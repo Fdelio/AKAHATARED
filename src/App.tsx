@@ -35,11 +35,12 @@ const TITULOS: Record<Pantalla, [string, string]> = {
 const RUTAS: Pantalla[] = ['red', 'mias', 'revision', 'cuenta', 'cargar'];
 
 /** La ruta vive en el hash (#radar, #op-<id>, #red…) para que los links se puedan compartir. */
-function leerRuta(): { pantalla: Pantalla; oportunidadId: string | null } {
+function leerRuta(): { pantalla: Pantalla; oportunidadId: string | null; editarId: string | null } {
   const h = window.location.hash.slice(1);
-  if (h.startsWith('op-')) return { pantalla: 'radar', oportunidadId: h.slice(3) };
-  if ((RUTAS as string[]).includes(h)) return { pantalla: h as Pantalla, oportunidadId: null };
-  return { pantalla: 'radar', oportunidadId: null };
+  if (h.startsWith('op-')) return { pantalla: 'radar', oportunidadId: h.slice(3), editarId: null };
+  if (h.startsWith('editar-')) return { pantalla: 'cargar', oportunidadId: null, editarId: h.slice(7) };
+  if ((RUTAS as string[]).includes(h)) return { pantalla: h as Pantalla, oportunidadId: null, editarId: null };
+  return { pantalla: 'radar', oportunidadId: null, editarId: null };
 }
 
 export default function App() {
@@ -120,9 +121,14 @@ export default function App() {
     ir('cuenta');
   };
 
+  const enEdicion = ruta.editarId
+    ? [...pendientes, ...oportunidades].find((x) => x.id === ruta.editarId)
+    : undefined;
+
   const guardarOportunidad = async (o: NuevaOportunidad, publicar: boolean) => {
     try {
-      await datos.crearOportunidad(o, publicar);
+      if (enEdicion) await datos.actualizarOportunidad(enEdicion.id, o, publicar);
+      else await datos.crearOportunidad(o, publicar);
       await cargar();
       setAviso(publicar ? 'Publicada en el radar' : 'Guardada en Revisión');
       ir(publicar ? 'radar' : 'revision');
@@ -135,7 +141,11 @@ export default function App() {
   };
 
   const abierta = ruta.oportunidadId ? oportunidades.find((o) => o.id === ruta.oportunidadId) : undefined;
-  const [titulo, subtitulo] = abierta ? [abierta.mecanismo, abierta.sistema] : TITULOS[ruta.pantalla];
+  const [titulo, subtitulo] = abierta
+    ? [abierta.mecanismo, abierta.sistema]
+    : ruta.editarId
+      ? ['Editar oportunidad', 'Revisá el texto antes de publicar']
+      : TITULOS[ruta.pantalla];
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[480px] flex-col bg-white sm:my-6 sm:min-h-0 sm:rounded-3xl sm:border sm:border-line">
@@ -213,7 +223,11 @@ export default function App() {
         ) : (ruta.pantalla === 'revision' || ruta.pantalla === 'cargar') && !revisora ? (
           <p className="m-0 text-sm text-ink-soft">Esta sección es solo para el equipo de Akãhatã.</p>
         ) : ruta.pantalla === 'cargar' ? (
-          <CargarView onGuardar={guardarOportunidad} onCancelar={() => ir('revision')} />
+          ruta.editarId && !enEdicion ? (
+            <p className="m-0 text-sm text-ink-soft">Cargando la oportunidad…</p>
+          ) : (
+            <CargarView key={ruta.editarId ?? 'nueva'} inicial={enEdicion} onGuardar={guardarOportunidad} onCancelar={() => ir('revision')} />
+          )
         ) : ruta.pantalla === 'red' ? (
           <RedView organizaciones={organizaciones} />
         ) : ruta.pantalla === 'mias' ? (
@@ -229,8 +243,8 @@ export default function App() {
             pendientes={pendientes}
             orgsPendientes={orgsPendientes}
             onCargar={() => ir('cargar')}
+            onEditar={(id) => ir('editar-' + id)}
             onAprobarOrg={(id, ok) => ejecutar(() => datos.aprobarOrganizacion(id, ok), ok ? 'Organización aprobada' : 'Organización rechazada')}
-            onAviso={setAviso}
             onRevisar={(id, estado: EstadoRevision) =>
               ejecutar(() => datos.revisarOportunidad(id, estado), estado === 'publicada' ? 'Publicada en el radar' : 'Descartada')
             }

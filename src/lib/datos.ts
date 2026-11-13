@@ -137,6 +137,21 @@ export async function aprobarOrganizacion(id: string, aprobada: boolean) {
 
 // ---------- Oportunidades y participaciones ----------
 
+/** Akãhatã corrige una oportunidad (por ejemplo, una recolectada automáticamente) antes o después de publicarla. */
+export async function actualizarOportunidad(id: string, o: NuevaOportunidad, publicar: boolean) {
+  const estado: EstadoRevision = publicar ? 'publicada' : 'pendiente';
+  if (supabase) {
+    const { error } = await supabase
+      .from('oportunidades')
+      .update({ ...o, estado, revisada_en: new Date().toISOString() })
+      .eq('id', id);
+    if (error) throw error;
+    return;
+  }
+  const i = mem.oportunidades.findIndex((x) => x.id === id);
+  if (i >= 0) mem.oportunidades[i] = { ...mem.oportunidades[i], ...o, estado };
+}
+
 /** Akãhatã carga una oportunidad a mano. Se publica directamente o queda para revisar. */
 export async function crearOportunidad(o: NuevaOportunidad, publicar: boolean) {
   const estado: EstadoRevision = publicar ? 'publicada' : 'pendiente';
