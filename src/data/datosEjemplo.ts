@@ -2,7 +2,7 @@
  * Datos de ejemplo para usar la app sin Supabase (por ejemplo, para mostrarla
  * en reuniones). Las organizaciones, plazos y casos son inventados.
  */
-import type { SesionOrgano, Oportunidad, Organizacion, Participacion } from '../types';
+import type { SesionOrgano, Oportunidad, Organizacion, Participacion, PedidoApoyo } from '../types';
 
 function enDias(n: number): string {
   const d = new Date();
@@ -86,6 +86,14 @@ export const OPORTUNIDADES: Oportunidad[] = [
     estado: 'publicada', recolectada_automaticamente: false,
   },
   {
+    id: 'cedaw-cl', sistema: 'ONU', mecanismo: 'Comité CEDAW',
+    titulo: 'Comité CEDAW revisa a Chile: informes sombra',
+    pais: 'Chile', tema: 'Violencia de género', fecha_limite: enDias(-40),
+    resumen: 'Ejemplo de una convocatoria ya cerrada, para mostrar lo que hicieron las organizaciones.',
+    angulo_agenda: '', pasos: [], fuente_nombre: 'ACNUDH', fuente_url: null,
+    estado: 'publicada', recolectada_automaticamente: false,
+  },
+  {
     id: 'q1', sistema: 'ONU', mecanismo: 'Procedimientos especiales',
     titulo: 'Relator Especial sobre el derecho a la alimentación: visita a un país de la región',
     pais: 'Regional', tema: 'Desarrollo y derechos sociales', fecha_limite: enDias(45),
@@ -103,16 +111,32 @@ export const OPORTUNIDADES: Oportunidad[] = [
   },
 ];
 
+const sin = { resultado: null, tipo_aporte: null, enviado: false, enlace: null } as const;
+
 export const PARTICIPACIONES: Participacion[] = [
-  { oportunidad_id: 'epu-py', organizacion_id: 'tr', visibilidad: 'red', resultado: null },
-  { oportunidad_id: 'epu-py', organizacion_id: 'rd', visibilidad: 'publica', resultado: null },
-  { oportunidad_id: 'epu-py', organizacion_id: 'ob', visibilidad: 'red', resultado: null },
-  { oportunidad_id: 'cidh-aud', organizacion_id: 'ag', visibilidad: 'publica', resultado: null },
-  { oportunidad_id: 'cidh-aud', organizacion_id: 'vd', visibilidad: 'red', resultado: null },
-  { oportunidad_id: 'cidh-aud', organizacion_id: 'ca', visibilidad: 'red', resultado: null },
-  { oportunidad_id: 'cidh-aud', organizacion_id: 'ml', visibilidad: 'red', resultado: null },
-  { oportunidad_id: 're-amb', organizacion_id: 'ml', visibilidad: 'red', resultado: null },
-  { oportunidad_id: 're-des', organizacion_id: 'ci', visibilidad: 'red', resultado: null },
+  { oportunidad_id: 'epu-py', organizacion_id: 'tr', visibilidad: 'red', ...sin, tipo_aporte: 'informe_sombra' },
+  { oportunidad_id: 'epu-py', organizacion_id: 'rd', visibilidad: 'publica', ...sin, tipo_aporte: 'contribucion' },
+  { oportunidad_id: 'epu-py', organizacion_id: 'ob', visibilidad: 'red', ...sin },
+  { oportunidad_id: 'cidh-aud', organizacion_id: 'ag', visibilidad: 'publica', ...sin, tipo_aporte: 'intervencion' },
+  { oportunidad_id: 'cidh-aud', organizacion_id: 'vd', visibilidad: 'red', ...sin },
+  { oportunidad_id: 'cidh-aud', organizacion_id: 'ca', visibilidad: 'red', ...sin },
+  { oportunidad_id: 'cidh-aud', organizacion_id: 'ml', visibilidad: 'red', ...sin },
+  { oportunidad_id: 're-amb', organizacion_id: 'ml', visibilidad: 'red', ...sin, tipo_aporte: 'contribucion', enviado: true },
+  { oportunidad_id: 're-des', organizacion_id: 'ci', visibilidad: 'red', ...sin },
+  {
+    oportunidad_id: 'cedaw-cl', organizacion_id: 'rd', visibilidad: 'publica', tipo_aporte: 'informe_sombra', enviado: true,
+    enlace: null, resultado: 'El Comité recomendó al Estado una ley integral contra la discriminación.',
+  },
+  { oportunidad_id: 'cedaw-cl', organizacion_id: 'ag', visibilidad: 'red', ...sin, tipo_aporte: 'informe_sombra', enviado: true },
+  { oportunidad_id: 'epu-py', organizacion_id: 'mia', visibilidad: 'red', ...sin, tipo_aporte: 'contribucion' },
+];
+
+export const PEDIDOS: PedidoApoyo[] = [
+  {
+    id: 'p1', organizacion_id: 'tr', oportunidad_id: 'epu-py', tipo_documento: 'informe_sombra',
+    mensaje: 'Tenemos los datos de casos pero nunca escribimos un informe para el EPU. ¿Nos ayudan con la estructura?',
+    contacto: 'contacto@ejemplo.org', estado: 'nuevo', creado_en: enDias(-2),
+  },
 ];
 
 export const SESIONES: SesionOrgano[] = [

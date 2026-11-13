@@ -1,16 +1,20 @@
-import type { EstadoRevision, Oportunidad, Organizacion } from '../types';
+import { TIPOS_APORTE, type EstadoPedido, type EstadoRevision, type Oportunidad, type Organizacion, type PedidoApoyo } from '../types';
 import { EtiquetaSistema } from './ui';
 
 interface Props {
   pendientes: Oportunidad[];
   orgsPendientes: Organizacion[];
+  pedidos: PedidoApoyo[];
+  organizaciones: Organizacion[];
+  oportunidades: Oportunidad[];
+  onPedido: (id: string, estado: EstadoPedido) => void;
   onRevisar: (id: string, estado: EstadoRevision) => void;
   onAprobarOrg: (id: string, aprobada: boolean) => void;
   onCargar: () => void;
   onEditar: (id: string) => void;
 }
 
-export default function RevisionView({ pendientes, orgsPendientes, onRevisar, onAprobarOrg, onCargar, onEditar }: Props) {
+export default function RevisionView({ pendientes, orgsPendientes, pedidos, organizaciones, oportunidades, onPedido, onRevisar, onAprobarOrg, onCargar, onEditar }: Props) {
   return (
     <div className="flex flex-col gap-3.5">
       <button
@@ -19,6 +23,39 @@ export default function RevisionView({ pendientes, orgsPendientes, onRevisar, on
       >
         + Cargar una oportunidad a mano
       </button>
+
+      {pedidos.some((p) => p.estado !== 'cerrado') && (
+        <section className="flex flex-col gap-2.5">
+          <h3 className="m-0 text-[13px] font-extrabold uppercase tracking-wider text-naranja-dark">Pedidos de apoyo para redactar</h3>
+          {pedidos.filter((p) => p.estado !== 'cerrado').map((p) => {
+            const org = organizaciones.find((o) => o.id === p.organizacion_id);
+            const op = oportunidades.find((o) => o.id === p.oportunidad_id);
+            return (
+              <div key={p.id} className="flex flex-col gap-1.5 rounded-lg border border-magenta bg-magenta-light/40 p-3.5 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <b className="text-magenta">{org?.nombre ?? 'Organización'}</b>
+                  {org && <span className="text-[13px] text-ink-soft">{org.pais}</span>}
+                  <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-xs font-bold text-naranja-dark">
+                    {p.estado === 'nuevo' ? 'Nuevo' : 'En curso'}
+                  </span>
+                </div>
+                <span><b>{TIPOS_APORTE[p.tipo_documento]}</b>{op && <> para “{op.titulo}”</>}</span>
+                <span>{p.mensaje}</span>
+                <span className="text-[13px]">
+                  Contacto:{' '}
+                  {p.contacto.includes('@') ? <a className="font-bold text-magenta" href={'mailto:' + p.contacto}>{p.contacto}</a> : <b>{p.contacto}</b>}
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  {p.estado === 'nuevo' ? (
+                    <button className="rounded bg-magenta px-1.5 py-2.5 text-xs font-extrabold uppercase text-white" onClick={() => onPedido(p.id, 'en_curso')}>Lo tomamos</button>
+                  ) : <span />}
+                  <button className="rounded border-2 border-line px-1.5 py-2 text-xs font-extrabold uppercase text-ink-soft" onClick={() => onPedido(p.id, 'cerrado')}>Cerrar</button>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
 
       {orgsPendientes.length > 0 && (
         <section className="flex flex-col gap-2.5">

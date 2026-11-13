@@ -3,7 +3,8 @@
  * base real; si no, trabaja en memoria con los datos de ejemplo.
  */
 import type {
-  EstadoRevision, NuevaOportunidad, NuevaOrganizacion, Oportunidad, Organizacion, Participacion, Sesion, SesionOrgano, Visibilidad,
+  EstadoPedido, EstadoRevision, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Participacion,
+  PedidoApoyo, Sesion, SesionOrgano, Trabajo, Visibilidad,
 } from '../types';
 import { supabase } from './supabaseClient';
 import * as ejemplo from '../data/datosEjemplo';
@@ -13,6 +14,7 @@ const mem = {
   oportunidades: [...ejemplo.OPORTUNIDADES],
   participaciones: [...ejemplo.PARTICIPACIONES],
   organizaciones: [...ejemplo.ORGANIZACIONES],
+  pedidos: [...ejemplo.PEDIDOS],
 };
 
 export async function listarOportunidades(estado: EstadoRevision = 'publicada'): Promise<Oportunidad[]> {
@@ -194,7 +196,10 @@ export async function sumarse(oportunidadId: string, organizacionId: string, vis
   mem.participaciones = mem.participaciones.filter(
     (p) => !(p.oportunidad_id === oportunidadId && p.organizacion_id === organizacionId),
   );
-  mem.participaciones.push({ oportunidad_id: oportunidadId, organizacion_id: organizacionId, visibilidad, resultado: null });
+  mem.participaciones.push({
+    oportunidad_id: oportunidadId, organizacion_id: organizacionId, visibilidad,
+    resultado: null, tipo_aporte: null, enviado: false, enlace: null,
+  });
 }
 
 export async function salirse(oportunidadId: string, organizacionId: string) {
@@ -212,18 +217,56 @@ export async function salirse(oportunidadId: string, organizacionId: string) {
   );
 }
 
-export async function guardarResultado(oportunidadId: string, organizacionId: string, resultado: string) {
+/** Qué documento prepara la organización, si ya lo envió, el enlace y el resultado. */
+export async function guardarTrabajo(oportunidadId: string, organizacionId: string, t: Trabajo) {
+  const limpio: Trabajo = {
+    tipo_aporte: t.tipo_aporte,
+    enviado: t.enviado,
+    enlace: t.enlace?.trim() || null,
+    resultado: t.resultado?.trim() || null,
+  };
   if (supabase) {
     const { error } = await supabase
       .from('participaciones')
-      .update({ resultado, resultado_en: new Date().toISOString() })
+      .update({ ...limpio, resultado_en: limpio.resultado ? new Date().toISOString() : null })
       .eq('oportunidad_id', oportunidadId)
       .eq('organizacion_id', organizacionId);
     if (error) throw error;
     return;
   }
   const p = mem.participaciones.find((x) => x.oportunidad_id === oportunidadId && x.organizacion_id === organizacionId);
-  if (p) p.resultado = resultado;
+  if (p) Object.assign(p, limpio);
+}
+
+// ---------- Pedidos de apoyo a Akãhatã ----------
+
+/** Los de mi organización; el equipo de Akãhatã ve todos. */
+export async function listarPedidos(): Promise<PedidoApoyo[]> {
+  if (supabase) {
+    const { data, error } = await supabase.from('pedidos_apoyo').select('*').order('creado_en', { ascending: false });
+    if (error) throw error;
+    return data as PedidoApoyo[];
+  }
+  return mem.pedidos;
+}
+
+export async function pedirApoyo(organizacionId: string, p: NuevoPedido) {
+  if (supabase) {
+    const { error } = await supabase.from('pedidos_apoyo').insert({ ...p, organizacion_id: organizacionId });
+    if (error) throw error;
+    return;
+  }
+  mem.pedidos.unshift({ ...p, id: 'p-' + Date.now(), organizacion_id: organizacionId, estado: 'nuevo', creado_en: new Date().toISOString() });
+}
+
+export async function actualizarPedido(id: string, estado: EstadoPedido) {
+  if (supabase) {
+    const { error } = await supabase.from('pedidos_apoyo').update({ estado }).eq('id', id);
+    if (error) throw error;
+    return;
+  }
+  const p = mem.pedidos.find((x) => x.id === id);
+  if (p) p.estado = estado;
 }
 
 export async function revisarOportunidad(id: string, estado: EstadoRevision) {

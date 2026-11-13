@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { Oportunidad, Organizacion, Participacion, Visibilidad } from '../types';
+import { TIPOS_APORTE, type NuevoPedido, type Oportunidad, type Organizacion, type Participacion, type Visibilidad } from '../types';
+import PedirApoyo from './PedirApoyo';
 import { Boton, EtiquetaSistema, Iniciales, Plazo } from './ui';
 
 interface Props {
@@ -9,7 +10,10 @@ interface Props {
   miOrg: string | null;
   onSumarse: (v: Visibilidad) => void;
   onSalirse: () => void;
-  onAviso: (t: string) => void;
+  email: string;
+  /** null si la persona no tiene una organización aprobada. */
+  onPedirApoyo: ((p: NuevoPedido) => Promise<void>) | null;
+  onSinOrganizacion: () => void;
   /** Solo para el equipo de Akãhatã. */
   onEditar?: () => void;
 }
@@ -20,10 +24,11 @@ const OPCIONES: { v: Visibilidad; texto: string }[] = [
   { v: 'solo_akahata', texto: 'Solo Akãhatã (para contextos de riesgo)' },
 ];
 
-export default function OportunidadView({ o, organizaciones, participaciones, miOrg, onSumarse, onSalirse, onAviso, onEditar }: Props) {
+export default function OportunidadView({ o, organizaciones, participaciones, miOrg, onSumarse, onSalirse, email, onPedirApoyo, onSinOrganizacion, onEditar }: Props) {
   const ps = participaciones.filter((p) => p.oportunidad_id === o.id);
   const mia = ps.find((p) => p.organizacion_id === miOrg);
   const [vis, setVis] = useState<Visibilidad>(mia?.visibilidad ?? 'red');
+  const [pidiendo, setPidiendo] = useState(false);
   const orgPorId = new Map(organizaciones.map((x) => [x.id, x]));
   const otras = ps.filter((p) => p.organizacion_id !== miOrg && p.visibilidad !== 'solo_akahata');
 
@@ -74,7 +79,8 @@ export default function OportunidadView({ o, organizaciones, participaciones, mi
               <div>
                 <b className="block">{org.nombre}</b>
                 <span className="text-[13px] text-ink-soft">
-                  {org.pais} · ofrece: {org.ofrece}
+                  {org.pais}
+                  {p.tipo_aporte && <> · {TIPOS_APORTE[p.tipo_aporte].toLowerCase()}{p.enviado && ' (enviado)'}</>}
                 </span>
               </div>
             </div>
@@ -115,9 +121,21 @@ export default function OportunidadView({ o, organizaciones, participaciones, mi
       ) : (
         <Boton onClick={() => onSumarse(vis)}>Me sumo</Boton>
       )}
-      <Boton variante="borde" onClick={() => onAviso('Próximamente: un espacio para coordinar con quienes se sumaron')}>
-        Proponer una acción conjunta
-      </Boton>
+      {pidiendo && onPedirApoyo ? (
+        <PedirApoyo
+          oportunidadId={o.id}
+          email={email}
+          onEnviar={async (p) => {
+            await onPedirApoyo(p);
+            setPidiendo(false);
+          }}
+          onCancelar={() => setPidiendo(false)}
+        />
+      ) : (
+        <Boton variante="borde" onClick={() => (onPedirApoyo ? setPidiendo(true) : onSinOrganizacion())}>
+          Pedir apoyo de Akãhatã para redactar
+        </Boton>
+      )}
       <div className="border-l-[3px] border-line pl-2.5 text-[13px] text-ink-soft">
         Fuente: {o.fuente_url ? <a className="text-magenta" href={o.fuente_url} target="_blank" rel="noreferrer">{o.fuente_nombre}</a> : o.fuente_nombre}.{' '}
         {o.recolectada_automaticamente ? 'Recolectada automáticamente y revisada por Akãhatã.' : 'Cargada por Akãhatã.'}
