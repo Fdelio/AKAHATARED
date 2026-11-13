@@ -50,7 +50,8 @@ insert into perfiles (id) select id from auth.users on conflict (id) do nothing;
 create function privado.proteger_organizacion() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  if privado.es_revisora() then
+  -- Sin persona usuaria (panel de Supabase, tareas del servidor) o revisora: sin restricciones.
+  if auth.uid() is null or privado.es_revisora() then
     return new;
   end if;
   if tg_op = 'INSERT' then
