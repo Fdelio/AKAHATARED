@@ -14,6 +14,7 @@ import RevisionView from './components/RevisionView';
 import CuentaView from './components/CuentaView';
 import CargarView from './components/CargarView';
 import ChatView from './components/ChatView';
+import BienvenidaView from './components/BienvenidaView';
 import { Boton } from './components/ui';
 
 type ItemNav = { id: Pantalla; label: string; Icono: typeof Radar };
@@ -61,6 +62,8 @@ export default function App() {
   const [solicitudes, setSolicitudes] = useState<SolicitudUnion[]>([]);
   const [personas, setPersonas] = useState<string[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
+  /** Ya se sabe si hay alguien que ingresó (para no mostrar la portada un instante de más). */
+  const [listo, setListo] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
@@ -93,6 +96,8 @@ export default function App() {
     } catch (e) {
       setError('No se pudieron cargar los datos. Revisá tu conexión e intentá de nuevo.');
       console.error(e);
+    } finally {
+      setListo(true);
     }
   }, []);
 
@@ -170,6 +175,13 @@ export default function App() {
     : ruta.editarId
       ? ['Editar oportunidad', 'Revisá el texto antes de publicar']
       : TITULOS[ruta.pantalla];
+
+  if (!listo) return <div className="min-h-screen bg-white" aria-busy="true" />;
+
+  // Quien no ingresó ve la portada con el ingreso. (#bienvenida la muestra igual, para revisarla.)
+  if (!sesion || window.location.hash === '#bienvenida') {
+    return <BienvenidaView modoEjemplo={modoEjemplo} onEnviarEnlace={datos.enviarEnlace} />;
+  }
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[480px] flex-col bg-white sm:my-6 sm:min-h-0 sm:rounded-3xl sm:border sm:border-line">

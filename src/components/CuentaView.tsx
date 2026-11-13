@@ -74,7 +74,7 @@ export default function CuentaView({
   );
 }
 
-function Ingreso({ modoEjemplo, onEnviarEnlace }: { modoEjemplo: boolean; onEnviarEnlace: (e: string) => Promise<void> }) {
+export function Ingreso({ modoEjemplo, onEnviarEnlace }: { modoEjemplo: boolean; onEnviarEnlace: (e: string) => Promise<void> }) {
   const [email, setEmail] = useState('');
   const [estado, setEstado] = useState<'inicio' | 'enviando' | 'enviado' | 'error'>('inicio');
 
@@ -105,8 +105,7 @@ function Ingreso({ modoEjemplo, onEnviarEnlace }: { modoEjemplo: boolean; onEnvi
   return (
     <form onSubmit={enviar} className="flex flex-col gap-4">
       <p className="m-0 text-sm text-ink-soft">
-        Las oportunidades son abiertas. Para sumarte, ver la red y usar el chat, entrá con el correo de tu
-        organización. No hace falta contraseña: te mandamos un enlace.
+        Entrá con tu correo. No hace falta contraseña: te mandamos un enlace para entrar.
       </p>
       <label className={etiqueta}>
         Correo
