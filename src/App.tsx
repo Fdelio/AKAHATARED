@@ -131,7 +131,7 @@ export default function App() {
       else await datos.crearOportunidad(o, publicar);
       await cargar();
       setAviso(publicar ? 'Publicada en el radar' : 'Guardada en Revisión');
-      ir(publicar ? 'radar' : 'revision');
+      ir(enEdicion && publicar ? 'op-' + enEdicion.id : publicar ? 'radar' : 'revision');
       return true;
     } catch (e) {
       console.error(e);
@@ -188,6 +188,7 @@ export default function App() {
             participaciones={participaciones}
             miOrg={miOrg}
             onAviso={setAviso}
+            onEditar={revisora ? () => ir('editar-' + abierta.id) : undefined}
             onSumarse={(v: Visibilidad) =>
               miOrg ? ejecutar(() => datos.sumarse(abierta.id, miOrg, v), 'Te sumaste. Te avisamos antes del plazo.') : pedirIngreso()
             }
@@ -226,7 +227,7 @@ export default function App() {
           ruta.editarId && !enEdicion ? (
             <p className="m-0 text-sm text-ink-soft">Cargando la oportunidad…</p>
           ) : (
-            <CargarView key={ruta.editarId ?? 'nueva'} inicial={enEdicion} onGuardar={guardarOportunidad} onCancelar={() => ir('revision')} />
+            <CargarView key={ruta.editarId ?? 'nueva'} inicial={enEdicion} onGuardar={guardarOportunidad} onCancelar={() => ir(enEdicion?.estado === 'publicada' ? 'op-' + enEdicion.id : 'revision')} />
           )
         ) : ruta.pantalla === 'red' ? (
           <RedView organizaciones={organizaciones} />

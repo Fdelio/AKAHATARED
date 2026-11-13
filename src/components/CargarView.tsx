@@ -143,7 +143,7 @@ export default function CargarView({ inicial, onGuardar, onCancelar }: Props) {
       </label>
 
       <Boton>{guardando ? 'Guardando…' : publicar ? (inicial?.estado === 'publicada' ? 'Guardar cambios' : 'Publicar oportunidad') : 'Guardar para revisar'}</Boton>
-      <button type="button" className="text-sm font-bold text-ink-soft underline" onClick={onCancelar}>Volver a Revisión</button>
+      <button type="button" className="text-sm font-bold text-ink-soft underline" onClick={onCancelar}>{inicial?.estado === 'publicada' ? 'Cancelar' : 'Volver a Revisión'}</button>
     </form>
   );
 }
