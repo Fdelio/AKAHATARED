@@ -47,12 +47,46 @@ export interface Oportunidad {
   recolectada_automaticamente: boolean;
 }
 
+/** Qué documento preparó (o prepara) la organización. */
+export type TipoAporte = 'informe_sombra' | 'contribucion' | 'reporte' | 'intervencion' | 'otro';
+
+export const TIPOS_APORTE: Record<TipoAporte, string> = {
+  informe_sombra: 'Informe sombra o alternativo',
+  contribucion: 'Contribución o respuesta a cuestionario',
+  reporte: 'Reporte o informe propio',
+  intervencion: 'Intervención oral o audiencia',
+  otro: 'Otro',
+};
+
 export interface Participacion {
   oportunidad_id: string;
   organizacion_id: string;
   visibilidad: Visibilidad;
   resultado: string | null;
+  tipo_aporte: TipoAporte | null;
+  /** Ya lo enviaron. */
+  enviado: boolean;
+  enlace: string | null;
 }
+
+/** Lo que una organización registra sobre su trabajo en una oportunidad. */
+export type Trabajo = Pick<Participacion, 'tipo_aporte' | 'enviado' | 'enlace' | 'resultado'>;
+
+export type EstadoPedido = 'nuevo' | 'en_curso' | 'cerrado';
+
+/** Pedido de apoyo a Akãhatã para redactar un documento. */
+export interface PedidoApoyo {
+  id: string;
+  organizacion_id: string;
+  oportunidad_id: string | null;
+  tipo_documento: TipoAporte;
+  mensaje: string;
+  contacto: string;
+  estado: EstadoPedido;
+  creado_en: string;
+}
+
+export type NuevoPedido = Pick<PedidoApoyo, 'oportunidad_id' | 'tipo_documento' | 'mensaje' | 'contacto'>;
 
 export type Pantalla = 'radar' | 'red' | 'mias' | 'revision' | 'cuenta' | 'cargar';
 

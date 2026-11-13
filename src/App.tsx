@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BookmarkCheck, CheckCheck, Network, Radar, UserRound } from 'lucide-react';
+import { Building2, CheckCheck, Network, Radar, UserRound } from 'lucide-react';
 import type {
-  EstadoRevision, NuevaOportunidad, NuevaOrganizacion, Oportunidad, Organizacion, Pantalla, Participacion, Sesion, SesionOrgano, Visibilidad,
+  EstadoRevision, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Pantalla, Participacion, PedidoApoyo, Sesion,
+  SesionOrgano, Visibilidad,
 } from './types';
 import * as datos from './lib/datos';
 import { modoEjemplo } from './lib/supabaseClient';
 import RadarView from './components/RadarView';
 import OportunidadView from './components/OportunidadView';
 import RedView from './components/RedView';
-import MiasView from './components/MiasView';
+import MiOrganizacionView from './components/MiOrganizacionView';
 import RevisionView from './components/RevisionView';
 import CuentaView from './components/CuentaView';
 import CargarView from './components/CargarView';
@@ -18,15 +19,15 @@ type ItemNav = { id: Pantalla; label: string; Icono: typeof Radar };
 const NAV: ItemNav[] = [
   { id: 'radar', label: 'Oportunidades', Icono: Radar },
   { id: 'red', label: 'Red', Icono: Network },
-  { id: 'mias', label: 'Me sumé', Icono: BookmarkCheck },
+  { id: 'mias', label: 'Mi organización', Icono: Building2 },
 ];
 const NAV_REVISION: ItemNav = { id: 'revision', label: 'Revisión', Icono: CheckCheck };
 const NAV_CUENTA: ItemNav = { id: 'cuenta', label: 'Cuenta', Icono: UserRound };
 
 const TITULOS: Record<Pantalla, [string, string]> = {
   radar: ['Oportunidades de participar', 'ONU, OEA y Mercosur, en todos los temas'],
-  red: ['Mapa de la red', 'Organizaciones por país'],
-  mias: ['Me sumé', 'Tus oportunidades y resultados'],
+  red: ['La red', 'Organizaciones, en qué trabajan y qué hicieron'],
+  mias: ['Mi organización', 'Nuestro trabajo y pedidos de apoyo'],
   revision: ['Revisión de Akãhatã', 'Organizaciones y oportunidades por aprobar'],
   cuenta: ['Tu cuenta', 'Tu organización en la red'],
   cargar: ['Cargar oportunidad', 'Se suma al radar de incidencia'],
@@ -52,6 +53,7 @@ export default function App() {
   const [orgsPendientes, setOrgsPendientes] = useState<Organizacion[]>([]);
   const [sesion, setSesion] = useState<Sesion | null>(null);
   const [sesiones, setSesiones] = useState<SesionOrgano[]>([]);
+  const [pedidos, setPedidos] = useState<PedidoApoyo[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,14 +61,16 @@ export default function App() {
     try {
       const s = await datos.obtenerSesion();
       const revisora = s?.rol === 'revisora';
-      const [ops, pend, orgs, orgsPend, parts, cal] = await Promise.all([
+      const [ops, pend, orgs, orgsPend, parts, cal, peds] = await Promise.all([
         datos.listarOportunidades('publicada'),
         revisora ? datos.listarOportunidades('pendiente') : [],
         s ? datos.listarOrganizaciones(true) : [],
         revisora ? datos.listarOrganizaciones(false) : [],
         s ? datos.listarParticipaciones() : [],
         datos.listarSesiones(),
+        s ? datos.listarPedidos() : [],
       ]);
+      setPedidos(peds);
       setSesiones(cal);
       setSesion(s);
       setOportunidades(ops);
@@ -123,6 +127,9 @@ export default function App() {
     setAviso(sesion ? 'Tu organización todavía espera aprobación' : 'Entrá con tu organización para sumarte');
     ir('cuenta');
   };
+
+  const pedirApoyo = (p: NuevoPedido) =>
+    miOrg ? ejecutar(() => datos.pedirApoyo(miOrg, p), 'Pedido enviado. Akãhatã se va a contactar.') : Promise.resolve();
 
   const enEdicion = ruta.editarId
     ? [...pendientes, ...oportunidades].find((x) => x.id === ruta.editarId)
@@ -190,7 +197,9 @@ export default function App() {
             organizaciones={organizaciones}
             participaciones={participaciones}
             miOrg={miOrg}
-            onAviso={setAviso}
+            email={sesion?.email ?? ''}
+            onPedirApoyo={miOrg ? pedirApoyo : null}
+            onSinOrganizacion={pedirIngreso}
             onEditar={revisora ? () => ir('editar-' + abierta.id) : undefined}
             onSumarse={(v: Visibilidad) =>
               miOrg ? ejecutar(() => datos.sumarse(abierta.id, miOrg, v), 'Te sumaste. Te avisamos antes del plazo.') : pedirIngreso()
@@ -221,7 +230,7 @@ export default function App() {
             <p className="m-0 text-sm text-ink-soft">
               {ruta.pantalla === 'red'
                 ? 'El mapa de la red lo ven solo las organizaciones que forman parte, para cuidar a quienes trabajan en contextos de riesgo.'
-                : 'Entrá con tu organización para ver las oportunidades a las que te sumaste y registrar resultados.'}
+                : 'Entrá con tu organización para registrar su trabajo y pedir apoyo a Akãhatã.'}
             </p>
             <Boton onClick={() => ir('cuenta')}>Entrar</Boton>
           </div>
@@ -234,19 +243,34 @@ export default function App() {
             <CargarView key={ruta.editarId ?? 'nueva'} inicial={enEdicion} onGuardar={guardarOportunidad} onCancelar={() => ir(enEdicion?.estado === 'publicada' ? 'op-' + enEdicion.id : 'revision')} />
           )
         ) : ruta.pantalla === 'red' ? (
-          <RedView organizaciones={organizaciones} />
+          <RedView
+            organizaciones={organizaciones}
+            participaciones={participaciones}
+            oportunidades={oportunidades}
+            miOrg={miOrg}
+            revisora={revisora}
+            onAbrir={(id) => ir('op-' + id)}
+            onPedirApoyo={() => ir('mias')}
+          />
         ) : ruta.pantalla === 'mias' ? (
-          <MiasView
+          <MiOrganizacionView
+            sesion={sesion!}
             oportunidades={oportunidades}
             participaciones={participaciones}
-            miOrg={miOrg}
+            pedidos={pedidos.filter((p) => p.organizacion_id === sesion?.organizacion?.id)}
             onAbrir={(id) => ir('op-' + id)}
-            onGuardar={(id, r) => miOrg && ejecutar(() => datos.guardarResultado(id, miOrg, r), 'Resultado guardado')}
+            onIrACuenta={() => ir('cuenta')}
+            onGuardar={(id, t) => miOrg && ejecutar(() => datos.guardarTrabajo(id, miOrg, t), 'Guardado')}
+            onPedirApoyo={pedirApoyo}
           />
         ) : (
           <RevisionView
             pendientes={pendientes}
             orgsPendientes={orgsPendientes}
+            pedidos={pedidos}
+            organizaciones={organizaciones}
+            oportunidades={oportunidades}
+            onPedido={(id, estado) => ejecutar(() => datos.actualizarPedido(id, estado), estado === 'cerrado' ? 'Pedido cerrado' : 'Pedido en curso')}
             onCargar={() => ir('cargar')}
             onEditar={(id) => ir('editar-' + id)}
             onAprobarOrg={(id, ok) => ejecutar(() => datos.aprobarOrganizacion(id, ok), ok ? 'Organización aprobada' : 'Organización rechazada')}
