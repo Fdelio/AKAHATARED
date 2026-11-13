@@ -10,6 +10,8 @@ interface Props {
   onSumarse: (v: Visibilidad) => void;
   onSalirse: () => void;
   onAviso: (t: string) => void;
+  /** Solo para el equipo de Akãhatã. */
+  onEditar?: () => void;
 }
 
 const OPCIONES: { v: Visibilidad; texto: string }[] = [
@@ -18,7 +20,7 @@ const OPCIONES: { v: Visibilidad; texto: string }[] = [
   { v: 'solo_akahata', texto: 'Solo Akãhatã (para contextos de riesgo)' },
 ];
 
-export default function OportunidadView({ o, organizaciones, participaciones, miOrg, onSumarse, onSalirse, onAviso }: Props) {
+export default function OportunidadView({ o, organizaciones, participaciones, miOrg, onSumarse, onSalirse, onAviso, onEditar }: Props) {
   const ps = participaciones.filter((p) => p.oportunidad_id === o.id);
   const mia = ps.find((p) => p.organizacion_id === miOrg);
   const [vis, setVis] = useState<Visibilidad>(mia?.visibilidad ?? 'red');
@@ -31,6 +33,14 @@ export default function OportunidadView({ o, organizaciones, participaciones, mi
         <EtiquetaSistema sistema={o.sistema} mecanismo={o.mecanismo} />
         <Plazo fecha={o.fecha_limite} />
       </div>
+      {onEditar && (
+        <button
+          onClick={onEditar}
+          className="self-start rounded border-2 border-magenta px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-magenta"
+        >
+          Editar (equipo Akãhatã)
+        </button>
+      )}
       <h2 className="m-0 text-[22px] font-black leading-tight text-magenta">{o.titulo}</h2>
       <div className="text-sm text-ink-soft">
         {o.pais} · {o.tema}
