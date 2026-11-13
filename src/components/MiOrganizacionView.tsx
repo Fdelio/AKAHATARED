@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import {
-  TIPOS_APORTE, type NuevoPedido, type Oportunidad, type Participacion, type PedidoApoyo, type Sesion, type TipoAporte, type Trabajo,
+  TIPOS_APORTE, type NuevoPedido, type Oportunidad, type Participacion, type PedidoApoyo, type Sesion, type SolicitudUnion, type TipoAporte,
+  type Trabajo,
 } from '../types';
 import { Boton, EtiquetaSistema, Plazo } from './ui';
 import { campo, etiqueta } from './CuentaView';
@@ -11,6 +12,9 @@ interface Props {
   oportunidades: Oportunidad[];
   participaciones: Participacion[];
   pedidos: PedidoApoyo[];
+  personas: string[];
+  solicitudes: SolicitudUnion[];
+  onResponder: (perfilId: string, aceptar: boolean) => void;
   onAbrir: (id: string) => void;
   onIrACuenta: () => void;
   onGuardar: (oportunidadId: string, t: Trabajo) => void;
@@ -20,7 +24,7 @@ interface Props {
 const ESTADO_PEDIDO = { nuevo: 'Enviado', en_curso: 'Akãhatã lo está viendo', cerrado: 'Cerrado' } as const;
 
 export default function MiOrganizacionView({
-  sesion, oportunidades, participaciones, pedidos, onAbrir, onIrACuenta, onGuardar, onPedirApoyo,
+  sesion, oportunidades, participaciones, pedidos, personas, solicitudes, onResponder, onAbrir, onIrACuenta, onGuardar, onPedirApoyo,
 }: Props) {
   const org = sesion.organizacion;
   const [pidiendo, setPidiendo] = useState<string | null>(null); // id de oportunidad, o '' para un pedido general
@@ -55,6 +59,26 @@ export default function MiOrganizacionView({
         <b className="block text-lg text-magenta">{org.nombre}</b>
         <span className="text-sm text-ink-soft">{org.pais}{org.temas.length > 0 && ' · ' + org.temas.join(', ')}</span>
       </div>
+
+      <section className="flex flex-col gap-2">
+        <h3 className="m-0 text-[13px] font-extrabold uppercase tracking-wider text-naranja-dark">Personas que entran por la organización</h3>
+        {solicitudes.map((s) => (
+          <div key={s.perfil_id} className="flex flex-col gap-2 rounded-lg border border-naranja bg-naranja-light/40 p-3 text-sm">
+            <span><b>{s.email}</b> pidió sumarse a {org.nombre}. ¿Forma parte del equipo?</span>
+            <div className="grid grid-cols-2 gap-2">
+              <button className="rounded bg-magenta px-1.5 py-2.5 text-xs font-extrabold uppercase text-white" onClick={() => onResponder(s.perfil_id, true)}>Aceptar</button>
+              <button className="rounded border-2 border-line px-1.5 py-2 text-xs font-extrabold uppercase text-ink-soft" onClick={() => onResponder(s.perfil_id, false)}>Rechazar</button>
+            </div>
+          </div>
+        ))}
+        <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm">
+          {personas.map((p) => <li key={p}>• {p}{p === sesion.email && <span className="text-ink-soft"> (vos)</span>}</li>)}
+        </ul>
+        <p className="m-0 text-xs text-ink-soft">
+          Para sumar a alguien: que entre con su correo y elija “{org.nombre}” en “Ya está en la red”. Te va a aparecer acá
+          para aceptarla.
+        </p>
+      </section>
 
       <section className="flex flex-col gap-2.5">
         <h3 className="m-0 text-[13px] font-extrabold uppercase tracking-wider text-naranja-dark">Apoyo de Akãhatã</h3>

@@ -14,6 +14,7 @@ interface Props {
   /** null si la persona no tiene una organización aprobada. */
   onPedirApoyo: ((p: NuevoPedido) => Promise<void>) | null;
   onSinOrganizacion: () => void;
+  onConversar: () => void;
   /** Solo para el equipo de Akãhatã. */
   onEditar?: () => void;
 }
@@ -24,7 +25,7 @@ const OPCIONES: { v: Visibilidad; texto: string }[] = [
   { v: 'solo_akahata', texto: 'Solo Akãhatã (para contextos de riesgo)' },
 ];
 
-export default function OportunidadView({ o, organizaciones, participaciones, miOrg, onSumarse, onSalirse, email, onPedirApoyo, onSinOrganizacion, onEditar }: Props) {
+export default function OportunidadView({ o, organizaciones, participaciones, miOrg, onSumarse, onSalirse, email, onPedirApoyo, onSinOrganizacion, onConversar, onEditar }: Props) {
   const ps = participaciones.filter((p) => p.oportunidad_id === o.id);
   const mia = ps.find((p) => p.organizacion_id === miOrg);
   const [vis, setVis] = useState<Visibilidad>(mia?.visibilidad ?? 'red');
@@ -136,6 +137,7 @@ export default function OportunidadView({ o, organizaciones, participaciones, mi
           Pedir apoyo de Akãhatã para redactar
         </Boton>
       )}
+      <Boton variante="borde" onClick={onConversar}>Conversar con la red sobre esta oportunidad</Boton>
       <div className="border-l-[3px] border-line pl-2.5 text-[13px] text-ink-soft">
         Fuente: {o.fuente_url ? <a className="text-magenta" href={o.fuente_url} target="_blank" rel="noreferrer">{o.fuente_nombre}</a> : o.fuente_nombre}.{' '}
         {o.recolectada_automaticamente ? 'Recolectada automáticamente y revisada por Akãhatã.' : 'Cargada por Akãhatã.'}

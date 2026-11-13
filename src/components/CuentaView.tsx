@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import type { NuevaOrganizacion, Sesion } from '../types';
+import type { NuevaOrganizacion, Organizacion, Sesion } from '../types';
 import { Boton } from './ui';
 
 const TEMAS = [
@@ -16,12 +16,40 @@ interface Props {
   modoEjemplo: boolean;
   onEnviarEnlace: (email: string) => Promise<void>;
   onCrearOrganizacion: (org: NuevaOrganizacion) => Promise<void>;
+  /** Organizaciones aprobadas, para sumarse a una que ya está en la red. */
+  organizaciones: Organizacion[];
+  onPedirUnirme: (organizacionId: string) => Promise<void>;
+  onCancelarSolicitud: () => void;
   onSalir: () => void;
 }
 
-export default function CuentaView({ sesion, modoEjemplo, onEnviarEnlace, onCrearOrganizacion, onSalir }: Props) {
+export default function CuentaView({
+  sesion, modoEjemplo, onEnviarEnlace, onCrearOrganizacion, organizaciones, onPedirUnirme, onCancelarSolicitud, onSalir,
+}: Props) {
   if (!sesion) return <Ingreso modoEjemplo={modoEjemplo} onEnviarEnlace={onEnviarEnlace} />;
-  if (!sesion.organizacion) return <AltaOrganizacion email={sesion.email} onCrear={onCrearOrganizacion} onSalir={onSalir} />;
+  if (!sesion.organizacion && sesion.solicitud) {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="m-0 rounded-lg bg-naranja-light p-3.5 text-sm text-naranja-dark">
+          Pediste sumarte a <b>{sesion.solicitud.nombre}</b>. Te va a aceptar alguien de esa organización o el equipo de
+          Akãhatã. Mientras tanto podés ver las oportunidades.
+        </p>
+        <Boton variante="borde" onClick={onCancelarSolicitud}>Cancelar el pedido</Boton>
+        <button type="button" className="text-sm font-bold text-ink-soft underline" onClick={onSalir}>Salir</button>
+      </div>
+    );
+  }
+  if (!sesion.organizacion) {
+    return (
+      <SinOrganizacion
+        email={sesion.email}
+        organizaciones={organizaciones}
+        onPedirUnirme={onPedirUnirme}
+        onCrear={onCrearOrganizacion}
+        onSalir={onSalir}
+      />
+    );
+  }
 
   const org = sesion.organizacion;
   return (
@@ -29,7 +57,7 @@ export default function CuentaView({ sesion, modoEjemplo, onEnviarEnlace, onCrea
       {!org.aprobada && (
         <p className="m-0 rounded-lg bg-naranja-light p-3.5 text-sm text-naranja-dark">
           <b>Tu organización está esperando la aprobación de Akãhatã.</b> Mientras tanto podés ver el radar. Cuando la
-          aprueben vas a poder sumarte a oportunidades y aparecer en el mapa de la red.
+          aprueben vas a poder sumarte a oportunidades y aparecer en la red.
         </p>
       )}
       <div className="rounded-lg border border-line p-3.5">
@@ -77,7 +105,7 @@ function Ingreso({ modoEjemplo, onEnviarEnlace }: { modoEjemplo: boolean; onEnvi
   return (
     <form onSubmit={enviar} className="flex flex-col gap-4">
       <p className="m-0 text-sm text-ink-soft">
-        El radar es abierto. Para sumarte a oportunidades y ver el mapa de la red, entrá con el correo de tu
+        Las oportunidades son abiertas. Para sumarte, ver la red y usar el chat, entrá con el correo de tu
         organización. No hace falta contraseña: te mandamos un enlace.
       </p>
       <label className={etiqueta}>
@@ -91,6 +119,68 @@ function Ingreso({ modoEjemplo, onEnviarEnlace }: { modoEjemplo: boolean; onEnvi
         Solo guardamos tu correo para que puedas entrar. Tu organización decide qué muestra a la red.
       </p>
     </form>
+  );
+}
+
+function SinOrganizacion({
+  email, organizaciones, onPedirUnirme, onCrear, onSalir,
+}: {
+  email: string; organizaciones: Organizacion[]; onPedirUnirme: (id: string) => Promise<void>;
+  onCrear: (o: NuevaOrganizacion) => Promise<void>; onSalir: () => void;
+}) {
+  const [modo, setModo] = useState<'unirme' | 'nueva'>(organizaciones.length > 0 ? 'unirme' : 'nueva');
+  const [elegida, setElegida] = useState('');
+  const [enviando, setEnviando] = useState(false);
+
+  const pedir = async (e: FormEvent) => {
+    e.preventDefault();
+    setEnviando(true);
+    try {
+      await onPedirUnirme(elegida);
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="m-0 text-sm text-ink-soft">
+        Hola, <b className="text-ink">{email}</b>. ¿Tu organización ya está en la red?
+      </p>
+      <div className="grid grid-cols-2 rounded-lg bg-crema p-1" role="tablist">
+        {(['unirme', 'nueva'] as const).map((m) => (
+          <button
+            key={m}
+            role="tab"
+            aria-selected={modo === m}
+            onClick={() => setModo(m)}
+            className={`rounded-md px-1 py-2 text-[12px] font-extrabold uppercase tracking-wider ${modo === m ? 'bg-white text-magenta shadow-sm' : 'text-ink-soft'}`}
+          >
+            {m === 'unirme' ? 'Ya está en la red' : 'Registrar una nueva'}
+          </button>
+        ))}
+      </div>
+      {modo === 'unirme' ? (
+        <form onSubmit={pedir} className="flex flex-col gap-4">
+          <label className={etiqueta}>
+            Elegí tu organización
+            <select required className={campo} value={elegida} onChange={(e) => setElegida(e.target.value)}>
+              <option value="" disabled>Elegí…</option>
+              {[...organizaciones].sort((a, b) => a.nombre.localeCompare(b.nombre)).map((o) => (
+                <option key={o.id} value={o.id}>{o.nombre} ({o.pais})</option>
+              ))}
+            </select>
+          </label>
+          <p className="m-0 text-xs text-ink-soft">
+            Le avisamos a la organización: alguien de su equipo (o Akãhatã) confirma que formás parte. Van a ver tu correo.
+          </p>
+          <Boton>{enviando ? 'Enviando…' : 'Pedir sumarme'}</Boton>
+          <button type="button" className="text-sm font-bold text-ink-soft underline" onClick={onSalir}>Salir</button>
+        </form>
+      ) : (
+        <AltaOrganizacion email={email} onCrear={onCrear} onSalir={onSalir} />
+      )}
+    </div>
   );
 }
 
@@ -114,8 +204,8 @@ function AltaOrganizacion({ email, onCrear, onSalir }: { email: string; onCrear:
   return (
     <form onSubmit={enviar} className="flex flex-col gap-4">
       <p className="m-0 text-sm text-ink-soft">
-        Hola, <b className="text-ink">{email}</b>. Contanos de tu organización. El equipo de Akãhatã la revisa antes de
-        sumarla al mapa de la red.
+        Contanos de tu organización (vas a quedar como <b className="text-ink">{email}</b>). El equipo de Akãhatã la
+        revisa antes de sumarla a la red.
       </p>
       <label className={etiqueta}>
         Nombre de la organización o colectiva

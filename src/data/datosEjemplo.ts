@@ -2,7 +2,7 @@
  * Datos de ejemplo para usar la app sin Supabase (por ejemplo, para mostrarla
  * en reuniones). Las organizaciones, plazos y casos son inventados.
  */
-import type { SesionOrgano, Oportunidad, Organizacion, Participacion, PedidoApoyo } from '../types';
+import type { Mensaje, SesionOrgano, Oportunidad, Organizacion, Participacion, PedidoApoyo, SolicitudUnion } from '../types';
 
 function enDias(n: number): string {
   const d = new Date();
@@ -155,4 +155,31 @@ export const SESIONES: SesionOrgano[] = [
     fecha_inicio: enDias(170), fecha_fin: null, a_confirmar: true, lugar: 'Sede a confirmar',
     descripcion: 'Ejemplo: resolución ómnibus de derechos humanos.', fuente_url: null,
   },
+];
+
+function haceMinutos(n: number): string {
+  return new Date(Date.now() - n * 60_000).toISOString();
+}
+
+export const MENSAJES: Mensaje[] = [
+  {
+    id: 'm1', oportunidad_id: null, organizacion_id: 'rd', autor: 'x', borrado: false, creado_en: haceMinutos(300),
+    texto: '¡Hola a todas! Estamos armando el informe para el EPU de Paraguay. Si alguien tiene datos de salud, nos sirven.',
+  },
+  {
+    id: 'm2', oportunidad_id: null, organizacion_id: 'ob', autor: 'x', borrado: false, creado_en: haceMinutos(240),
+    texto: 'Nosotras tenemos datos de acceso a salud de 2025. Les escribimos por privado.',
+  },
+  {
+    id: 'm3', oportunidad_id: 'cidh-aud', organizacion_id: 'ag', autor: 'x', borrado: false, creado_en: haceMinutos(90),
+    texto: '¿Armamos una solicitud de audiencia conjunta? Podemos coordinar una reunión el jueves.',
+  },
+  {
+    id: 'm4', oportunidad_id: 'cidh-aud', organizacion_id: 'ml', autor: 'x', borrado: false, creado_en: haceMinutos(60),
+    texto: 'Sí, contamos con nosotras. Podemos aportar los testimonios de defensoras ambientales.',
+  },
+];
+
+export const SOLICITUDES: SolicitudUnion[] = [
+  { perfil_id: 'x1', email: 'nueva.persona@ejemplo.org', organizacion_id: 'mia', organizacion: 'Tu organización', creada_en: haceMinutos(30) },
 ];
