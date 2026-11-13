@@ -18,9 +18,32 @@ export interface Organizacion {
 
 /** Datos de la persona que ingresó. */
 export interface Sesion {
+  id: string;
   email: string;
   rol: 'miembro' | 'revisora';
   organizacion: Organizacion | null;
+  /** Pidió sumarse a una organización que ya está en la red y espera respuesta. */
+  solicitud: { organizacion_id: string; nombre: string } | null;
+}
+
+/** Alguien que pidió sumarse a una organización. */
+export interface SolicitudUnion {
+  perfil_id: string;
+  email: string;
+  organizacion_id: string;
+  organizacion: string;
+  creada_en: string;
+}
+
+/** Mensaje del chat. Sin oportunidad = sala general. Se firma con la organización. */
+export interface Mensaje {
+  id: string;
+  oportunidad_id: string | null;
+  organizacion_id: string;
+  autor: string | null;
+  texto: string;
+  borrado: boolean;
+  creado_en: string;
 }
 
 /** Lo que se completa al dar de alta una organización. */
@@ -88,7 +111,7 @@ export interface PedidoApoyo {
 
 export type NuevoPedido = Pick<PedidoApoyo, 'oportunidad_id' | 'tipo_documento' | 'mensaje' | 'contacto'>;
 
-export type Pantalla = 'radar' | 'red' | 'mias' | 'revision' | 'cuenta' | 'cargar';
+export type Pantalla = 'radar' | 'red' | 'chat' | 'mias' | 'revision' | 'cuenta' | 'cargar';
 
 /** Sesión de un órgano (Consejo de DDHH, EPU, CSW, Asamblea General de la OEA…). */
 export interface SesionOrgano {

@@ -1,4 +1,4 @@
-import { TIPOS_APORTE, type EstadoPedido, type EstadoRevision, type Oportunidad, type Organizacion, type PedidoApoyo } from '../types';
+import { TIPOS_APORTE, type EstadoPedido, type EstadoRevision, type Oportunidad, type Organizacion, type PedidoApoyo, type SolicitudUnion } from '../types';
 import { EtiquetaSistema } from './ui';
 
 interface Props {
@@ -8,13 +8,15 @@ interface Props {
   organizaciones: Organizacion[];
   oportunidades: Oportunidad[];
   onPedido: (id: string, estado: EstadoPedido) => void;
+  solicitudes: SolicitudUnion[];
+  onResponder: (perfilId: string, aceptar: boolean) => void;
   onRevisar: (id: string, estado: EstadoRevision) => void;
   onAprobarOrg: (id: string, aprobada: boolean) => void;
   onCargar: () => void;
   onEditar: (id: string) => void;
 }
 
-export default function RevisionView({ pendientes, orgsPendientes, pedidos, organizaciones, oportunidades, onPedido, onRevisar, onAprobarOrg, onCargar, onEditar }: Props) {
+export default function RevisionView({ pendientes, orgsPendientes, pedidos, organizaciones, oportunidades, onPedido, solicitudes, onResponder, onRevisar, onAprobarOrg, onCargar, onEditar }: Props) {
   return (
     <div className="flex flex-col gap-3.5">
       <button
@@ -54,6 +56,22 @@ export default function RevisionView({ pendientes, orgsPendientes, pedidos, orga
               </div>
             );
           })}
+        </section>
+      )}
+
+      {solicitudes.length > 0 && (
+        <section className="flex flex-col gap-2.5">
+          <h3 className="m-0 text-[13px] font-extrabold uppercase tracking-wider text-naranja-dark">Personas que piden sumarse a una organización</h3>
+          <p className="m-0 text-[13px] text-ink-soft">También las puede aceptar alguien de esa organización.</p>
+          {solicitudes.map((s) => (
+            <div key={s.perfil_id} className="flex flex-col gap-2 rounded-lg border border-naranja bg-naranja-light/40 p-3 text-sm">
+              <span><b>{s.email}</b> → {s.organizacion}</span>
+              <div className="grid grid-cols-2 gap-2">
+                <button className="rounded bg-magenta px-1.5 py-2.5 text-xs font-extrabold uppercase text-white" onClick={() => onResponder(s.perfil_id, true)}>Aceptar</button>
+                <button className="rounded border-2 border-line px-1.5 py-2 text-xs font-extrabold uppercase text-ink-soft" onClick={() => onResponder(s.perfil_id, false)}>Rechazar</button>
+              </div>
+            </div>
+          ))}
         </section>
       )}
 

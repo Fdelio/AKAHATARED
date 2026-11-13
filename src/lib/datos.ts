@@ -3,8 +3,8 @@
  * base real; si no, trabaja en memoria con los datos de ejemplo.
  */
 import type {
-  EstadoPedido, EstadoRevision, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Participacion,
-  PedidoApoyo, Sesion, SesionOrgano, Trabajo, Visibilidad,
+  EstadoPedido, EstadoRevision, Mensaje, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Participacion,
+  PedidoApoyo, Sesion, SesionOrgano, SolicitudUnion, Trabajo, Visibilidad,
 } from '../types';
 import { supabase } from './supabaseClient';
 import * as ejemplo from '../data/datosEjemplo';
@@ -15,6 +15,8 @@ const mem = {
   participaciones: [...ejemplo.PARTICIPACIONES],
   organizaciones: [...ejemplo.ORGANIZACIONES],
   pedidos: [...ejemplo.PEDIDOS],
+  mensajes: [...ejemplo.MENSAJES],
+  solicitudes: [...ejemplo.SOLICITUDES],
 };
 
 export async function listarOportunidades(estado: EstadoRevision = 'publicada'): Promise<Oportunidad[]> {
@@ -78,20 +80,30 @@ export async function obtenerSesion(): Promise<Sesion | null> {
     const { data: s } = await supabase.auth.getSession();
     const usuaria = s.session?.user;
     if (!usuaria) return null;
-    const { data, error } = await supabase
-      .from('perfiles')
-      .select('rol, organizaciones(*)')
-      .eq('id', usuaria.id)
-      .maybeSingle();
+    const [{ data, error }, { data: sol }] = await Promise.all([
+      supabase.from('perfiles').select('rol, organizaciones(*)').eq('id', usuaria.id).maybeSingle(),
+      supabase
+        .from('solicitudes_union')
+        .select('organizacion_id, organizaciones(nombre)')
+        .eq('perfil_id', usuaria.id)
+        .eq('estado', 'pendiente')
+        .maybeSingle(),
+    ]);
     if (error) throw error;
     return {
+      id: usuaria.id,
       email: usuaria.email ?? '',
       rol: (data?.rol as Sesion['rol']) ?? 'miembro',
       organizacion: (data?.organizaciones as unknown as Organizacion | null) ?? null,
+      solicitud: sol
+        ? { organizacion_id: sol.organizacion_id, nombre: (sol.organizaciones as unknown as { nombre: string } | null)?.nombre ?? '' }
+        : null,
     };
   }
   // Modo ejemplo: se muestra todo, como si ingresara alguien del equipo de Akãhatã.
   return {
+    id: 'yo',
+    solicitud: null,
     email: 'ejemplo@akahata.org',
     rol: 'revisora',
     organizacion: {
@@ -280,6 +292,125 @@ export async function revisarOportunidad(id: string, estado: EstadoRevision) {
   }
   const o = mem.oportunidades.find((x) => x.id === id);
   if (o) o.estado = estado;
+}
+
+// ---------- Varias personas por organización ----------
+
+/** Pide sumarse a una organización que ya está en la red. */
+export async function pedirUnirme(organizacionId: string) {
+  if (supabase) {
+    const { data: s } = await supabase.auth.getSession();
+    const { error } = await supabase
+      .from('solicitudes_union')
+      .insert({ perfil_id: s.session?.user.id, organizacion_id: organizacionId });
+    if (error) throw error;
+  }
+}
+
+export async function cancelarSolicitud() {
+  if (supabase) {
+    const { data: s } = await supabase.auth.getSession();
+    const { error } = await supabase
+      .from('solicitudes_union')
+      .update({ estado: 'cancelada' })
+      .eq('perfil_id', s.session?.user.id ?? '')
+      .eq('estado', 'pendiente');
+    if (error) throw error;
+  }
+}
+
+/** Pedidos para sumarse a mi organización (Akãhatã ve todos). */
+export async function listarSolicitudes(): Promise<SolicitudUnion[]> {
+  if (supabase) {
+    const { data, error } = await supabase.rpc('solicitudes_para_responder');
+    if (error) throw error;
+    return data as SolicitudUnion[];
+  }
+  return mem.solicitudes;
+}
+
+export async function responderSolicitud(perfilId: string, aceptar: boolean) {
+  if (supabase) {
+    const { error } = await supabase.rpc('responder_solicitud', { p_perfil: perfilId, p_aceptar: aceptar });
+    if (error) throw error;
+    return;
+  }
+  mem.solicitudes = mem.solicitudes.filter((s) => s.perfil_id !== perfilId);
+}
+
+/** Correos de las personas de mi organización. */
+export async function listarPersonas(): Promise<string[]> {
+  if (supabase) {
+    const { data, error } = await supabase.rpc('personas_de_mi_organizacion');
+    if (error) throw error;
+    return (data as { email: string }[]).map((p) => p.email);
+  }
+  return ['ejemplo@akahata.org', 'otra.persona@ejemplo.org'];
+}
+
+// ---------- Chat ----------
+
+/** Mensajes de una sala: null = general, si no, la de esa oportunidad. */
+export async function listarMensajes(oportunidadId: string | null): Promise<Mensaje[]> {
+  if (supabase) {
+    let q = supabase.from('mensajes').select('*').order('creado_en', { ascending: true }).limit(300);
+    q = oportunidadId ? q.eq('oportunidad_id', oportunidadId) : q.is('oportunidad_id', null);
+    const { data, error } = await q;
+    if (error) throw error;
+    return data as Mensaje[];
+  }
+  return mem.mensajes.filter((m) => m.oportunidad_id === oportunidadId);
+}
+
+/** Cuántos mensajes tiene cada conversación de oportunidad (para la lista de salas). */
+export async function contarMensajesPorOportunidad(): Promise<Record<string, number>> {
+  let filas: { oportunidad_id: string | null }[] = mem.mensajes;
+  if (supabase) {
+    const { data, error } = await supabase.from('mensajes').select('oportunidad_id').not('oportunidad_id', 'is', null).eq('borrado', false);
+    if (error) throw error;
+    filas = data;
+  }
+  const cuenta: Record<string, number> = {};
+  filas.forEach((f) => f.oportunidad_id && (cuenta[f.oportunidad_id] = (cuenta[f.oportunidad_id] ?? 0) + 1));
+  return cuenta;
+}
+
+export async function enviarMensaje(organizacionId: string, oportunidadId: string | null, texto: string) {
+  if (supabase) {
+    const { error } = await supabase
+      .from('mensajes')
+      .insert({ organizacion_id: organizacionId, oportunidad_id: oportunidadId, texto });
+    if (error) throw error;
+    return;
+  }
+  mem.mensajes.push({
+    id: 'm-' + Date.now(), organizacion_id: organizacionId, oportunidad_id: oportunidadId, autor: 'yo',
+    texto, borrado: false, creado_en: new Date().toISOString(),
+  });
+}
+
+/** Lo puede hacer quien lo escribió o Akãhatã. El texto se reemplaza. */
+export async function borrarMensaje(id: string) {
+  if (supabase) {
+    const { error } = await supabase.from('mensajes').update({ borrado: true, texto: 'Mensaje borrado' }).eq('id', id);
+    if (error) throw error;
+    return;
+  }
+  const m = mem.mensajes.find((x) => x.id === id);
+  if (m) Object.assign(m, { borrado: true, texto: 'Mensaje borrado' });
+}
+
+/** Avisa cuando llega o cambia un mensaje. Devuelve la función para dejar de escuchar. */
+export function escucharMensajes(fn: () => void): () => void {
+  const cliente = supabase;
+  if (!cliente) return () => {};
+  const canal = cliente
+    .channel('mensajes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'mensajes' }, fn)
+    .subscribe();
+  return () => {
+    cliente.removeChannel(canal);
+  };
 }
 
 /** Días que faltan hasta la fecha límite (negativo si ya pasó). */

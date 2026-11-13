@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Building2, CheckCheck, Network, Radar, UserRound } from 'lucide-react';
+import { Building2, CheckCheck, MessagesSquare, Network, Radar, UserRound } from 'lucide-react';
 import type {
   EstadoRevision, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Pantalla, Participacion, PedidoApoyo, Sesion,
-  SesionOrgano, Visibilidad,
+  SesionOrgano, SolicitudUnion, Visibilidad,
 } from './types';
 import * as datos from './lib/datos';
 import { modoEjemplo } from './lib/supabaseClient';
@@ -13,12 +13,14 @@ import MiOrganizacionView from './components/MiOrganizacionView';
 import RevisionView from './components/RevisionView';
 import CuentaView from './components/CuentaView';
 import CargarView from './components/CargarView';
+import ChatView from './components/ChatView';
 import { Boton } from './components/ui';
 
 type ItemNav = { id: Pantalla; label: string; Icono: typeof Radar };
 const NAV: ItemNav[] = [
   { id: 'radar', label: 'Oportunidades', Icono: Radar },
   { id: 'red', label: 'Red', Icono: Network },
+  { id: 'chat', label: 'Chat', Icono: MessagesSquare },
   { id: 'mias', label: 'Mi organización', Icono: Building2 },
 ];
 const NAV_REVISION: ItemNav = { id: 'revision', label: 'Revisión', Icono: CheckCheck };
@@ -27,17 +29,19 @@ const NAV_CUENTA: ItemNav = { id: 'cuenta', label: 'Cuenta', Icono: UserRound };
 const TITULOS: Record<Pantalla, [string, string]> = {
   radar: ['Oportunidades de participar', 'ONU, OEA y Mercosur, en todos los temas'],
   red: ['La red', 'Organizaciones, en qué trabajan y qué hicieron'],
+  chat: ['Chat de la red', 'Para coordinar entre organizaciones'],
   mias: ['Mi organización', 'Nuestro trabajo y pedidos de apoyo'],
   revision: ['Revisión de Akãhatã', 'Organizaciones y oportunidades por aprobar'],
   cuenta: ['Tu cuenta', 'Tu organización en la red'],
   cargar: ['Cargar oportunidad', 'Se suma al radar de incidencia'],
 };
 
-const RUTAS: Pantalla[] = ['red', 'mias', 'revision', 'cuenta', 'cargar'];
+const RUTAS: Pantalla[] = ['red', 'chat', 'mias', 'revision', 'cuenta', 'cargar'];
 
 /** La ruta vive en el hash (#radar, #op-<id>, #red…) para que los links se puedan compartir. */
-function leerRuta(): { pantalla: Pantalla; oportunidadId: string | null; editarId: string | null } {
+function leerRuta(): { pantalla: Pantalla; oportunidadId: string | null; editarId: string | null; sala?: string } {
   const h = window.location.hash.slice(1);
+  if (h.startsWith('chat-')) return { pantalla: 'chat', oportunidadId: null, editarId: null, sala: h.slice(5) };
   if (h.startsWith('op-')) return { pantalla: 'radar', oportunidadId: h.slice(3), editarId: null };
   if (h.startsWith('editar-')) return { pantalla: 'cargar', oportunidadId: null, editarId: h.slice(7) };
   if ((RUTAS as string[]).includes(h)) return { pantalla: h as Pantalla, oportunidadId: null, editarId: null };
@@ -54,6 +58,8 @@ export default function App() {
   const [sesion, setSesion] = useState<Sesion | null>(null);
   const [sesiones, setSesiones] = useState<SesionOrgano[]>([]);
   const [pedidos, setPedidos] = useState<PedidoApoyo[]>([]);
+  const [solicitudes, setSolicitudes] = useState<SolicitudUnion[]>([]);
+  const [personas, setPersonas] = useState<string[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,7 +67,8 @@ export default function App() {
     try {
       const s = await datos.obtenerSesion();
       const revisora = s?.rol === 'revisora';
-      const [ops, pend, orgs, orgsPend, parts, cal, peds] = await Promise.all([
+      const conOrg = !!s?.organizacion?.aprobada;
+      const [ops, pend, orgs, orgsPend, parts, cal, peds, sols, pers] = await Promise.all([
         datos.listarOportunidades('publicada'),
         revisora ? datos.listarOportunidades('pendiente') : [],
         s ? datos.listarOrganizaciones(true) : [],
@@ -69,7 +76,11 @@ export default function App() {
         s ? datos.listarParticipaciones() : [],
         datos.listarSesiones(),
         s ? datos.listarPedidos() : [],
+        conOrg || revisora ? datos.listarSolicitudes() : [],
+        conOrg ? datos.listarPersonas() : [],
       ]);
+      setSolicitudes(sols);
+      setPersonas(pers);
       setPedidos(peds);
       setSesiones(cal);
       setSesion(s);
@@ -130,6 +141,9 @@ export default function App() {
 
   const pedirApoyo = (p: NuevoPedido) =>
     miOrg ? ejecutar(() => datos.pedirApoyo(miOrg, p), 'Pedido enviado. Akãhatã se va a contactar.') : Promise.resolve();
+
+  const responder = (perfilId: string, aceptar: boolean) =>
+    ejecutar(() => datos.responderSolicitud(perfilId, aceptar), aceptar ? 'Persona aceptada' : 'Pedido rechazado');
 
   const enEdicion = ruta.editarId
     ? [...pendientes, ...oportunidades].find((x) => x.id === ruta.editarId)
@@ -200,6 +214,7 @@ export default function App() {
             email={sesion?.email ?? ''}
             onPedirApoyo={miOrg ? pedirApoyo : null}
             onSinOrganizacion={pedirIngreso}
+            onConversar={() => ir('chat-' + abierta.id)}
             onEditar={revisora ? () => ir('editar-' + abierta.id) : undefined}
             onSumarse={(v: Visibilidad) =>
               miOrg ? ejecutar(() => datos.sumarse(abierta.id, miOrg, v), 'Te sumaste. Te avisamos antes del plazo.') : pedirIngreso()
@@ -223,12 +238,17 @@ export default function App() {
             onCrearOrganizacion={(org: NuevaOrganizacion) =>
               ejecutar(() => datos.crearMiOrganizacion(org), 'Enviada. Akãhatã la va a revisar.')
             }
+            organizaciones={organizaciones}
+            onPedirUnirme={(id) => ejecutar(() => datos.pedirUnirme(id), 'Pedido enviado. Te avisamos cuando te acepten.')}
+            onCancelarSolicitud={() => ejecutar(datos.cancelarSolicitud, 'Pedido cancelado')}
             onSalir={() => ejecutar(datos.salir, 'Saliste de la app').then(() => ir('radar'))}
           />
-        ) : !sesion && (ruta.pantalla === 'red' || ruta.pantalla === 'mias') ? (
+        ) : !sesion && (ruta.pantalla === 'red' || ruta.pantalla === 'mias' || ruta.pantalla === 'chat') ? (
           <div className="flex flex-col gap-4">
             <p className="m-0 text-sm text-ink-soft">
-              {ruta.pantalla === 'red'
+              {ruta.pantalla === 'chat'
+                ? 'El chat es solo para las organizaciones de la red y el equipo de Akãhatã.'
+                : ruta.pantalla === 'red'
                 ? 'El mapa de la red lo ven solo las organizaciones que forman parte, para cuidar a quienes trabajan en contextos de riesgo.'
                 : 'Entrá con tu organización para registrar su trabajo y pedir apoyo a Akãhatã.'}
             </p>
@@ -242,6 +262,21 @@ export default function App() {
           ) : (
             <CargarView key={ruta.editarId ?? 'nueva'} inicial={enEdicion} onGuardar={guardarOportunidad} onCancelar={() => ir(enEdicion?.estado === 'publicada' ? 'op-' + enEdicion.id : 'revision')} />
           )
+        ) : ruta.pantalla === 'chat' ? (
+          <ChatView
+            sala={ruta.sala ?? null}
+            oportunidades={oportunidades}
+            organizaciones={
+              sesion?.organizacion && !organizaciones.some((o) => o.id === sesion.organizacion!.id)
+                ? [...organizaciones, sesion.organizacion]
+                : organizaciones
+            }
+            miOrg={miOrg}
+            usuariaId={sesion!.id}
+            revisora={revisora}
+            onCambiarSala={(s) => ir(s ? 'chat-' + s : 'chat')}
+            onAviso={setAviso}
+          />
         ) : ruta.pantalla === 'red' ? (
           <RedView
             organizaciones={organizaciones}
@@ -262,12 +297,17 @@ export default function App() {
             onIrACuenta={() => ir('cuenta')}
             onGuardar={(id, t) => miOrg && ejecutar(() => datos.guardarTrabajo(id, miOrg, t), 'Guardado')}
             onPedirApoyo={pedirApoyo}
+            personas={personas}
+            solicitudes={solicitudes.filter((x) => x.organizacion_id === sesion?.organizacion?.id)}
+            onResponder={responder}
           />
         ) : (
           <RevisionView
             pendientes={pendientes}
             orgsPendientes={orgsPendientes}
             pedidos={pedidos}
+            solicitudes={solicitudes}
+            onResponder={responder}
             organizaciones={organizaciones}
             oportunidades={oportunidades}
             onPedido={(id, estado) => ejecutar(() => datos.actualizarPedido(id, estado), estado === 'cerrado' ? 'Pedido cerrado' : 'Pedido en curso')}
@@ -281,7 +321,7 @@ export default function App() {
         )}
       </main>
 
-      <nav className="sticky bottom-0 grid grid-cols-4 border-t border-line bg-white pb-[env(safe-area-inset-bottom)]" aria-label="Secciones">
+      <nav className="sticky bottom-0 grid grid-cols-5 border-t border-line bg-white pb-[env(safe-area-inset-bottom)]" aria-label="Secciones">
         {nav.map(({ id, label, Icono }) => {
           const actual = !abierta && (ruta.pantalla === id || (id === 'revision' && ruta.pantalla === 'cargar'));
           return (
@@ -289,7 +329,7 @@ export default function App() {
               key={id}
               onClick={() => ir(id)}
               aria-current={actual ? 'page' : undefined}
-              className={`flex flex-col items-center gap-0.5 border-0 bg-transparent px-1 pt-2.5 pb-3 text-xs ${actual ? 'font-bold text-magenta' : 'text-ink-soft'}`}
+              className={`flex flex-col items-center gap-0.5 border-0 bg-transparent px-0 pt-2.5 pb-3 text-[10px] leading-tight ${actual ? 'font-bold text-magenta' : 'text-ink-soft'}`}
             >
               <Icono size={22} />
               {label}
