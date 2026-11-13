@@ -3,7 +3,7 @@
  * base real; si no, trabaja en memoria con los datos de ejemplo.
  */
 import type {
-  EstadoRevision, NuevaOportunidad, NuevaOrganizacion, Oportunidad, Organizacion, Participacion, Sesion, Visibilidad,
+  EstadoRevision, NuevaOportunidad, NuevaOrganizacion, Oportunidad, Organizacion, Participacion, Sesion, SesionOrgano, Visibilidad,
 } from '../types';
 import { supabase } from './supabaseClient';
 import * as ejemplo from '../data/datosEjemplo';
@@ -51,6 +51,21 @@ export async function listarParticipaciones(): Promise<Participacion[]> {
     return data as Participacion[];
   }
   return mem.participaciones;
+}
+
+/** Calendario de sesiones desde hoy en adelante. */
+export async function listarSesiones(): Promise<SesionOrgano[]> {
+  const hoy = new Date().toISOString().slice(0, 10);
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('sesiones')
+      .select('*')
+      .or(`fecha_fin.gte.${hoy},and(fecha_fin.is.null,fecha_inicio.gte.${hoy})`)
+      .order('fecha_inicio');
+    if (error) throw error;
+    return data as SesionOrgano[];
+  }
+  return ejemplo.SESIONES;
 }
 
 // ---------- Ingreso ----------
