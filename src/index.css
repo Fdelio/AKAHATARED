@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/* Paleta tomada de la web de Akãhatã (akahataorg.org): magenta, naranja y
+   berenjena sobre un fondo crema, con Montserrat muy pesada en los títulos.
+   Definir los colores acá genera clases reales (bg-magenta, text-ink, etc.)
+   y permite cambiar el look entero desde un solo archivo. */
+@theme {
+  --color-magenta: #a30d5f;
+  --color-magenta-dark: #7d084e;
+  --color-magenta-light: #fbe4f0;
+
+  --color-naranja: #f7941d;
+  --color-naranja-dark: #8a4a00;
+  --color-naranja-light: #feefdc;
+
+  --color-berenjena: #2e0526;
+  --color-rosa: #e98cc4;
+
+  --color-ink: #2b0a24;
+  --color-ink-soft: #6e5167;
+  --color-line: #efdfe8;
+  --color-crema: #fdf6f1;
+
+  --color-ok: #2f7a3b;
+  --color-ok-light: #e3f2e4;
+
+  --font-sans: "Montserrat", "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+html, body, #root { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--color-crema);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--color-magenta); outline-offset: 2px; }
