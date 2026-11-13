@@ -12,7 +12,22 @@ export interface Organizacion {
   temas: string[];
   ofrece: string;
   necesita: string;
+  /** Las organizaciones nuevas quedan pendientes hasta que Akãhatã las aprueba. */
+  aprobada: boolean;
 }
+
+/** Datos de la persona que ingresó. */
+export interface Sesion {
+  email: string;
+  rol: 'miembro' | 'revisora';
+  organizacion: Organizacion | null;
+}
+
+/** Lo que se completa al dar de alta una organización. */
+export type NuevaOrganizacion = Pick<Organizacion, 'nombre' | 'pais' | 'temas' | 'ofrece' | 'necesita'>;
+
+/** Lo que completa Akãhatã al cargar una oportunidad a mano. */
+export type NuevaOportunidad = Omit<Oportunidad, 'id' | 'estado' | 'recolectada_automaticamente'>;
 
 export interface Oportunidad {
   id: string;
@@ -39,4 +54,4 @@ export interface Participacion {
   resultado: string | null;
 }
 
-export type Pantalla = 'radar' | 'red' | 'mias' | 'revision';
+export type Pantalla = 'radar' | 'red' | 'mias' | 'revision' | 'cuenta' | 'cargar';
