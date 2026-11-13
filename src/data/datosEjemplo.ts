@@ -11,14 +11,14 @@ function enDias(n: number): string {
 }
 
 export const ORGANIZACIONES: Organizacion[] = [
-  { id: 'ca', nombre: 'Colectiva Ámbar', pais: 'Argentina', temas: ['Derechos sexuales y reproductivos'], ofrece: 'Datos de casos', necesita: 'Contactos en Ginebra' },
-  { id: 'rd', nombre: 'Red Diversa del Sur', pais: 'Chile', temas: ['Personas LGBTI+'], ofrece: 'Experiencia en EPU', necesita: 'Traducción al inglés' },
-  { id: 'ml', nombre: 'Mujeres en Lucha Andina', pais: 'Bolivia', temas: ['Ambiente y clima'], ofrece: 'Testimonios', necesita: 'Asesoría jurídica' },
-  { id: 'tr', nombre: 'Trans Visibles', pais: 'Paraguay', temas: ['Identidad de género'], ofrece: 'Firmas', necesita: 'Seguridad digital' },
-  { id: 'ci', nombre: 'Círculo Feminista Caribe', pais: 'República Dominicana', temas: ['Desarrollo y derechos sociales'], ofrece: 'Redes en el Caribe', necesita: 'Financiamiento para viajar' },
-  { id: 'ob', nombre: 'Observatorio Cuerpos Libres', pais: 'Perú', temas: ['Salud'], ofrece: 'Informes sombra previos', necesita: 'Datos de otros países' },
-  { id: 'ag', nombre: 'Agenda Lésbica', pais: 'Uruguay', temas: ['Personas LGBTI+'], ofrece: 'Experiencia en CIDH', necesita: 'Firmas' },
-  { id: 'vd', nombre: 'Voces Diversas', pais: 'Guatemala', temas: ['Empresas y economía'], ofrece: 'Testimonios', necesita: 'Acompañamiento en audiencias' },
+  { id: 'ca', nombre: 'Colectiva Ámbar', pais: 'Argentina', temas: ['Derechos sexuales y reproductivos'], ofrece: 'Datos de casos', necesita: 'Contactos en Ginebra', aprobada: true },
+  { id: 'rd', nombre: 'Red Diversa del Sur', pais: 'Chile', temas: ['Personas LGBTI+'], ofrece: 'Experiencia en EPU', necesita: 'Traducción al inglés', aprobada: true },
+  { id: 'ml', nombre: 'Mujeres en Lucha Andina', pais: 'Bolivia', temas: ['Ambiente y clima'], ofrece: 'Testimonios', necesita: 'Asesoría jurídica', aprobada: true },
+  { id: 'tr', nombre: 'Trans Visibles', pais: 'Paraguay', temas: ['Identidad de género'], ofrece: 'Firmas', necesita: 'Seguridad digital', aprobada: true },
+  { id: 'ci', nombre: 'Círculo Feminista Caribe', pais: 'República Dominicana', temas: ['Desarrollo y derechos sociales'], ofrece: 'Redes en el Caribe', necesita: 'Financiamiento para viajar', aprobada: true },
+  { id: 'ob', nombre: 'Observatorio Cuerpos Libres', pais: 'Perú', temas: ['Salud'], ofrece: 'Informes sombra previos', necesita: 'Datos de otros países', aprobada: true },
+  { id: 'ag', nombre: 'Agenda Lésbica', pais: 'Uruguay', temas: ['Personas LGBTI+'], ofrece: 'Experiencia en CIDH', necesita: 'Firmas', aprobada: true },
+  { id: 'vd', nombre: 'Voces Diversas', pais: 'Guatemala', temas: ['Empresas y economía'], ofrece: 'Testimonios', necesita: 'Acompañamiento en audiencias', aprobada: true },
 ];
 
 /** La organización de quien usa la app en modo ejemplo. */
