@@ -140,7 +140,7 @@ export default function App() {
   return (
     <div className="mx-auto flex min-h-screen max-w-[480px] flex-col bg-white sm:my-6 sm:min-h-0 sm:rounded-3xl sm:border sm:border-line">
       <header className="flex items-center gap-2.5 border-b border-line px-5 py-3.5">
-        <img src="/logo-marca.png" alt="" className="size-9" />
+        <img src={import.meta.env.BASE_URL + 'logo-marca.png'} alt="" className="size-9" />
         <b className="text-xl font-extrabold tracking-tight text-magenta">Akãhatã</b>
         <span className="ml-auto text-xs font-bold">Red de incidencia</span>
         {revisora && (
