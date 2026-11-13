@@ -64,6 +64,8 @@ export default function App() {
   const [aviso, setAviso] = useState<string | null>(null);
   /** Ya se sabe si hay alguien que ingresó (para no mostrar la portada un instante de más). */
   const [listo, setListo] = useState(false);
+  /** Mira las oportunidades sin registrarse. Un enlace compartido a una oportunidad entra directo. */
+  const [visitante, setVisitante] = useState(() => /^#(op-|radar$)/.test(window.location.hash));
   const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
@@ -179,8 +181,17 @@ export default function App() {
   if (!listo) return <div className="min-h-screen bg-white" aria-busy="true" />;
 
   // Quien no ingresó ve la portada con el ingreso. (#bienvenida la muestra igual, para revisarla.)
-  if (!sesion || window.location.hash === '#bienvenida') {
-    return <BienvenidaView modoEjemplo={modoEjemplo} onEnviarEnlace={datos.enviarEnlace} />;
+  if ((!sesion && !visitante) || window.location.hash === '#bienvenida') {
+    return (
+      <BienvenidaView
+        modoEjemplo={modoEjemplo}
+        onEnviarEnlace={datos.enviarEnlace}
+        onVerOportunidades={() => {
+          setVisitante(true);
+          ir('radar');
+        }}
+      />
+    );
   }
 
   return (

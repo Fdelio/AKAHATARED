@@ -4,6 +4,7 @@ import { Ingreso } from './CuentaView';
 interface Props {
   modoEjemplo: boolean;
   onEnviarEnlace: (email: string) => Promise<void>;
+  onVerOportunidades: () => void;
 }
 
 const QUE_HAY = [
@@ -36,7 +37,7 @@ const PASOS = [
 ];
 
 /** Portada para quien todavía no ingresó: qué es la app y cómo entrar. */
-export default function BienvenidaView({ modoEjemplo, onEnviarEnlace }: Props) {
+export default function BienvenidaView({ modoEjemplo, onEnviarEnlace, onVerOportunidades }: Props) {
   return (
     <div className="mx-auto flex min-h-screen max-w-[480px] flex-col bg-white sm:my-6 sm:min-h-0 sm:overflow-hidden sm:rounded-3xl sm:border sm:border-line">
       <section className="relative isolate overflow-hidden bg-magenta px-6 pt-8 pb-12 text-white">
@@ -51,12 +52,20 @@ export default function BienvenidaView({ modoEjemplo, onEnviarEnlace }: Props) {
           Para que las organizaciones de América Latina lleven sus agendas a la ONU, la OEA y el Mercosur, en todos los
           temas, y no vayan solas.
         </p>
-        <button
-          onClick={() => document.getElementById('entrar')?.scrollIntoView({ behavior: 'smooth' })}
-          className="mt-6 rounded bg-white px-5 py-3 text-[13px] font-extrabold uppercase tracking-widest text-magenta"
-        >
-          Entrar
-        </button>
+        <div className="mt-6 flex flex-wrap gap-2.5">
+          <button
+            onClick={() => document.getElementById('entrar')?.scrollIntoView({ behavior: 'smooth' })}
+            className="rounded bg-white px-5 py-3 text-[13px] font-extrabold uppercase tracking-widest text-magenta"
+          >
+            Entrar
+          </button>
+          <button
+            onClick={onVerOportunidades}
+            className="rounded border-2 border-white px-4 py-2.5 text-[13px] font-extrabold uppercase tracking-widest text-white"
+          >
+            Ver oportunidades
+          </button>
+        </div>
       </section>
 
       <main className="flex flex-col gap-6 px-6 pt-6 pb-8">
@@ -92,7 +101,11 @@ export default function BienvenidaView({ modoEjemplo, onEnviarEnlace }: Props) {
           <Ingreso modoEjemplo={modoEjemplo} onEnviarEnlace={onEnviarEnlace} />
         </section>
 
-        <p className="m-0 text-center text-xs text-ink-soft">
+        <button className="self-center text-sm font-bold text-magenta underline" onClick={onVerOportunidades}>
+          Ver las oportunidades sin registrarme
+        </button>
+
+        <p className="m-0 -mt-2 text-center text-xs text-ink-soft">
           Una iniciativa de{' '}
           <a className="font-bold text-magenta" href="https://www.akahataorg.org" target="_blank" rel="noreferrer">Akãhatã</a>.
           Pedimos pocos datos y cada organización elige qué es público.
