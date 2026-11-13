@@ -55,3 +55,18 @@ export interface Participacion {
 }
 
 export type Pantalla = 'radar' | 'red' | 'mias' | 'revision' | 'cuenta' | 'cargar';
+
+/** Sesión de un órgano (Consejo de DDHH, EPU, CSW, Asamblea General de la OEA…). */
+export interface SesionOrgano {
+  id: string;
+  sistema: Sistema;
+  organo: string;
+  nombre: string;
+  fecha_inicio: string; // YYYY-MM-DD
+  fecha_fin: string | null;
+  /** La fecha todavía no está confirmada oficialmente. */
+  a_confirmar: boolean;
+  lugar: string;
+  descripcion: string;
+  fuente_url: string | null;
+}

@@ -2,7 +2,7 @@
  * Datos de ejemplo para usar la app sin Supabase (por ejemplo, para mostrarla
  * en reuniones). Las organizaciones, plazos y casos son inventados.
  */
-import type { Oportunidad, Organizacion, Participacion } from '../types';
+import type { SesionOrgano, Oportunidad, Organizacion, Participacion } from '../types';
 
 function enDias(n: number): string {
   const d = new Date();
@@ -113,4 +113,22 @@ export const PARTICIPACIONES: Participacion[] = [
   { oportunidad_id: 'cidh-aud', organizacion_id: 'ml', visibilidad: 'red', resultado: null },
   { oportunidad_id: 're-amb', organizacion_id: 'ml', visibilidad: 'red', resultado: null },
   { oportunidad_id: 're-des', organizacion_id: 'ci', visibilidad: 'red', resultado: null },
+];
+
+export const SESIONES: SesionOrgano[] = [
+  {
+    id: 's1', sistema: 'ONU', organo: 'Examen Periódico Universal', nombre: 'EPU · sesión del Grupo de Trabajo',
+    fecha_inicio: enDias(40), fecha_fin: enDias(51), a_confirmar: false, lugar: 'Ginebra',
+    descripcion: 'Ejemplo: se examinan 14 países, entre ellos dos de la región.', fuente_url: null,
+  },
+  {
+    id: 's2', sistema: 'ONU', organo: 'Consejo de Derechos Humanos', nombre: 'Consejo de Derechos Humanos · período de sesiones',
+    fecha_inicio: enDias(75), fecha_fin: enDias(110), a_confirmar: true, lugar: 'Ginebra',
+    descripcion: 'Ejemplo: informes de relatorías y resoluciones.', fuente_url: null,
+  },
+  {
+    id: 's3', sistema: 'OEA', organo: 'Asamblea General de la OEA', nombre: 'Asamblea General de la OEA',
+    fecha_inicio: enDias(170), fecha_fin: null, a_confirmar: true, lugar: 'Sede a confirmar',
+    descripcion: 'Ejemplo: resolución ómnibus de derechos humanos.', fuente_url: null,
+  },
 ];

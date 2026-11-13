@@ -1,24 +1,57 @@
 import { useState } from 'react';
-import type { Oportunidad, Organizacion, Participacion } from '../types';
+import type { Oportunidad, Organizacion, Participacion, SesionOrgano } from '../types';
 import { TarjetaOportunidad } from './ui';
-
-const TEMAS = ['Todos', 'Ambiente y clima', 'Desarrollo y derechos sociales', 'Empresas y economía', 'Migración', 'Salud', 'Todos los temas'];
+import { diasHasta } from '../lib/datos';
+import CalendarioView from './CalendarioView';
 
 interface Props {
   oportunidades: Oportunidad[];
   organizaciones: Organizacion[];
   participaciones: Participacion[];
   miOrg: string | null;
+  sesiones: SesionOrgano[];
   onAbrir: (id: string) => void;
 }
 
-export default function RadarView({ oportunidades, organizaciones, participaciones, miOrg, onAbrir }: Props) {
+export default function RadarView({ oportunidades, organizaciones, participaciones, miOrg, sesiones, onAbrir }: Props) {
+  const [vista, setVista] = useState<'convocatorias' | 'calendario'>('convocatorias');
   const [tema, setTema] = useState('Todos');
-  const lista = oportunidades.filter((o) => tema === 'Todos' || o.tema === tema);
+  const abiertas = oportunidades.filter((o) => diasHasta(o.fecha_limite) >= 0);
+  // Los temas salen de las oportunidades abiertas, así no aparecen filtros vacíos.
+  const TEMAS = ['Todos', ...[...new Set(abiertas.map((o) => o.tema))].sort()];
+  const lista = abiertas.filter((o) => tema === 'Todos' || o.tema === tema);
   const orgPorId = new Map(organizaciones.map((o) => [o.id, o]));
+
+  const pestanas = (
+    <div className="grid grid-cols-2 rounded-lg bg-crema p-1" role="tablist">
+      {(['convocatorias', 'calendario'] as const).map((v) => (
+        <button
+          key={v}
+          role="tab"
+          aria-selected={vista === v}
+          onClick={() => setVista(v)}
+          className={`rounded-md py-2 text-[13px] font-extrabold uppercase tracking-wider ${
+            vista === v ? 'bg-white text-magenta shadow-sm' : 'text-ink-soft'
+          }`}
+        >
+          {v === 'convocatorias' ? `Convocatorias (${abiertas.length})` : 'Calendario'}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (vista === 'calendario') {
+    return (
+      <div className="flex flex-col gap-3.5">
+        {pestanas}
+        <CalendarioView sesiones={sesiones} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3.5">
+      {pestanas}
       <div className="rounded-lg bg-magenta-light px-3.5 py-3 text-sm">
         <b className="font-extrabold text-magenta">Llevá tu agenda a nuevos espacios.</b> Ambiente, desarrollo,
         economía o migración también se discuten en la ONU, la OEA y el Mercosur. Tu mirada feminista y de

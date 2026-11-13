@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { BookmarkCheck, CheckCheck, Network, Radar, UserRound } from 'lucide-react';
 import type {
-  EstadoRevision, NuevaOportunidad, NuevaOrganizacion, Oportunidad, Organizacion, Pantalla, Participacion, Sesion, Visibilidad,
+  EstadoRevision, NuevaOportunidad, NuevaOrganizacion, Oportunidad, Organizacion, Pantalla, Participacion, Sesion, SesionOrgano, Visibilidad,
 } from './types';
 import * as datos from './lib/datos';
 import { modoEjemplo } from './lib/supabaseClient';
@@ -16,7 +16,7 @@ import { Boton } from './components/ui';
 
 type ItemNav = { id: Pantalla; label: string; Icono: typeof Radar };
 const NAV: ItemNav[] = [
-  { id: 'radar', label: 'Radar', Icono: Radar },
+  { id: 'radar', label: 'Oportunidades', Icono: Radar },
   { id: 'red', label: 'Red', Icono: Network },
   { id: 'mias', label: 'Me sumé', Icono: BookmarkCheck },
 ];
@@ -24,7 +24,7 @@ const NAV_REVISION: ItemNav = { id: 'revision', label: 'Revisión', Icono: Check
 const NAV_CUENTA: ItemNav = { id: 'cuenta', label: 'Cuenta', Icono: UserRound };
 
 const TITULOS: Record<Pantalla, [string, string]> = {
-  radar: ['Radar de incidencia', 'Oportunidades en todos los temas'],
+  radar: ['Oportunidades de participar', 'ONU, OEA y Mercosur, en todos los temas'],
   red: ['Mapa de la red', 'Organizaciones por país'],
   mias: ['Me sumé', 'Tus oportunidades y resultados'],
   revision: ['Revisión de Akãhatã', 'Organizaciones y oportunidades por aprobar'],
@@ -51,6 +51,7 @@ export default function App() {
   const [participaciones, setParticipaciones] = useState<Participacion[]>([]);
   const [orgsPendientes, setOrgsPendientes] = useState<Organizacion[]>([]);
   const [sesion, setSesion] = useState<Sesion | null>(null);
+  const [sesiones, setSesiones] = useState<SesionOrgano[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,13 +59,15 @@ export default function App() {
     try {
       const s = await datos.obtenerSesion();
       const revisora = s?.rol === 'revisora';
-      const [ops, pend, orgs, orgsPend, parts] = await Promise.all([
+      const [ops, pend, orgs, orgsPend, parts, cal] = await Promise.all([
         datos.listarOportunidades('publicada'),
         revisora ? datos.listarOportunidades('pendiente') : [],
         s ? datos.listarOrganizaciones(true) : [],
         revisora ? datos.listarOrganizaciones(false) : [],
         s ? datos.listarParticipaciones() : [],
+        datos.listarSesiones(),
       ]);
+      setSesiones(cal);
       setSesion(s);
       setOportunidades(ops);
       setPendientes(pend);
@@ -152,7 +155,7 @@ export default function App() {
       <header className="flex items-center gap-2.5 border-b border-line px-5 py-3.5">
         <img src={import.meta.env.BASE_URL + 'logo-marca.png'} alt="" className="size-9" />
         <b className="text-xl font-extrabold tracking-tight text-magenta">Akãhatã</b>
-        <span className="ml-auto text-xs font-bold">Red de incidencia</span>
+        <span className="ml-auto text-right text-[11px] font-bold leading-tight">Radar de Incidencia<br />Internacional</span>
         {revisora && (
           <button aria-label="Tu cuenta" onClick={() => ir('cuenta')} className="grid size-9 place-items-center rounded-full bg-magenta-light text-magenta">
             <UserRound size={18} />
@@ -200,6 +203,7 @@ export default function App() {
             organizaciones={organizaciones}
             participaciones={participaciones}
             miOrg={miOrg}
+            sesiones={sesiones}
             onAbrir={(id) => ir('op-' + id)}
           />
         ) : ruta.pantalla === 'cuenta' ? (
