@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import type { NuevaOportunidad, Sistema } from '../types';
+import type { NuevaOportunidad, Oportunidad, Sistema } from '../types';
 import { Boton } from './ui';
 import { campo, etiqueta } from './CuentaView';
 
@@ -25,14 +25,21 @@ const VACIA: NuevaOportunidad = {
 };
 
 interface Props {
+  /** Si viene, el formulario edita esta oportunidad en vez de crear una nueva. */
+  inicial?: Oportunidad;
   onGuardar: (o: NuevaOportunidad, publicar: boolean) => Promise<boolean>;
   onCancelar: () => void;
 }
 
-export default function CargarView({ onGuardar, onCancelar }: Props) {
-  const [o, setO] = useState<NuevaOportunidad>(VACIA);
-  const [pasos, setPasos] = useState('');
-  const [publicar, setPublicar] = useState(true);
+function aFormulario(op: Oportunidad): NuevaOportunidad {
+  const { id: _id, estado: _estado, recolectada_automaticamente: _auto, ...resto } = op;
+  return resto;
+}
+
+export default function CargarView({ inicial, onGuardar, onCancelar }: Props) {
+  const [o, setO] = useState<NuevaOportunidad>(inicial ? aFormulario(inicial) : VACIA);
+  const [pasos, setPasos] = useState(inicial ? inicial.pasos.join('\n') : '');
+  const [publicar, setPublicar] = useState(inicial ? inicial.estado === 'publicada' : true);
   const [guardando, setGuardando] = useState(false);
   const cambiar = <K extends keyof NuevaOportunidad>(k: K, v: NuevaOportunidad[K]) => setO({ ...o, [k]: v });
 
@@ -42,7 +49,7 @@ export default function CargarView({ onGuardar, onCancelar }: Props) {
     const listaPasos = pasos.split('\n').map((p) => p.trim()).filter(Boolean);
     const ok = await onGuardar({ ...o, pasos: listaPasos, fuente_url: o.fuente_url?.trim() || null }, publicar);
     setGuardando(false);
-    if (ok) {
+    if (ok && !inicial) {
       setO(VACIA);
       setPasos('');
     }
@@ -50,10 +57,17 @@ export default function CargarView({ onGuardar, onCancelar }: Props) {
 
   return (
     <form onSubmit={enviar} className="flex flex-col gap-4">
+      {inicial ? (
+        <p className="m-0 text-sm text-ink-soft">
+          Revisá que el resumen sea claro para alguien que no conoce el mecanismo, y que el “cómo sumar tu agenda”
+          invite a organizaciones de otros temas.
+        </p>
+      ) : (
       <p className="m-0 text-sm text-ink-soft">
         Para convocatorias que el radar no recolecta solo. Pensá en organizaciones que no trabajan este tema: el
         “cómo sumar tu agenda” es lo que las anima a participar.
       </p>
+      )}
 
       <fieldset className="m-0 flex gap-2 border-0 p-0">
         <legend className="mb-1 text-[13px] font-bold">Sistema</legend>
@@ -125,10 +139,10 @@ export default function CargarView({ onGuardar, onCancelar }: Props) {
 
       <label className="flex items-center gap-2 text-sm font-bold">
         <input type="checkbox" className="size-4 accent-magenta" checked={publicar} onChange={(e) => setPublicar(e.target.checked)} />
-        Publicar ya en el radar (si no, queda en Revisión)
+        {inicial?.estado === 'publicada' ? 'Visible en el radar (si lo destildás, vuelve a Revisión)' : 'Publicar ya en el radar (si no, queda en Revisión)'}
       </label>
 
-      <Boton>{guardando ? 'Guardando…' : publicar ? 'Publicar oportunidad' : 'Guardar para revisar'}</Boton>
+      <Boton>{guardando ? 'Guardando…' : publicar ? (inicial?.estado === 'publicada' ? 'Guardar cambios' : 'Publicar oportunidad') : 'Guardar para revisar'}</Boton>
       <button type="button" className="text-sm font-bold text-ink-soft underline" onClick={onCancelar}>Volver a Revisión</button>
     </form>
   );

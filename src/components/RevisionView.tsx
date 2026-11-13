@@ -7,10 +7,10 @@ interface Props {
   onRevisar: (id: string, estado: EstadoRevision) => void;
   onAprobarOrg: (id: string, aprobada: boolean) => void;
   onCargar: () => void;
-  onAviso: (t: string) => void;
+  onEditar: (id: string) => void;
 }
 
-export default function RevisionView({ pendientes, orgsPendientes, onRevisar, onAprobarOrg, onCargar, onAviso }: Props) {
+export default function RevisionView({ pendientes, orgsPendientes, onRevisar, onAprobarOrg, onCargar, onEditar }: Props) {
   return (
     <div className="flex flex-col gap-3.5">
       <button
@@ -61,7 +61,7 @@ export default function RevisionView({ pendientes, orgsPendientes, onRevisar, on
           </div>
           <div className="grid grid-cols-3 gap-2">
             <button className="rounded bg-magenta px-1.5 py-2.5 text-xs font-extrabold uppercase text-white" onClick={() => onRevisar(o.id, 'publicada')}>Publicar</button>
-            <button className="rounded border-2 border-magenta px-1.5 py-2 text-xs font-extrabold uppercase text-magenta" onClick={() => onAviso('Próximamente: editar el resumen y el "cómo sumar tu agenda"')}>Editar</button>
+            <button className="rounded border-2 border-magenta px-1.5 py-2 text-xs font-extrabold uppercase text-magenta" onClick={() => onEditar(o.id)}>Editar</button>
             <button className="rounded border-2 border-line px-1.5 py-2 text-xs font-extrabold uppercase text-ink-soft" onClick={() => onRevisar(o.id, 'descartada')}>Descartar</button>
           </div>
         </div>
