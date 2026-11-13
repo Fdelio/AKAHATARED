@@ -1,0 +1,116 @@
+/**
+ * Datos de ejemplo para usar la app sin Supabase (por ejemplo, para mostrarla
+ * en reuniones). Las organizaciones, plazos y casos son inventados.
+ */
+import type { Oportunidad, Organizacion, Participacion } from '../types';
+
+function enDias(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+export const ORGANIZACIONES: Organizacion[] = [
+  { id: 'ca', nombre: 'Colectiva Ámbar', pais: 'Argentina', temas: ['Derechos sexuales y reproductivos'], ofrece: 'Datos de casos', necesita: 'Contactos en Ginebra' },
+  { id: 'rd', nombre: 'Red Diversa del Sur', pais: 'Chile', temas: ['Personas LGBTI+'], ofrece: 'Experiencia en EPU', necesita: 'Traducción al inglés' },
+  { id: 'ml', nombre: 'Mujeres en Lucha Andina', pais: 'Bolivia', temas: ['Ambiente y clima'], ofrece: 'Testimonios', necesita: 'Asesoría jurídica' },
+  { id: 'tr', nombre: 'Trans Visibles', pais: 'Paraguay', temas: ['Identidad de género'], ofrece: 'Firmas', necesita: 'Seguridad digital' },
+  { id: 'ci', nombre: 'Círculo Feminista Caribe', pais: 'República Dominicana', temas: ['Desarrollo y derechos sociales'], ofrece: 'Redes en el Caribe', necesita: 'Financiamiento para viajar' },
+  { id: 'ob', nombre: 'Observatorio Cuerpos Libres', pais: 'Perú', temas: ['Salud'], ofrece: 'Informes sombra previos', necesita: 'Datos de otros países' },
+  { id: 'ag', nombre: 'Agenda Lésbica', pais: 'Uruguay', temas: ['Personas LGBTI+'], ofrece: 'Experiencia en CIDH', necesita: 'Firmas' },
+  { id: 'vd', nombre: 'Voces Diversas', pais: 'Guatemala', temas: ['Empresas y economía'], ofrece: 'Testimonios', necesita: 'Acompañamiento en audiencias' },
+];
+
+/** La organización de quien usa la app en modo ejemplo. */
+export const MI_ORGANIZACION_ID = 'mia';
+
+export const OPORTUNIDADES: Oportunidad[] = [
+  {
+    id: 're-amb', sistema: 'ONU', mecanismo: 'Procedimientos especiales',
+    titulo: 'Relatoría Especial sobre derechos humanos y medio ambiente: llamado a contribuciones',
+    pais: 'Regional', tema: 'Ambiente y clima', fecha_limite: enDias(16),
+    resumen: 'La Relatoría prepara un informe temático para el Consejo de Derechos Humanos y pide aportes de la sociedad civil: datos, casos y recomendaciones.',
+    angulo_agenda: 'Mostrá cómo la crisis climática y los proyectos extractivos afectan distinto a mujeres, personas LGBTI+ y quienes cuidan: desplazamiento, acceso al agua, violencia en los territorios.',
+    pasos: ['Leer el cuestionario y elegir 2 o 3 preguntas donde tu experiencia aporte.', 'Sumar datos o casos concretos de tu país.', 'Proponer recomendaciones con enfoque de género.', 'Enviar por correo antes de la fecha límite.'],
+    fuente_nombre: 'Llamados a contribuciones de procedimientos especiales (ACNUDH)', fuente_url: null,
+    estado: 'publicada', recolectada_automaticamente: true,
+  },
+  {
+    id: 'epu-py', sistema: 'ONU', mecanismo: 'EPU',
+    titulo: 'EPU de Paraguay: informes de partes interesadas',
+    pais: 'Paraguay', tema: 'Todos los temas', fecha_limite: enDias(12),
+    resumen: 'Paraguay será examinado en el próximo ciclo del Examen Periódico Universal. Se puede enviar un informe propio o sumarse a uno conjunto.',
+    angulo_agenda: 'El EPU revisa todos los derechos. Además del capítulo de igualdad, podés aportar en educación, salud, trabajo o pobreza, mostrando cómo afectan a tu población.',
+    pasos: ['Revisar las recomendaciones que Paraguay recibió en el ciclo anterior.', 'Decidir si van solas o en informe conjunto con otras organizaciones.', 'Enviar el informe por la plataforma de la ONU antes del plazo.', 'Pedir reuniones con embajadas antes de la sesión.'],
+    fuente_nombre: 'Calendario del EPU (ACNUDH)', fuente_url: null,
+    estado: 'publicada', recolectada_automaticamente: true,
+  },
+  {
+    id: 'cidh-aud', sistema: 'OEA', mecanismo: 'CIDH',
+    titulo: 'Solicitud de audiencias sobre empresas, extractivismo y derechos humanos',
+    pais: 'Regional', tema: 'Empresas y economía', fecha_limite: enDias(19),
+    resumen: 'La CIDH abrió el plazo para pedir audiencias del próximo período de sesiones. Una solicitud conjunta de varias organizaciones suele tener más peso.',
+    angulo_agenda: 'Las audiencias sobre empresas casi nunca incluyen el impacto en mujeres indígenas, defensoras ambientales o personas LGBTI+ en zonas extractivas. Esa mirada suma.',
+    pasos: ['Definir el tema y el objetivo de la audiencia.', 'Coordinar con organizaciones ambientales o de pueblos indígenas una solicitud conjunta.', 'Completar el formulario de solicitud de la CIDH.', 'Preparar una intervención de pocos minutos por organización.'],
+    fuente_nombre: 'Comunicados de prensa de la CIDH', fuente_url: null,
+    estado: 'publicada', recolectada_automaticamente: true,
+  },
+  {
+    id: 'desc-bo', sistema: 'ONU', mecanismo: 'Órganos de tratados',
+    titulo: 'Comité DESC revisa a Bolivia: informes alternativos',
+    pais: 'Bolivia', tema: 'Desarrollo y derechos sociales', fecha_limite: enDias(34),
+    resumen: 'El Comité de Derechos Económicos, Sociales y Culturales examinará a Bolivia. Recibe informes alternativos sobre trabajo, salud, vivienda, educación y seguridad social.',
+    angulo_agenda: 'Podés mostrar la discriminación laboral de personas trans, la salud sexual y reproductiva como parte del derecho a la salud, o el trabajo de cuidados no pagado.',
+    pasos: ['Leer la lista de cuestiones que el Comité envió al Estado.', 'Elegir los artículos del Pacto donde tu agenda encaja.', 'Redactar el informe con preguntas sugeridas para el Comité.', 'Enviarlo a la secretaría del Comité antes del plazo.'],
+    fuente_nombre: 'Calendario de sesiones de los órganos de tratados (ACNUDH)', fuente_url: null,
+    estado: 'publicada', recolectada_automaticamente: true,
+  },
+  {
+    id: 're-des', sistema: 'ONU', mecanismo: 'Procedimientos especiales',
+    titulo: 'Relatoría Especial sobre el derecho al desarrollo: consulta regional',
+    pais: 'Regional', tema: 'Desarrollo y derechos sociales', fecha_limite: enDias(41),
+    resumen: 'La Relatoría convoca a organizaciones de América Latina a una consulta virtual sobre financiamiento del desarrollo y deuda.',
+    angulo_agenda: 'Las políticas de deuda y ajuste recortan servicios de salud y cuidados. Contá cómo eso golpea a las poblaciones con las que trabajás.',
+    pasos: ['Inscribirse en la consulta virtual.', 'Preparar una intervención de 3 minutos con un dato y un caso.', 'Enviar un aporte escrito breve después de la consulta.'],
+    fuente_nombre: 'Página de la Relatoría Especial sobre el derecho al desarrollo (ACNUDH)', fuente_url: null,
+    estado: 'publicada', recolectada_automaticamente: false,
+  },
+  {
+    id: 'raadh', sistema: 'Mercosur', mecanismo: 'RAADH',
+    titulo: 'Reunión de Altas Autoridades sobre Derechos Humanos: consulta sobre migración',
+    pais: 'Regional', tema: 'Migración', fecha_limite: enDias(58),
+    resumen: 'La presidencia pro tempore convoca a organizaciones a una consulta previa a la reunión de altas autoridades, con foco en personas migrantes.',
+    angulo_agenda: 'Las mujeres y personas LGBTI+ migrantes enfrentan riesgos específicos en el tránsito y en el acceso a documentos. Es una agenda poco presente en estos espacios.',
+    pasos: ['Inscribirse en la consulta.', 'Preparar una posición breve sobre los temas de la agenda.', 'Coordinar con organizaciones de otros países del bloque.'],
+    fuente_nombre: 'Convocatoria de la presidencia pro tempore', fuente_url: null,
+    estado: 'publicada', recolectada_automaticamente: false,
+  },
+  {
+    id: 'q1', sistema: 'ONU', mecanismo: 'Procedimientos especiales',
+    titulo: 'Relator Especial sobre el derecho a la alimentación: visita a un país de la región',
+    pais: 'Regional', tema: 'Desarrollo y derechos sociales', fecha_limite: enDias(45),
+    resumen: 'Resumen generado automáticamente, pendiente de revisión.', angulo_agenda: 'Pendiente de revisión.', pasos: [],
+    fuente_nombre: 'Página de visitas a países (ACNUDH)', fuente_url: null,
+    estado: 'pendiente', recolectada_automaticamente: true,
+  },
+  {
+    id: 'q2', sistema: 'OEA', mecanismo: 'Corte IDH',
+    titulo: 'Solicitud de opinión consultiva: plazo para presentar observaciones escritas',
+    pais: 'Regional', tema: 'Ambiente y clima', fecha_limite: enDias(60),
+    resumen: 'Resumen generado automáticamente, pendiente de revisión.', angulo_agenda: 'Pendiente de revisión.', pasos: [],
+    fuente_nombre: 'Comunicados de la Corte IDH', fuente_url: null,
+    estado: 'pendiente', recolectada_automaticamente: true,
+  },
+];
+
+export const PARTICIPACIONES: Participacion[] = [
+  { oportunidad_id: 'epu-py', organizacion_id: 'tr', visibilidad: 'red', resultado: null },
+  { oportunidad_id: 'epu-py', organizacion_id: 'rd', visibilidad: 'publica', resultado: null },
+  { oportunidad_id: 'epu-py', organizacion_id: 'ob', visibilidad: 'red', resultado: null },
+  { oportunidad_id: 'cidh-aud', organizacion_id: 'ag', visibilidad: 'publica', resultado: null },
+  { oportunidad_id: 'cidh-aud', organizacion_id: 'vd', visibilidad: 'red', resultado: null },
+  { oportunidad_id: 'cidh-aud', organizacion_id: 'ca', visibilidad: 'red', resultado: null },
+  { oportunidad_id: 'cidh-aud', organizacion_id: 'ml', visibilidad: 'red', resultado: null },
+  { oportunidad_id: 're-amb', organizacion_id: 'ml', visibilidad: 'red', resultado: null },
+  { oportunidad_id: 're-des', organizacion_id: 'ci', visibilidad: 'red', resultado: null },
+];
