@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { TIPOS_APORTE, type Oportunidad, type Organizacion, type Participacion } from '../types';
+import { TIPOS_APORTE, type Oportunidad, type Organizacion, type Participacion, type PersonaRed } from '../types';
 import { diasHasta } from '../lib/datos';
 import { Iniciales } from './ui';
 
@@ -12,9 +12,98 @@ interface Props {
   revisora: boolean;
   onAbrir: (id: string) => void;
   onPedirApoyo: () => void;
+  personas: PersonaRed[];
+  usuariaId: string;
+  /** Si quien mira ya aparece en la red (según su perfil). */
+  apareceEnRed: boolean;
+  onEscribir: (personaId: string) => void;
+  onCompletarPerfil: () => void;
 }
 
-export default function RedView({ organizaciones, participaciones, oportunidades, miOrg, revisora, onAbrir, onPedirApoyo }: Props) {
+export default function RedView(props: Props) {
+  const [pestana, setPestana] = useState<'orgs' | 'personas'>('orgs');
+  const otras = props.personas.filter((p) => p.id !== props.usuariaId).length;
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 rounded-lg bg-crema p-1" role="tablist">
+        {([['orgs', `Organizaciones (${props.organizaciones.length})`], ['personas', `Personas (${otras})`]] as const).map(([id, t]) => (
+          <button
+            key={id}
+            role="tab"
+            aria-selected={pestana === id}
+            onClick={() => setPestana(id)}
+            className={`rounded-md py-2 text-[12px] font-extrabold uppercase tracking-wider ${pestana === id ? 'bg-magenta text-white' : 'text-ink-soft'}`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+      {pestana === 'orgs' ? <Organizaciones {...props} /> : <Personas {...props} />}
+    </div>
+  );
+}
+
+function Personas({ personas, organizaciones, usuariaId, apareceEnRed, onEscribir, onCompletarPerfil }: Props) {
+  const [busqueda, setBusqueda] = useState('');
+  const orgPorId = new Map(organizaciones.map((o) => [o.id, o]));
+  const q = busqueda.trim().toLowerCase();
+  const lista = personas
+    .filter((p) => p.id !== usuariaId)
+    .filter((p) =>
+      !q || [p.nombre_visible, p.cargo ?? '', p.presentacion ?? '', orgPorId.get(p.organizacion_id)?.nombre ?? '', orgPorId.get(p.organizacion_id)?.pais ?? '']
+        .some((x) => x.toLowerCase().includes(q)),
+    )
+    .sort((a, b) => (orgPorId.get(a.organizacion_id)?.nombre ?? '').localeCompare(orgPorId.get(b.organizacion_id)?.nombre ?? ''));
+
+  return (
+    <>
+      {!apareceEnRed && (
+        <div className="flex flex-col gap-1.5 rounded-lg bg-naranja-light p-3.5 text-sm text-naranja-dark">
+          <b>Todavía no aparecés en esta lista.</b>
+          <span className="text-ink">Completá tu perfil y elegí si querés aparecer y recibir mensajes. Tu correo nunca se muestra.</span>
+          <button className="self-start font-bold text-magenta underline" onClick={onCompletarPerfil}>Completar mi perfil</button>
+        </div>
+      )}
+      <p className="m-0 text-sm text-ink-soft">
+        Personas de las organizaciones de la red que eligieron aparecer. Para contactarlas, escribiles dentro de la app.
+      </p>
+      <input
+        type="search"
+        className="w-full rounded border-2 border-line px-3 py-2 text-[15px] focus:border-magenta focus:outline-none"
+        placeholder="Buscar por nombre, organización, país o tema"
+        value={busqueda}
+        onChange={(e) => setBusqueda(e.target.value)}
+      />
+      {lista.map((p) => {
+        const o = orgPorId.get(p.organizacion_id);
+        return (
+          <div key={p.id} className="flex gap-3 border-b border-line py-3 last:border-b-0">
+            <Avatar nombre={p.nombre_visible} />
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <b>{p.nombre_visible}</b>
+              <span className="text-[13px] text-ink-soft">
+                {[p.cargo, o && `${o.nombre} (${o.pais})`].filter(Boolean).join(' · ')}
+              </span>
+              {p.presentacion && <span className="text-[13px] leading-snug">{p.presentacion}</span>}
+              {p.acepta_mensajes ? (
+                <button className="mt-1 self-start rounded-full bg-magenta px-3 py-1 text-xs font-extrabold text-white" onClick={() => onEscribir(p.id)}>
+                  Escribir
+                </button>
+              ) : (
+                <span className="text-xs text-ink-soft">No recibe mensajes privados</span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+      {lista.length === 0 && (
+        <p className="m-0 text-sm text-ink-soft">{q ? 'No encontramos personas con esa búsqueda.' : 'Todavía nadie completó su perfil para aparecer.'}</p>
+      )}
+    </>
+  );
+}
+
+function Organizaciones({ organizaciones, participaciones, oportunidades, miOrg, revisora, onAbrir, onPedirApoyo }: Props) {
   const [busqueda, setBusqueda] = useState('');
   const opPorId = new Map(oportunidades.map((o) => [o.id, o]));
   const visibles = participaciones.filter(
@@ -31,7 +120,7 @@ export default function RedView({ organizaciones, participaciones, oportunidades
   const enviados = visibles.filter((p) => p.enviado).length;
 
   return (
-    <div className="flex flex-col gap-3">
+    <>
       <p className="m-0 text-sm text-ink-soft">
         {organizaciones.length} organizaciones en {new Set(organizaciones.map((o) => o.pais)).size} países
         {enviados > 0 && <> · {enviados} {enviados === 1 ? 'documento enviado' : 'documentos enviados'}</>}. Cada una elige qué muestra.
@@ -91,7 +180,7 @@ export default function RedView({ organizaciones, participaciones, oportunidades
         </section>
       ))}
       {lista.length === 0 && <p className="m-0 text-sm text-ink-soft">No encontramos organizaciones con esa búsqueda.</p>}
-    </div>
+    </>
   );
 }
 
@@ -119,5 +208,14 @@ function Item({ p, o, onAbrir, hecho = false }: { p: Participacion; o: Oportunid
       {p.visibilidad === 'solo_akahata' && <span className="text-ink-soft"> (solo Akãhatã lo ve)</span>}
       {p.resultado && <div className="mt-0.5 border-l-2 border-line pl-2 text-ink-soft">Resultado: {p.resultado}</div>}
     </li>
+  );
+}
+
+export function Avatar({ nombre }: { nombre: string }) {
+  const ini = nombre.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || '·';
+  return (
+    <div className="grid size-10 flex-none place-items-center rounded-full border-2 border-magenta bg-naranja-light font-bold text-naranja-dark">
+      {ini}
+    </div>
   );
 }

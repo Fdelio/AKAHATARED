@@ -4,7 +4,7 @@
 // Lee fuentes que se pueden leer automáticamente (canales RSS y la página de
 // comunicados de la CIDH) y guarda cada nota nueva como "pendiente". Akãhatã
 // la revisa y la publica. Nunca publica nada por su cuenta. Solo guarda el
-// título, un resumen breve y el enlace: el texto completo queda en la fuente.
+// título, un resumen breve, la imagen y el enlace: el texto completo queda en la fuente.
 
 import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
 
@@ -20,6 +20,7 @@ interface Nota {
   sistema: Sistema | null;
   idioma: 'es' | 'en';
   publicada_en: string; // ISO
+  imagen_url: string | null;
 }
 
 interface FuenteRss {
@@ -84,6 +85,20 @@ async function leer(url: string, codificacion = 'utf-8'): Promise<string> {
   return new TextDecoder(codificacion).decode(await r.arrayBuffer());
 }
 
+/** Imagen de la nota: adjunto del RSS, miniatura o la primera imagen del texto. */
+function imagenDe(item: string): string | null {
+  const candidatos = [
+    item.match(/<enclosure[^>]+url=["']([^"']+)["'][^>]*type=["']image/i)?.[1],
+    item.match(/<enclosure[^>]+type=["']image[^>]*url=["']([^"']+)["']/i)?.[1],
+    item.match(/<media:thumbnail[^>]+url=["']([^"']+)["']/i)?.[1],
+    item.match(/<media:content[^>]+url=["']([^"']+\.(?:jpe?g|png|webp)[^"']*)["']/i)?.[1],
+    item.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1],
+    item.match(/&lt;img[^&]+src=(?:&quot;|["'])([^"'&]+)/i)?.[1],
+  ];
+  const url = candidatos.find((u) => u && /^https:\/\//.test(u) && !/gravatar|emoji|pixel|feeds\.feedburner/i.test(u));
+  return url ? url.replace(/&amp;/g, '&') : null;
+}
+
 const desde = () => new Date(Date.now() - DIAS_ATRAS * 86_400_000);
 
 async function deRss(f: FuenteRss): Promise<Nota[]> {
@@ -108,6 +123,7 @@ async function deRss(f: FuenteRss): Promise<Nota[]> {
       sistema: f.sistema ?? adivinarSistema(titulo + ' ' + resumen),
       idioma: f.idioma,
       publicada_en: fecha.toISOString(),
+      imagen_url: imagenDe(item),
     });
   }
   return notas;
@@ -141,6 +157,7 @@ async function deCidh(): Promise<Nota[]> {
       sistema: 'OEA',
       idioma: 'es',
       publicada_en: fecha.toISOString(),
+      imagen_url: null,
     });
   }
   return notas;
@@ -175,6 +192,19 @@ Deno.serve(async () => {
       )
       .select('titulo');
     informe.nuevas = error ? { error: error.message } : (data ?? []).length;
+
+    // Las que ya estaban sin imagen y ahora la tienen.
+    let imagenes = 0;
+    for (const n of todas.filter((x) => x.imagen_url)) {
+      const { data: d } = await supabase
+        .from('noticias')
+        .update({ imagen_url: n.imagen_url })
+        .eq('clave_fuente', n.clave_fuente)
+        .is('imagen_url', null)
+        .select('id');
+      imagenes += d?.length ?? 0;
+    }
+    informe.imagenes_agregadas = imagenes;
   }
   return new Response(JSON.stringify(informe, null, 2), { headers: { 'content-type': 'application/json' } });
 });

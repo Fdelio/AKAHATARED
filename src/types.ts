@@ -24,6 +24,37 @@ export interface Sesion {
   organizacion: Organizacion | null;
   /** Pidió sumarse a una organización que ya está en la red y espera respuesta. */
   solicitud: { organizacion_id: string; nombre: string } | null;
+  perfil: Perfil;
+}
+
+/** Datos personales que cada persona elige mostrar. Nada es obligatorio. */
+export interface Perfil {
+  nombre_visible: string;
+  cargo: string;
+  presentacion: string;
+  /** Aparece en la Red (solo para organizaciones aprobadas). */
+  visible_en_red: boolean;
+  /** Otras personas de la red le pueden escribir por mensaje privado. */
+  acepta_mensajes: boolean;
+}
+
+/** Persona que aparece en la Red. Nunca se muestra su correo. */
+export interface PersonaRed {
+  id: string;
+  nombre_visible: string;
+  cargo: string;
+  presentacion: string;
+  organizacion_id: string;
+  acepta_mensajes: boolean;
+}
+
+export interface MensajePrivado {
+  id: string;
+  de: string;
+  para: string;
+  texto: string;
+  leido: boolean;
+  creado_en: string;
 }
 
 /** Alguien que pidió sumarse a una organización. */
@@ -130,9 +161,12 @@ export interface Noticia {
   publicada_en: string;
   estado: EstadoRevision;
   recolectada_automaticamente: boolean;
+  imagen_url: string | null;
 }
 
-export type NuevaNoticia = Pick<Noticia, 'titulo' | 'resumen' | 'comentario_akahata' | 'url' | 'fuente_nombre' | 'tipo' | 'sistema'>;
+export type NuevaNoticia = Pick<
+  Noticia, 'titulo' | 'resumen' | 'comentario_akahata' | 'url' | 'fuente_nombre' | 'tipo' | 'sistema' | 'imagen_url'
+>;
 
 /** Comentario del foro de una noticia. Se firma con la organización. */
 export interface Comentario {
