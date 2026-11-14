@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import type { Comentario, Noticia, Organizacion, Sistema } from '../types';
 import * as datos from '../lib/datos';
+import { MessageCircle } from 'lucide-react';
 import { Iniciales } from './ui';
 
 const TIPO: Record<Noticia['tipo'], string> = { noticia: 'Noticia', articulo: 'Artículo', nota_akahata: 'Nota de Akãhatã' };
@@ -23,6 +24,44 @@ function Etiquetas({ n }: { n: Noticia }) {
       </span>
       <span className="ml-auto text-[12px] text-ink-soft">{fechaCorta(n.publicada_en)}</span>
     </div>
+  );
+}
+
+/** Foto de la fuente o, si no hay (o no carga), una ilustración con los colores de Akãhatã. */
+export function Portada({ n, grande = false }: { n: Noticia; grande?: boolean }) {
+  const [fallo, setFallo] = useState(false);
+  const alto = grande ? 'aspect-[16/9]' : 'aspect-[2/1]';
+  if (n.imagen_url && !fallo) {
+    return (
+      <img
+        src={n.imagen_url}
+        alt=""
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        onError={() => setFallo(true)}
+        className={`${alto} w-full rounded-t-lg bg-crema object-cover`}
+      />
+    );
+  }
+  const fondo =
+    n.tipo === 'nota_akahata' ? 'bg-magenta' : n.sistema === 'OEA' ? 'bg-berenjena' : n.sistema === 'Mercosur' ? 'bg-naranja' : 'bg-magenta';
+  const sello = n.tipo === 'nota_akahata' ? 'Akãhatã' : n.sistema ?? 'DDHH';
+  return (
+    <div className={`${alto} relative isolate w-full overflow-hidden rounded-t-lg ${fondo}`} aria-hidden="true">
+      <div className="absolute -bottom-10 -left-8 -z-10 size-32 rounded-full bg-naranja/90" />
+      <div className="absolute -top-8 -right-6 -z-10 size-28 rounded-full border-[3px] border-rosa/70" />
+      <div className="absolute right-10 bottom-4 -z-10 size-10 rounded-full bg-rosa/60" />
+      <span className="absolute top-3 left-4 text-[28px] font-black tracking-tight text-white/95">{sello}</span>
+    </div>
+  );
+}
+
+function Conversacion({ cantidad }: { cantidad: number }) {
+  return (
+    <span className="ml-auto flex flex-none items-center gap-1 rounded-full bg-magenta-light px-2.5 py-1 text-[12px] font-extrabold text-magenta">
+      <MessageCircle size={14} />
+      {cantidad > 0 ? `${cantidad} ${cantidad === 1 ? 'comentario' : 'comentarios'}` : 'Comentá'}
+    </span>
   );
 }
 
@@ -62,17 +101,20 @@ export default function NoticiasView({ noticias, comentarios, onAbrir }: ListaPr
         <button
           key={n.id}
           onClick={() => onAbrir(n.id)}
-          className={`flex w-full flex-col gap-2 rounded-lg border bg-white p-3.5 text-left hover:border-magenta ${n.tipo === 'nota_akahata' ? 'border-magenta border-l-[5px]' : 'border-line'}`}
+          className={`flex w-full flex-col overflow-hidden rounded-lg border bg-white p-0 text-left hover:border-magenta ${n.tipo === 'nota_akahata' ? 'border-magenta' : 'border-line'}`}
         >
-          <Etiquetas n={n} />
-          <h3 className="m-0 text-base font-extrabold leading-snug text-magenta">{n.titulo}</h3>
-          {n.resumen && <p className="m-0 line-clamp-3 text-sm text-ink">{n.resumen}</p>}
-          <div className="flex items-center gap-2 text-[12px] text-ink-soft">
-            <span>{n.fuente_nombre}</span>
-            {n.comentario_akahata && <span className="font-bold text-naranja-dark">· Comentario de Akãhatã</span>}
-            {comentarios[n.id] ? (
-              <span className="ml-auto font-bold text-magenta">💬 {comentarios[n.id]}</span>
-            ) : null}
+          <Portada n={n} />
+          <div className="flex flex-col gap-2 p-3.5">
+            <Etiquetas n={n} />
+            <h3 className="m-0 text-base font-extrabold leading-snug text-magenta">{n.titulo}</h3>
+            {n.resumen && <p className="m-0 line-clamp-3 text-sm text-ink">{n.resumen}</p>}
+            {n.comentario_akahata && (
+              <span className="self-start rounded bg-naranja-light px-2 py-0.5 text-[12px] font-bold text-naranja-dark">Con comentario de Akãhatã</span>
+            )}
+            <div className="flex items-center gap-2 text-[12px] text-ink-soft">
+              <span className="min-w-0">{n.fuente_nombre}</span>
+              <Conversacion cantidad={comentarios[n.id] ?? 0} />
+            </div>
           </div>
         </button>
       ))}
@@ -140,6 +182,9 @@ export function NotaView({ n, organizaciones, miOrg, usuariaId, revisora, onEdit
 
   return (
     <div className="flex flex-col gap-3.5">
+      <div className="-mx-5 -mt-4">
+        <Portada n={n} grande />
+      </div>
       <Etiquetas n={n} />
       {onEditar && (
         <button onClick={onEditar} className="self-start rounded border-2 border-magenta px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-magenta">

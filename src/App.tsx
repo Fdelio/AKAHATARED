@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Building2, CheckCheck, MessagesSquare, Network, Newspaper, Radar, UserRound } from 'lucide-react';
 import type {
   EstadoRevision, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Pantalla, Participacion, PedidoApoyo, Sesion,
-  SesionOrgano, SolicitudUnion, Visibilidad,
+  SesionOrgano, SolicitudUnion, Visibilidad, MensajePrivado, PersonaRed,
 } from './types';
 import * as datos from './lib/datos';
 import { modoEjemplo } from './lib/supabaseClient';
@@ -14,6 +14,8 @@ import RevisionView from './components/RevisionView';
 import CuentaView from './components/CuentaView';
 import CargarView from './components/CargarView';
 import ChatView from './components/ChatView';
+import PrivadosView from './components/PrivadosView';
+import { NuevaContrasena } from './components/CuentaView';
 import BienvenidaView from './components/BienvenidaView';
 import NoticiasView, { NotaView } from './components/NoticiasView';
 import NotaForm from './components/NotaForm';
@@ -31,8 +33,8 @@ const NAV: ItemNav[] = [
 const TITULOS: Record<Pantalla, [string, string]> = {
   noticias: ['Noticias', 'Lo que pasa en los espacios internacionales'],
   radar: ['Oportunidades de participar', 'ONU, OEA y Mercosur, en todos los temas'],
-  red: ['La red', 'Organizaciones, en qué trabajan y qué hicieron'],
-  chat: ['Chat de la red', 'Para coordinar entre organizaciones'],
+  red: ['La red', 'Organizaciones, personas y su trabajo'],
+  chat: ['Chat de la red', 'Salas para coordinar y mensajes privados'],
   mias: ['Mi organización', 'Nuestro trabajo y pedidos de apoyo'],
   revision: ['Revisión de Akãhatã', 'Lo que espera aprobación'],
   cuenta: ['Tu cuenta', 'Tu organización en la red'],
@@ -44,11 +46,15 @@ const RUTAS: Pantalla[] = ['noticias', 'radar', 'red', 'chat', 'mias', 'revision
 /** La ruta vive en el hash (#radar, #op-<id>, #red…) para que los links se puedan compartir. */
 function leerRuta(): {
   pantalla: Pantalla; oportunidadId: string | null; editarId: string | null; sala?: string; notaId?: string; notaEditar?: string;
+  /** '' = lista de mensajes privados; un id = conversación con esa persona. */
+  privado?: string;
 } {
   const h = window.location.hash.slice(1);
   if (h.startsWith('nota-')) return { pantalla: 'noticias', oportunidadId: null, editarId: null, notaId: h.slice(5) };
   if (h.startsWith('editar-nota-')) return { pantalla: 'cargar', oportunidadId: null, editarId: null, notaEditar: h.slice(12) };
   if (h === 'nueva-nota') return { pantalla: 'cargar', oportunidadId: null, editarId: null, notaEditar: 'nueva' };
+  if (h === 'privados') return { pantalla: 'chat', oportunidadId: null, editarId: null, privado: '' };
+  if (h.startsWith('privado-')) return { pantalla: 'chat', oportunidadId: null, editarId: null, privado: h.slice(8) };
   if (h.startsWith('chat-')) return { pantalla: 'chat', oportunidadId: null, editarId: null, sala: h.slice(5) };
   if (h.startsWith('op-')) return { pantalla: 'radar', oportunidadId: h.slice(3), editarId: null };
   if (h.startsWith('editar-')) return { pantalla: 'cargar', oportunidadId: null, editarId: h.slice(7) };
@@ -77,13 +83,17 @@ export default function App() {
   const [noticiasPendientes, setNoticiasPendientes] = useState<Noticia[]>([]);
   const [comentarios, setComentarios] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
+  const [personasRed, setPersonasRed] = useState<PersonaRed[]>([]);
+  const [privados, setPrivados] = useState<MensajePrivado[]>([]);
+  /** Volvió del correo para elegir una contraseña nueva. */
+  const [recuperando, setRecuperando] = useState(false);
 
   const cargar = useCallback(async () => {
     try {
       const s = await datos.obtenerSesion();
       const revisora = s?.rol === 'revisora';
       const conOrg = !!s?.organizacion?.aprobada;
-      const [ops, pend, orgs, orgsPend, parts, cal, peds, sols, pers, nots, notsPend, coms] = await Promise.all([
+      const [ops, pend, orgs, orgsPend, parts, cal, peds, sols, pers, nots, notsPend, coms, red, privs] = await Promise.all([
         datos.listarOportunidades('publicada'),
         revisora ? datos.listarOportunidades('pendiente') : [],
         s ? datos.listarOrganizaciones(true) : [],
@@ -95,8 +105,12 @@ export default function App() {
         conOrg ? datos.listarPersonas() : [],
         datos.listarNoticias('publicada'),
         revisora ? datos.listarNoticias('pendiente') : [],
-        conOrg || revisora ? datos.contarComentarios() : {},
+        datos.contarComentarios(),
+        conOrg || revisora ? datos.listarPersonasDeLaRed() : [],
+        s ? datos.listarMensajesPrivados() : [],
       ]);
+      setPersonasRed(red);
+      setPrivados(privs);
       setNoticias(nots);
       setNoticiasPendientes(notsPend);
       setComentarios(coms);
@@ -123,12 +137,18 @@ export default function App() {
     cargar();
     const alCambiar = () => setRuta(leerRuta());
     window.addEventListener('hashchange', alCambiar);
-    const dejarDeEscuchar = datos.alCambiarSesion(cargar);
+    const dejarDeEscuchar = datos.alCambiarSesion(cargar, () => setRecuperando(true));
     return () => {
       window.removeEventListener('hashchange', alCambiar);
       dejarDeEscuchar();
     };
   }, [cargar]);
+
+  const recargarPrivados = useCallback(() => {
+    datos.listarMensajesPrivados().then(setPrivados).catch(console.error);
+  }, []);
+  const conSesion = !!sesion;
+  useEffect(() => (conSesion ? datos.escucharPrivados(recargarPrivados) : undefined), [conSesion, recargarPrivados]);
 
   useEffect(() => {
     if (!aviso) return;
@@ -156,6 +176,11 @@ export default function App() {
   const miOrg = sesion?.organizacion?.aprobada ? sesion.organizacion.id : null;
   const revisora = sesion?.rol === 'revisora';
   const nav = NAV;
+  const sinLeer = privados.filter((m) => m.para === sesion?.id && !m.leido).length;
+  const organizacionesConLaMia =
+    sesion?.organizacion && !organizaciones.some((o) => o.id === sesion.organizacion!.id)
+      ? [...organizaciones, sesion.organizacion]
+      : organizaciones;
   const porRevisar = pendientes.length + orgsPendientes.length + noticiasPendientes.length + solicitudes.length
     + pedidos.filter((p) => p.estado === 'nuevo').length;
 
@@ -222,12 +247,28 @@ export default function App() {
 
   if (!listo) return <div className="min-h-screen bg-white" aria-busy="true" />;
 
+  if (recuperando && sesion) {
+    return (
+      <div className="mx-auto flex min-h-screen max-w-[480px] flex-col gap-4 bg-white p-5">
+        <img src={import.meta.env.BASE_URL + 'logo-marca.png'} alt="Akãhatã" className="h-10 self-start" />
+        <p className="m-0 text-sm text-ink-soft">Elegí tu contraseña nueva. Después entrás con tu correo y esta contraseña, sin esperar correos.</p>
+        <NuevaContrasena
+          titulo="Tu contraseña nueva"
+          onListo={() => {
+            setRecuperando(false);
+            setAviso('Listo, guardamos tu contraseña');
+            ir('noticias');
+          }}
+        />
+      </div>
+    );
+  }
+
   // Quien no ingresó ve la portada con el ingreso. (#bienvenida la muestra igual, para revisarla.)
   if ((!sesion && !visitante) || window.location.hash === '#bienvenida') {
     return (
       <BienvenidaView
         modoEjemplo={modoEjemplo}
-        onEnviarEnlace={datos.enviarEnlace}
         onVerOportunidades={() => {
           setVisitante(true);
           ir('noticias');
@@ -281,11 +322,7 @@ export default function App() {
           <NotaView
             key={notaAbierta.id}
             n={notaAbierta}
-            organizaciones={
-              sesion?.organizacion && !organizaciones.some((o) => o.id === sesion.organizacion!.id)
-                ? [...organizaciones, sesion.organizacion]
-                : organizaciones
-            }
+            organizaciones={organizacionesConLaMia}
             miOrg={miOrg}
             usuariaId={sesion?.id ?? null}
             revisora={revisora}
@@ -325,14 +362,14 @@ export default function App() {
           <CuentaView
             sesion={sesion}
             modoEjemplo={modoEjemplo}
-            onEnviarEnlace={datos.enviarEnlace}
-            onCrearOrganizacion={(org: NuevaOrganizacion) =>
+                onCrearOrganizacion={(org: NuevaOrganizacion) =>
               ejecutar(() => datos.crearMiOrganizacion(org), 'Enviada. Akãhatã la va a revisar.')
             }
             organizaciones={organizaciones}
             onPedirUnirme={(id) => ejecutar(() => datos.pedirUnirme(id), 'Pedido enviado. Te avisamos cuando te acepten.')}
             onCancelarSolicitud={() => ejecutar(datos.cancelarSolicitud, 'Pedido cancelado')}
             onSalir={() => ejecutar(datos.salir, 'Saliste de la app').then(() => ir('radar'))}
+            onRecargar={cargar}
           />
         ) : !sesion && (ruta.pantalla === 'red' || ruta.pantalla === 'mias' || ruta.pantalla === 'chat') ? (
           <div className="flex flex-col gap-4">
@@ -360,6 +397,36 @@ export default function App() {
             <CargarView key={ruta.editarId ?? 'nueva'} inicial={enEdicion} onGuardar={guardarOportunidad} onCancelar={() => ir(enEdicion?.estado === 'publicada' ? 'op-' + enEdicion.id : 'revision')} />
           )
         ) : ruta.pantalla === 'chat' ? (
+          <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 rounded-lg bg-crema p-1" role="tablist">
+            {([['salas', 'Salas de la red'], ['privados', 'Privados' + (sinLeer ? ` (${sinLeer})` : '')]] as const).map(([id, t]) => {
+              const activa = id === 'privados' ? ruta.privado !== undefined : ruta.privado === undefined;
+              return (
+                <button
+                  key={id}
+                  role="tab"
+                  aria-selected={activa}
+                  onClick={() => ir(id === 'privados' ? 'privados' : 'chat')}
+                  className={`rounded-md py-2 text-[12px] font-extrabold uppercase tracking-wider ${activa ? 'bg-magenta text-white' : 'text-ink-soft'}`}
+                >
+                  {t}
+                </button>
+              );
+            })}
+          </div>
+          {ruta.privado !== undefined ? (
+            <PrivadosView
+              privados={privados}
+              usuariaId={sesion!.id}
+              personaId={ruta.privado || null}
+              personas={personasRed}
+              organizaciones={organizacionesConLaMia}
+              puedeEscribir={!!miOrg}
+              onAbrir={(id) => ir(id ? 'privado-' + id : 'privados')}
+              onCambio={recargarPrivados}
+              onAviso={setAviso}
+            />
+          ) : (
           <ChatView
             sala={ruta.sala ?? null}
             oportunidades={oportunidades}
@@ -374,6 +441,8 @@ export default function App() {
             onCambiarSala={(s) => ir(s ? 'chat-' + s : 'chat')}
             onAviso={setAviso}
           />
+          )}
+          </div>
         ) : ruta.pantalla === 'red' ? (
           <RedView
             organizaciones={organizaciones}
@@ -383,6 +452,11 @@ export default function App() {
             revisora={revisora}
             onAbrir={(id) => ir('op-' + id)}
             onPedirApoyo={() => ir('mias')}
+            personas={personasRed}
+            usuariaId={sesion!.id}
+            apareceEnRed={!!sesion?.perfil.visible_en_red}
+            onEscribir={(id) => ir('privado-' + id)}
+            onCompletarPerfil={() => ir('cuenta')}
           />
         ) : ruta.pantalla === 'mias' ? (
           <MiOrganizacionView
@@ -434,7 +508,14 @@ export default function App() {
               aria-current={actual ? 'page' : undefined}
               className={`flex flex-col items-center gap-0.5 border-0 bg-transparent px-0 pt-2.5 pb-3 text-[10px] leading-tight ${actual ? 'font-bold text-magenta' : 'text-ink-soft'}`}
             >
-              <Icono size={22} />
+              <span className="relative">
+                <Icono size={22} />
+                {id === 'chat' && sinLeer > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 min-w-4 rounded-full bg-naranja px-1 text-[10px] font-extrabold leading-4 text-white">
+                    {sinLeer}
+                  </span>
+                )}
+              </span>
               {label}
             </button>
           );

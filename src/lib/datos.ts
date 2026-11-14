@@ -3,7 +3,7 @@
  * base real; si no, trabaja en memoria con los datos de ejemplo.
  */
 import type {
-  Comentario, EstadoPedido, EstadoRevision, Mensaje, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Participacion,
+  Comentario, MensajePrivado, Perfil, PersonaRed, EstadoPedido, EstadoRevision, Mensaje, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Participacion,
   PedidoApoyo, Sesion, SesionOrgano, SolicitudUnion, Trabajo, Visibilidad,
 } from '../types';
 import { supabase } from './supabaseClient';
@@ -18,6 +18,8 @@ const mem = {
   mensajes: [...ejemplo.MENSAJES],
   solicitudes: [...ejemplo.SOLICITUDES],
   noticias: [...ejemplo.NOTICIAS],
+  perfil: { ...ejemplo.MI_PERFIL },
+  privados: [...ejemplo.PRIVADOS],
   comentarios: [...ejemplo.COMENTARIOS],
 };
 
@@ -83,7 +85,11 @@ export async function obtenerSesion(): Promise<Sesion | null> {
     const usuaria = s.session?.user;
     if (!usuaria) return null;
     const [{ data, error }, { data: sol }] = await Promise.all([
-      supabase.from('perfiles').select('rol, organizaciones(*)').eq('id', usuaria.id).maybeSingle(),
+      supabase
+        .from('perfiles')
+        .select('rol, nombre_visible, cargo, presentacion, visible_en_red, acepta_mensajes, organizaciones(*)')
+        .eq('id', usuaria.id)
+        .maybeSingle(),
       supabase
         .from('solicitudes_union')
         .select('organizacion_id, organizaciones(nombre)')
@@ -100,12 +106,20 @@ export async function obtenerSesion(): Promise<Sesion | null> {
       solicitud: sol
         ? { organizacion_id: sol.organizacion_id, nombre: (sol.organizaciones as unknown as { nombre: string } | null)?.nombre ?? '' }
         : null,
+      perfil: {
+        nombre_visible: data?.nombre_visible ?? '',
+        cargo: data?.cargo ?? '',
+        presentacion: data?.presentacion ?? '',
+        visible_en_red: data?.visible_en_red ?? false,
+        acepta_mensajes: data?.acepta_mensajes ?? false,
+      },
     };
   }
   // Modo ejemplo: se muestra todo, como si ingresara alguien del equipo de Akãhatã.
   return {
     id: 'yo',
     solicitud: null,
+    perfil: mem.perfil,
     email: 'ejemplo@akahata.org',
     rol: 'revisora',
     organizacion: {
@@ -125,15 +139,60 @@ export async function enviarEnlace(email: string) {
   if (error) throw error;
 }
 
+const volverAca = () => window.location.origin + window.location.pathname;
+
+/** Entrar con correo y contraseña. */
+export async function entrarConContrasena(email: string, contrasena: string) {
+  if (!supabase) return;
+  const { error } = await supabase.auth.signInWithPassword({ email, password: contrasena });
+  if (error) throw error;
+}
+
+/**
+ * Crear una cuenta con contraseña. Llega un correo para confirmar la dirección
+ * (solo esta vez). Devuelve true si ya quedó adentro (sin confirmar).
+ */
+export async function crearCuenta(email: string, contrasena: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password: contrasena,
+    options: { emailRedirectTo: volverAca() },
+  });
+  if (error) throw error;
+  // Si el correo ya tenía cuenta, Supabase no avisa (para no revelar quién está registrada):
+  // devuelve una persona sin identidades.
+  if (data.user && data.user.identities?.length === 0) throw new Error('ya_registrado');
+  return !!data.session;
+}
+
+/** Manda un correo para elegir una contraseña nueva. */
+export async function recuperarContrasena(email: string) {
+  if (!supabase) return;
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: volverAca() });
+  if (error) throw error;
+}
+
+/** Crear o cambiar la contraseña de quien ya entró. */
+export async function cambiarContrasena(contrasena: string) {
+  if (!supabase) return;
+  const { error } = await supabase.auth.updateUser({ password: contrasena });
+  if (error) throw error;
+}
+
 export async function salir() {
   if (supabase) await supabase.auth.signOut();
 }
 
-/** Avisa cuando alguien entra (por ejemplo, al volver desde el enlace del correo) o sale. */
-export function alCambiarSesion(fn: () => void): () => void {
+/**
+ * Avisa cuando alguien entra (por ejemplo, al volver desde el enlace del correo) o sale.
+ * alRecuperar se llama cuando se vuelve del correo para elegir una contraseña nueva.
+ */
+export function alCambiarSesion(fn: () => void, alRecuperar?: () => void): () => void {
   if (!supabase) return () => {};
   const { data } = supabase.auth.onAuthStateChange((evento) => {
-    if (evento === 'SIGNED_IN' || evento === 'SIGNED_OUT') fn();
+    if (evento === 'PASSWORD_RECOVERY') alRecuperar?.();
+    if (evento === 'SIGNED_IN' || evento === 'SIGNED_OUT' || evento === 'PASSWORD_RECOVERY') fn();
   });
   return () => data.subscription.unsubscribe();
 }
@@ -456,15 +515,16 @@ export async function actualizarNoticia(id: string, cambios: Partial<NuevaNotici
 }
 
 /** Cantidad de comentarios por noticia (solo la ven organizaciones aprobadas y Akãhatã). */
+/** Cantidad de comentarios por noticia. La ve cualquiera (sin el texto). */
 export async function contarComentarios(): Promise<Record<string, number>> {
-  let filas: { noticia_id: string }[] = mem.comentarios.filter((c) => !c.borrado);
-  if (supabase) {
-    const { data, error } = await supabase.from('comentarios').select('noticia_id').eq('borrado', false);
-    if (error) throw error;
-    filas = data;
-  }
   const cuenta: Record<string, number> = {};
-  filas.forEach((f) => (cuenta[f.noticia_id] = (cuenta[f.noticia_id] ?? 0) + 1));
+  if (supabase) {
+    const { data, error } = await supabase.rpc('contar_comentarios');
+    if (error) throw error;
+    (data as { noticia_id: string; cantidad: number }[]).forEach((f) => (cuenta[f.noticia_id] = Number(f.cantidad)));
+    return cuenta;
+  }
+  mem.comentarios.filter((c) => !c.borrado).forEach((c) => (cuenta[c.noticia_id] = (cuenta[c.noticia_id] ?? 0) + 1));
   return cuenta;
 }
 
@@ -502,6 +562,93 @@ export async function borrarComentario(id: string) {
   }
   const c = mem.comentarios.find((x) => x.id === id);
   if (c) Object.assign(c, { borrado: true, texto: 'Comentario borrado' });
+}
+
+// ---------- Perfil, personas y mensajes privados ----------
+
+export async function guardarPerfil(p: Perfil) {
+  const limpio: Perfil = {
+    nombre_visible: p.nombre_visible.trim(),
+    cargo: p.cargo.trim(),
+    presentacion: p.presentacion.trim(),
+    visible_en_red: p.visible_en_red,
+    acepta_mensajes: p.acepta_mensajes,
+  };
+  if (supabase) {
+    const { data: s } = await supabase.auth.getSession();
+    const { error } = await supabase.from('perfiles').update(limpio).eq('id', s.session?.user.id ?? '');
+    if (error) throw error;
+    return;
+  }
+  mem.perfil = limpio;
+}
+
+/** Personas que eligieron aparecer en la Red (sin correos). */
+export async function listarPersonasDeLaRed(): Promise<PersonaRed[]> {
+  if (supabase) {
+    const { data, error } = await supabase.rpc('personas_de_la_red');
+    if (error) throw error;
+    return data as PersonaRed[];
+  }
+  return [
+    ...ejemplo.PERSONAS,
+    { id: 'yo', organizacion_id: ejemplo.MI_ORGANIZACION_ID, ...mem.perfil, nombre_visible: mem.perfil.nombre_visible || 'Persona sin nombre' },
+  ];
+}
+
+/** Todos mis mensajes privados (enviados y recibidos), del más viejo al más nuevo. */
+export async function listarMensajesPrivados(): Promise<MensajePrivado[]> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('mensajes_privados')
+      .select('*')
+      .order('creado_en', { ascending: true })
+      .limit(1000);
+    if (error) throw error;
+    return data as MensajePrivado[];
+  }
+  return mem.privados.map((m) => ({ ...m }));
+}
+
+/** Nombres de las personas con las que tengo conversaciones. */
+export async function nombresDeConversaciones(): Promise<{ id: string; nombre_visible: string; organizacion_id: string | null }[]> {
+  if (supabase) {
+    const { data, error } = await supabase.rpc('nombres_de_mis_conversaciones');
+    if (error) throw error;
+    return data;
+  }
+  return ejemplo.PERSONAS;
+}
+
+export async function enviarMensajePrivado(para: string, texto: string) {
+  if (supabase) {
+    const { error } = await supabase.from('mensajes_privados').insert({ para, texto });
+    if (error) throw error;
+    return;
+  }
+  mem.privados.push({ id: 'p-' + Date.now(), de: 'yo', para, texto, leido: false, creado_en: new Date().toISOString() });
+}
+
+export async function marcarLeidos(de: string) {
+  if (supabase) {
+    const { error } = await supabase.from('mensajes_privados').update({ leido: true }).eq('de', de).eq('leido', false);
+    if (error) throw error;
+    return;
+  }
+  mem.privados.forEach((m) => m.de === de && (m.leido = true));
+}
+
+/** Avisa cuando llega un mensaje privado. */
+export function escucharPrivados(fn: () => void): () => void {
+  const cliente = supabase;
+  if (!cliente) return () => {};
+  const canal = cliente
+    .channel('privados')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'mensajes_privados' }, fn)
+    .subscribe();
+  return () => {
+    cliente.removeChannel(canal);
+  };
 }
 
 /** Días que faltan hasta la fecha límite (negativo si ya pasó). */

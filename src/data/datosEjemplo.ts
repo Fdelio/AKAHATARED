@@ -2,7 +2,7 @@
  * Datos de ejemplo para usar la app sin Supabase (por ejemplo, para mostrarla
  * en reuniones). Las organizaciones, plazos y casos son inventados.
  */
-import type { Comentario, Mensaje, Noticia, SesionOrgano, Oportunidad, Organizacion, Participacion, PedidoApoyo, SolicitudUnion } from '../types';
+import type { Comentario, Mensaje, MensajePrivado, Noticia, Perfil, PersonaRed, SesionOrgano, Oportunidad, Organizacion, Participacion, PedidoApoyo, SolicitudUnion } from '../types';
 
 function enDias(n: number): string {
   const d = new Date();
@@ -189,6 +189,7 @@ function haceDias(n: number): string {
 }
 
 const nota = (n: Partial<Noticia> & Pick<Noticia, 'id' | 'titulo'>): Noticia => ({
+  imagen_url: null,
   resumen: '', comentario_akahata: '', url: null, fuente_nombre: 'Akãhatã', tipo: 'noticia', sistema: null, idioma: 'es',
   publicada_en: haceDias(1), estado: 'publicada', recolectada_automaticamente: true, ...n,
 });
@@ -236,4 +237,18 @@ export const COMENTARIOS: Comentario[] = [
     id: 'c2', noticia_id: 'n1', organizacion_id: 'ml', autor: 'x', borrado: false, creado_en: haceDias(0.5),
     texto: 'Nosotras sí. Tenemos casos documentados en Bolivia.',
   },
+];
+
+export const MI_PERFIL: Perfil = {
+  nombre_visible: 'Ejemplo', cargo: 'Coordinación de incidencia', presentacion: '', visible_en_red: true, acepta_mensajes: true,
+};
+
+export const PERSONAS: PersonaRed[] = [
+  { id: 'p-rd', nombre_visible: 'Camila', cargo: 'Incidencia internacional', presentacion: 'Seguimos el EPU y los órganos de tratados.', organizacion_id: 'rd', acepta_mensajes: true },
+  { id: 'p-ml', nombre_visible: 'Rosa', cargo: 'Coordinadora', presentacion: 'Defensoras ambientales en Bolivia.', organizacion_id: 'ml', acepta_mensajes: true },
+  { id: 'p-ag', nombre_visible: 'Lu', cargo: '', presentacion: '', organizacion_id: 'ag', acepta_mensajes: false },
+];
+
+export const PRIVADOS: MensajePrivado[] = [
+  { id: 'pv1', de: 'p-rd', para: 'yo', texto: 'Hola, vi que trabajan el EPU de Paraguay. ¿Armamos algo juntas?', leido: false, creado_en: haceDias(0.3) },
 ];

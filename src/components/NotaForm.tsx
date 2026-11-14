@@ -16,9 +16,9 @@ export default function NotaForm({ inicial, onGuardar, onCancelar }: Props) {
       ? {
           titulo: inicial.titulo, resumen: inicial.resumen.replace(/^\[En inglés: traducir al revisar\]\s*/, ''),
           comentario_akahata: inicial.comentario_akahata, url: inicial.url, fuente_nombre: inicial.fuente_nombre,
-          tipo: inicial.tipo, sistema: inicial.sistema,
+          tipo: inicial.tipo, sistema: inicial.sistema, imagen_url: inicial.imagen_url,
         }
-      : { titulo: '', resumen: '', comentario_akahata: '', url: null, fuente_nombre: 'Akãhatã', tipo: 'nota_akahata', sistema: null },
+      : { titulo: '', resumen: '', comentario_akahata: '', url: null, fuente_nombre: 'Akãhatã', tipo: 'nota_akahata', sistema: null, imagen_url: null },
   );
   const [publicar, setPublicar] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -27,7 +27,7 @@ export default function NotaForm({ inicial, onGuardar, onCancelar }: Props) {
   const enviar = async (e: FormEvent) => {
     e.preventDefault();
     setGuardando(true);
-    await onGuardar({ ...n, url: n.url?.trim() || null }, publicar);
+    await onGuardar({ ...n, url: n.url?.trim() || null, imagen_url: n.imagen_url?.trim() || null }, publicar);
     setGuardando(false);
   };
 
@@ -79,6 +79,12 @@ export default function NotaForm({ inicial, onGuardar, onCancelar }: Props) {
           <input type="url" className={campo} value={n.url ?? ''} onChange={(e) => cambiar('url', e.target.value)} placeholder="https://…" />
         </label>
       </div>
+      <label className={etiqueta}>
+        Imagen (enlace, opcional)
+        <input type="url" className={campo} value={n.imagen_url ?? ''} onChange={(e) => cambiar('imagen_url', e.target.value)} placeholder="https://…/foto.jpg" />
+        <span className="text-xs font-normal text-ink-soft">Si queda vacío, la noticia lleva una ilustración con los colores de Akãhatã.</span>
+      </label>
+      {n.imagen_url && <img src={n.imagen_url} alt="" referrerPolicy="no-referrer" className="aspect-video w-full rounded-lg object-cover" />}
       <label className="flex items-center gap-2 text-sm font-bold">
         <input type="checkbox" className="size-4 accent-magenta" checked={publicar} onChange={(e) => setPublicar(e.target.checked)} />
         Publicar en Noticias (si no, queda en Revisión)

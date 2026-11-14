@@ -3,7 +3,6 @@ import { Ingreso } from './CuentaView';
 
 interface Props {
   modoEjemplo: boolean;
-  onEnviarEnlace: (email: string) => Promise<void>;
   onVerOportunidades: () => void;
 }
 
@@ -36,13 +35,13 @@ const QUE_HAY = [
 ];
 
 const PASOS = [
-  'Entrá con tu correo: te llega un enlace, sin contraseña.',
+  'Creá tu cuenta con tu correo y una contraseña (la primera vez confirmás el correo).',
   'Registrá tu organización, o sumate a la tuya si ya está en la red.',
   'El equipo de Akãhatã la aprueba y ya podés participar.',
 ];
 
 /** Portada para quien todavía no ingresó: qué es la app y cómo entrar. */
-export default function BienvenidaView({ modoEjemplo, onEnviarEnlace, onVerOportunidades }: Props) {
+export default function BienvenidaView({ modoEjemplo, onVerOportunidades }: Props) {
   return (
     <div className="mx-auto flex min-h-screen max-w-[480px] flex-col bg-white sm:my-6 sm:min-h-0 sm:overflow-hidden sm:rounded-3xl sm:border sm:border-line">
       <section className="relative isolate overflow-hidden bg-magenta px-6 pt-8 pb-12 text-white">
@@ -103,7 +102,7 @@ export default function BienvenidaView({ modoEjemplo, onEnviarEnlace, onVerOport
 
         <section id="entrar" className="flex flex-col gap-3 rounded-lg bg-crema p-4">
           <h2 className="m-0 text-lg font-black text-magenta">Entrar</h2>
-          <Ingreso modoEjemplo={modoEjemplo} onEnviarEnlace={onEnviarEnlace} />
+          <Ingreso modoEjemplo={modoEjemplo} />
         </section>
 
         <button className="self-center text-sm font-bold text-magenta underline" onClick={onVerOportunidades}>
