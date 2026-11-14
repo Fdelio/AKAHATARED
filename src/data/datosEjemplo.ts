@@ -2,7 +2,7 @@
  * Datos de ejemplo para usar la app sin Supabase (por ejemplo, para mostrarla
  * en reuniones). Las organizaciones, plazos y casos son inventados.
  */
-import type { Mensaje, SesionOrgano, Oportunidad, Organizacion, Participacion, PedidoApoyo, SolicitudUnion } from '../types';
+import type { Comentario, Mensaje, Noticia, SesionOrgano, Oportunidad, Organizacion, Participacion, PedidoApoyo, SolicitudUnion } from '../types';
 
 function enDias(n: number): string {
   const d = new Date();
@@ -182,4 +182,58 @@ export const MENSAJES: Mensaje[] = [
 
 export const SOLICITUDES: SolicitudUnion[] = [
   { perfil_id: 'x1', email: 'nueva.persona@ejemplo.org', organizacion_id: 'mia', organizacion: 'Tu organización', creada_en: haceMinutos(30) },
+];
+
+function haceDias(n: number): string {
+  return new Date(Date.now() - n * 86_400_000).toISOString();
+}
+
+const nota = (n: Partial<Noticia> & Pick<Noticia, 'id' | 'titulo'>): Noticia => ({
+  resumen: '', comentario_akahata: '', url: null, fuente_nombre: 'Akãhatã', tipo: 'noticia', sistema: null, idioma: 'es',
+  publicada_en: haceDias(1), estado: 'publicada', recolectada_automaticamente: true, ...n,
+});
+
+export const NOTICIAS: Noticia[] = [
+  nota({
+    id: 'n1', sistema: 'OEA', fuente_nombre: 'CIDH · Comunicados de prensa', publicada_en: haceDias(1),
+    titulo: 'Ejemplo: la CIDH anuncia el calendario de sesiones y el plazo para pedir audiencias en 2027',
+    resumen: 'La Comisión publicó las fechas de sus períodos de sesiones del próximo año y abrió el plazo para solicitar audiencias públicas.',
+    comentario_akahata: 'Es el momento de pensar audiencias conjuntas: una organización ambiental y una feminista pidiendo juntas suman fuerza. Mirá la oportunidad en el Radar.',
+  }),
+  nota({
+    id: 'n2', sistema: 'ONU', fuente_nombre: 'Noticias ONU · Derechos humanos', publicada_en: haceDias(2),
+    titulo: 'Ejemplo: el Alto Comisionado celebra la despenalización de las relaciones entre personas del mismo sexo en un país del Caribe',
+    resumen: 'El Alto Comisionado de la ONU para los Derechos Humanos saludó la decisión judicial y pidió a otros Estados de la región seguir el ejemplo.',
+  }),
+  nota({
+    id: 'n3', sistema: 'ONU', tipo: 'articulo', fuente_nombre: 'Agenda Estado de Derecho', publicada_en: haceDias(4),
+    titulo: 'Ejemplo: qué cambia en la justicia internacional con la nueva composición de los órganos de tratados',
+    resumen: 'Un análisis sobre la representación regional y de género en los comités de la ONU elegidos este año.',
+  }),
+  nota({
+    id: 'n4', sistema: 'Mercosur', fuente_nombre: 'IPPDH · Mercosur', publicada_en: haceDias(6),
+    titulo: 'Ejemplo: se realizó la Cumbre Social del Mercosur',
+    resumen: 'Organizaciones sociales de los países del bloque presentaron sus propuestas a las altas autoridades.',
+  }),
+  nota({
+    id: 'n5', tipo: 'nota_akahata', recolectada_automaticamente: false, publicada_en: haceDias(3),
+    titulo: 'Ejemplo de nota de Akãhatã: tres claves para presentar un informe sombra al Comité DESC',
+    resumen: 'Lo que aprendimos acompañando a organizaciones de la región en sus primeros informes alternativos.',
+  }),
+  nota({
+    id: 'n6', estado: 'pendiente', idioma: 'en', sistema: 'ONU', fuente_nombre: 'Universal Rights Group', tipo: 'articulo', publicada_en: haceDias(1),
+    titulo: 'Example: what to expect from the next Human Rights Council session',
+    resumen: '[En inglés: traducir al revisar] A preview of the resolutions and reports on the agenda.',
+  }),
+];
+
+export const COMENTARIOS: Comentario[] = [
+  {
+    id: 'c1', noticia_id: 'n1', organizacion_id: 'ag', autor: 'x', borrado: false, creado_en: haceDias(1),
+    texto: '¿Alguien más quiere pedir una audiencia sobre defensoras en zonas extractivas? Podemos armarla juntas.',
+  },
+  {
+    id: 'c2', noticia_id: 'n1', organizacion_id: 'ml', autor: 'x', borrado: false, creado_en: haceDias(0.5),
+    texto: 'Nosotras sí. Tenemos casos documentados en Bolivia.',
+  },
 ];

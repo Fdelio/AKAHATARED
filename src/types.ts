@@ -111,7 +111,39 @@ export interface PedidoApoyo {
 
 export type NuevoPedido = Pick<PedidoApoyo, 'oportunidad_id' | 'tipo_documento' | 'mensaje' | 'contacto'>;
 
-export type Pantalla = 'radar' | 'red' | 'chat' | 'mias' | 'revision' | 'cuenta' | 'cargar';
+export type Pantalla = 'noticias' | 'radar' | 'red' | 'chat' | 'mias' | 'revision' | 'cuenta' | 'cargar';
+
+export type TipoNoticia = 'noticia' | 'articulo' | 'nota_akahata';
+
+/** Noticia o artículo sobre los espacios internacionales (recolectado o escrito por Akãhatã). */
+export interface Noticia {
+  id: string;
+  titulo: string;
+  resumen: string;
+  /** Por qué importa para la red y cómo sumar la agenda. */
+  comentario_akahata: string;
+  url: string | null;
+  fuente_nombre: string;
+  tipo: TipoNoticia;
+  sistema: Sistema | null;
+  idioma: string;
+  publicada_en: string;
+  estado: EstadoRevision;
+  recolectada_automaticamente: boolean;
+}
+
+export type NuevaNoticia = Pick<Noticia, 'titulo' | 'resumen' | 'comentario_akahata' | 'url' | 'fuente_nombre' | 'tipo' | 'sistema'>;
+
+/** Comentario del foro de una noticia. Se firma con la organización. */
+export interface Comentario {
+  id: string;
+  noticia_id: string;
+  organizacion_id: string;
+  autor: string | null;
+  texto: string;
+  borrado: boolean;
+  creado_en: string;
+}
 
 /** Sesión de un órgano (Consejo de DDHH, EPU, CSW, Asamblea General de la OEA…). */
 export interface SesionOrgano {
