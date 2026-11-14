@@ -1,4 +1,4 @@
-import { CalendarDays, MessagesSquare, Network, PenLine } from 'lucide-react';
+import { CalendarDays, MessagesSquare, Network, Newspaper, PenLine } from 'lucide-react';
 import { Ingreso } from './CuentaView';
 
 interface Props {
@@ -8,6 +8,11 @@ interface Props {
 }
 
 const QUE_HAY = [
+  {
+    Icono: Newspaper,
+    titulo: 'Noticias',
+    texto: 'Lo que pasa en la ONU, la OEA y el Mercosur, de distintas fuentes y elegido por Akãhatã, con un foro para conversar cada noticia.',
+  },
   {
     Icono: CalendarDays,
     titulo: 'Oportunidades de participar',
@@ -63,7 +68,7 @@ export default function BienvenidaView({ modoEjemplo, onEnviarEnlace, onVerOport
             onClick={onVerOportunidades}
             className="rounded border-2 border-white px-4 py-2.5 text-[13px] font-extrabold uppercase tracking-widest text-white"
           >
-            Ver oportunidades
+            Ver noticias y oportunidades
           </button>
         </div>
       </section>
@@ -102,7 +107,7 @@ export default function BienvenidaView({ modoEjemplo, onEnviarEnlace, onVerOport
         </section>
 
         <button className="self-center text-sm font-bold text-magenta underline" onClick={onVerOportunidades}>
-          Ver las oportunidades sin registrarme
+          Ver noticias y oportunidades sin registrarme
         </button>
 
         <p className="m-0 -mt-2 text-center text-xs text-ink-soft">

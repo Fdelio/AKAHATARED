@@ -1,4 +1,5 @@
-import { TIPOS_APORTE, type EstadoPedido, type EstadoRevision, type Oportunidad, type Organizacion, type PedidoApoyo, type SolicitudUnion } from '../types';
+import { useState } from 'react';
+import { TIPOS_APORTE, type EstadoPedido, type EstadoRevision, type Oportunidad, type Organizacion, type Noticia, type PedidoApoyo, type SolicitudUnion } from '../types';
 import { EtiquetaSistema } from './ui';
 
 interface Props {
@@ -9,6 +10,10 @@ interface Props {
   oportunidades: Oportunidad[];
   onPedido: (id: string, estado: EstadoPedido) => void;
   solicitudes: SolicitudUnion[];
+  noticiasPendientes: Noticia[];
+  onNuevaNota: () => void;
+  onEditarNota: (id: string) => void;
+  onRevisarNota: (id: string, estado: EstadoRevision) => void;
   onResponder: (perfilId: string, aceptar: boolean) => void;
   onRevisar: (id: string, estado: EstadoRevision) => void;
   onAprobarOrg: (id: string, aprobada: boolean) => void;
@@ -16,7 +21,10 @@ interface Props {
   onEditar: (id: string) => void;
 }
 
-export default function RevisionView({ pendientes, orgsPendientes, pedidos, organizaciones, oportunidades, onPedido, solicitudes, onResponder, onRevisar, onAprobarOrg, onCargar, onEditar }: Props) {
+export default function RevisionView({ pendientes, orgsPendientes, pedidos, organizaciones, oportunidades, onPedido, solicitudes, onResponder, noticiasPendientes, onNuevaNota, onEditarNota, onRevisarNota, onRevisar, onAprobarOrg, onCargar, onEditar }: Props) {
+  const [verTodas, setVerTodas] = useState(false);
+  const notas = verTodas ? noticiasPendientes : noticiasPendientes.slice(0, 8);
+
   return (
     <div className="flex flex-col gap-3.5">
       <button
@@ -24,6 +32,12 @@ export default function RevisionView({ pendientes, orgsPendientes, pedidos, orga
         onClick={onCargar}
       >
         + Cargar una oportunidad a mano
+      </button>
+      <button
+        className="rounded border-2 border-magenta px-4 py-2.5 text-[13px] font-extrabold uppercase tracking-widest text-magenta"
+        onClick={onNuevaNota}
+      >
+        + Escribir una nota para Noticias
       </button>
 
       {pedidos.some((p) => p.estado !== 'cerrado') && (
@@ -98,6 +112,40 @@ export default function RevisionView({ pendientes, orgsPendientes, pedidos, orga
               </div>
             </div>
           ))}
+        </section>
+      )}
+
+      {noticiasPendientes.length > 0 && (
+        <section className="flex flex-col gap-2.5">
+          <h3 className="m-0 text-[13px] font-extrabold uppercase tracking-wider text-naranja-dark">
+            Noticias para revisar ({noticiasPendientes.length})
+          </h3>
+          <p className="m-0 text-[13px] text-ink-soft">
+            Llegan solas cada mañana. Publicá las que le sirven a la red; podés sumar un comentario de Akãhatã con Editar.
+          </p>
+          {notas.map((n) => (
+            <div key={n.id} className="flex flex-col gap-1.5 rounded-lg border border-dashed border-line bg-white p-3">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink-soft">
+                {n.fuente_nombre} · {new Date(n.publicada_en).toLocaleDateString('es', { day: 'numeric', month: 'short' })}
+              </span>
+              {n.url ? (
+                <a href={n.url} target="_blank" rel="noreferrer" className="text-[15px] font-extrabold leading-snug text-magenta">{n.titulo}</a>
+              ) : (
+                <b className="text-[15px] leading-snug text-magenta">{n.titulo}</b>
+              )}
+              {n.resumen && <span className="line-clamp-2 text-[13px] text-ink-soft">{n.resumen}</span>}
+              <div className="grid grid-cols-3 gap-2">
+                <button className="rounded bg-magenta px-1.5 py-2 text-xs font-extrabold uppercase text-white" onClick={() => onRevisarNota(n.id, 'publicada')}>Publicar</button>
+                <button className="rounded border-2 border-magenta px-1.5 py-1.5 text-xs font-extrabold uppercase text-magenta" onClick={() => onEditarNota(n.id)}>Editar</button>
+                <button className="rounded border-2 border-line px-1.5 py-1.5 text-xs font-extrabold uppercase text-ink-soft" onClick={() => onRevisarNota(n.id, 'descartada')}>Descartar</button>
+              </div>
+            </div>
+          ))}
+          {noticiasPendientes.length > notas.length && (
+            <button className="self-start text-sm font-bold text-magenta underline" onClick={() => setVerTodas(true)}>
+              Ver las {noticiasPendientes.length - notas.length} restantes
+            </button>
+          )}
         </section>
       )}
 

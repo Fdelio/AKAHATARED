@@ -3,7 +3,7 @@
  * base real; si no, trabaja en memoria con los datos de ejemplo.
  */
 import type {
-  EstadoPedido, EstadoRevision, Mensaje, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Participacion,
+  Comentario, EstadoPedido, EstadoRevision, Mensaje, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Participacion,
   PedidoApoyo, Sesion, SesionOrgano, SolicitudUnion, Trabajo, Visibilidad,
 } from '../types';
 import { supabase } from './supabaseClient';
@@ -17,6 +17,8 @@ const mem = {
   pedidos: [...ejemplo.PEDIDOS],
   mensajes: [...ejemplo.MENSAJES],
   solicitudes: [...ejemplo.SOLICITUDES],
+  noticias: [...ejemplo.NOTICIAS],
+  comentarios: [...ejemplo.COMENTARIOS],
 };
 
 export async function listarOportunidades(estado: EstadoRevision = 'publicada'): Promise<Oportunidad[]> {
@@ -411,6 +413,95 @@ export function escucharMensajes(fn: () => void): () => void {
   return () => {
     cliente.removeChannel(canal);
   };
+}
+
+// ---------- Noticias y foro ----------
+
+export async function listarNoticias(estado: EstadoRevision = 'publicada'): Promise<Noticia[]> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('noticias')
+      .select('*')
+      .eq('estado', estado)
+      .order('publicada_en', { ascending: false })
+      .limit(estado === 'publicada' ? 200 : 300);
+    if (error) throw error;
+    return data as Noticia[];
+  }
+  return mem.noticias.filter((n) => n.estado === estado).sort((a, b) => b.publicada_en.localeCompare(a.publicada_en));
+}
+
+/** Akãhatã escribe una nota propia o carga una noticia a mano. */
+export async function crearNoticia(n: NuevaNoticia, publicar: boolean) {
+  const estado: EstadoRevision = publicar ? 'publicada' : 'pendiente';
+  if (supabase) {
+    const { error } = await supabase.from('noticias').insert({ ...n, estado });
+    if (error) throw error;
+    return;
+  }
+  mem.noticias.push({
+    ...n, id: 'n-' + Date.now(), estado, idioma: 'es', publicada_en: new Date().toISOString(), recolectada_automaticamente: false,
+  });
+}
+
+/** Corregir, publicar o descartar una noticia. */
+export async function actualizarNoticia(id: string, cambios: Partial<NuevaNoticia>, estado: EstadoRevision) {
+  if (supabase) {
+    const { error } = await supabase.from('noticias').update({ ...cambios, estado }).eq('id', id);
+    if (error) throw error;
+    return;
+  }
+  const n = mem.noticias.find((x) => x.id === id);
+  if (n) Object.assign(n, cambios, { estado });
+}
+
+/** Cantidad de comentarios por noticia (solo la ven organizaciones aprobadas y Akãhatã). */
+export async function contarComentarios(): Promise<Record<string, number>> {
+  let filas: { noticia_id: string }[] = mem.comentarios.filter((c) => !c.borrado);
+  if (supabase) {
+    const { data, error } = await supabase.from('comentarios').select('noticia_id').eq('borrado', false);
+    if (error) throw error;
+    filas = data;
+  }
+  const cuenta: Record<string, number> = {};
+  filas.forEach((f) => (cuenta[f.noticia_id] = (cuenta[f.noticia_id] ?? 0) + 1));
+  return cuenta;
+}
+
+export async function listarComentarios(noticiaId: string): Promise<Comentario[]> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('comentarios')
+      .select('*')
+      .eq('noticia_id', noticiaId)
+      .order('creado_en', { ascending: true });
+    if (error) throw error;
+    return data as Comentario[];
+  }
+  return mem.comentarios.filter((c) => c.noticia_id === noticiaId);
+}
+
+export async function comentar(noticiaId: string, organizacionId: string, texto: string) {
+  if (supabase) {
+    const { error } = await supabase.from('comentarios').insert({ noticia_id: noticiaId, organizacion_id: organizacionId, texto });
+    if (error) throw error;
+    return;
+  }
+  mem.comentarios.push({
+    id: 'c-' + Date.now(), noticia_id: noticiaId, organizacion_id: organizacionId, autor: 'yo', texto, borrado: false,
+    creado_en: new Date().toISOString(),
+  });
+}
+
+/** Lo puede hacer quien lo escribió o Akãhatã. */
+export async function borrarComentario(id: string) {
+  if (supabase) {
+    const { error } = await supabase.from('comentarios').update({ borrado: true, texto: 'Comentario borrado' }).eq('id', id);
+    if (error) throw error;
+    return;
+  }
+  const c = mem.comentarios.find((x) => x.id === id);
+  if (c) Object.assign(c, { borrado: true, texto: 'Comentario borrado' });
 }
 
 /** Días que faltan hasta la fecha límite (negativo si ya pasó). */
