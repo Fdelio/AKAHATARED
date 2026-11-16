@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Oportunidad, Organizacion, Participacion, SesionOrgano } from '../types';
+import type { NuevaSesion, Oportunidad, Organizacion, Participacion, SesionOrgano } from '../types';
 import { TarjetaOportunidad } from './ui';
 import { diasHasta } from '../lib/datos';
 import CalendarioView from './CalendarioView';
@@ -11,9 +11,12 @@ interface Props {
   miOrg: string | null;
   sesiones: SesionOrgano[];
   onAbrir: (id: string) => void;
+  /** Solo para el equipo de Akãhatã. */
+  onGuardarSesion?: (id: string | null, s: NuevaSesion) => Promise<boolean>;
+  onBorrarSesion?: (id: string) => Promise<void>;
 }
 
-export default function RadarView({ oportunidades, organizaciones, participaciones, miOrg, sesiones, onAbrir }: Props) {
+export default function RadarView({ oportunidades, organizaciones, participaciones, miOrg, sesiones, onAbrir, onGuardarSesion, onBorrarSesion }: Props) {
   const [vista, setVista] = useState<'convocatorias' | 'calendario'>('convocatorias');
   const [tema, setTema] = useState('Todos');
   const abiertas = oportunidades.filter((o) => diasHasta(o.fecha_limite) >= 0);
@@ -44,7 +47,7 @@ export default function RadarView({ oportunidades, organizaciones, participacion
     return (
       <div className="flex flex-col gap-3.5">
         {pestanas}
-        <CalendarioView sesiones={sesiones} />
+        <CalendarioView sesiones={sesiones} onGuardar={onGuardarSesion} onBorrar={onBorrarSesion} />
       </div>
     );
   }

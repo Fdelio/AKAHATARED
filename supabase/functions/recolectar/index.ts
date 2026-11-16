@@ -6,6 +6,9 @@
 //
 // Fuentes:
 //   - CIDH · Cuestionarios de consulta (oas.org)
+//   - CIDH · Comunicados de prensa que abren un plazo para la sociedad civil
+//     (pedidos de audiencias, consultas públicas, convocatorias). Se guarda el
+//     enlace al comunicado específico.
 //   - ONU · procedimientos especiales y ACNUDH, a través de la página de
 //     convocatorias de Geneva Environment Network (ohchr.org bloquea la lectura
 //     automática).
@@ -27,6 +30,10 @@ interface Hallazgo {
 }
 
 const CIDH_URL = 'https://www.oas.org/es/cidh/jsForm/?File=/es/cidh/informes/cuestionarios.asp';
+const CIDH_COMUNICADOS_URL = 'https://www.oas.org/es/cidh/prensa/comunicados.asp';
+/** Títulos de comunicados que suelen abrir un plazo para participar. */
+const CONVOCA =
+  /solicitudes? de audiencia|solicitar audiencia|recibe solicitudes|consulta p[úu]blica|convoca|convocatoria|abre (?:el )?(?:plazo|registro|inscripci)|registro para participar|cuestionario|llamado a/i;
 const GEN_URL = 'https://www.genevaenvironmentnetwork.org/resources/updates/special-procedures-of-the-human-rights-council/';
 
 const MESES_ES: Record<string, number> = {
@@ -50,7 +57,11 @@ function texto(html: string): string {
     .replace(/&#160;|&nbsp;/g, ' ')
     .replace(/&#8220;|&#8221;|&quot;/g, '"')
     .replace(/&#8217;/g, '’')
+    .replace(/&([aeiouAEIOU])acute;/g, (_, v) => v.normalize('NFD') + '\u0301')
+    .replace(/&ntilde;/g, 'ñ')
+    .replace(/&mdash;|&#8212;|&ndash;|&#8211;/g, '–')
     .replace(/&amp;/g, '&')
+    .normalize('NFC')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -128,6 +139,55 @@ async function deCidh(): Promise<Hallazgo[]> {
   return hallazgos;
 }
 
+/**
+ * Busca la fecha de cierre en el texto de un comunicado: lo que viene después
+ * de "solicitudes", "plazo", "hasta", etc. En "del 19 de noviembre al 10 de
+ * diciembre de 2026" toma el 10 de diciembre.
+ */
+function cierreEnComunicado(t: string): string | null {
+  for (const m of t.matchAll(/(?:solicitud|plazo|vence|hasta|cierr|registro|inscrip|recib)[\s\S]{0,220}/gi)) {
+    const tramo = m[0];
+    const rango = tramo.match(/del?\s+\d{1,2}(?:\s+de\s+[a-záéíóú]+)?(?:\s+de\s+\d{4})?\s+(?:al|hasta el)\s+(\d{1,2}\s+de\s+[a-záéíóú]+(?:\s+de\s+\d{4})?)/i);
+    const fecha = fechaEs(rango ? rango[1] : tramo);
+    if (fecha && fecha >= hoy()) return fecha;
+  }
+  return null;
+}
+
+async function deComunicadosCidh(): Promise<Hallazgo[]> {
+  const html = await leer(CIDH_COMUNICADOS_URL, 'iso-8859-1');
+  const hace30 = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+  const patron = /<li><a href='[^']*?(\/es\/cidh\/prensa\/comunicados\/(\d{4})\/(\d+)\.asp)[^']*'[^>]*>([\s\S]*?)<\/a>[\s\S]*?<span[^>]*>([^<]*)<\/span>/gi;
+  const hallazgos: Hallazgo[] = [];
+  for (const m of html.matchAll(patron)) {
+    const titulo = texto(m[4]).replace(/^[A-Z]*\d+\/\d+\s*[—–-]\s*/, '');
+    const publicado = fechaEs(m[5]);
+    if (!titulo || !CONVOCA.test(titulo) || !publicado || publicado < hace30) continue;
+    const url = 'https://www.oas.org/es/CIDH/jsForm/?File=' + m[1];
+    try {
+      const cuerpo = texto(await leer(url, 'iso-8859-1'));
+      const desde = cuerpo.search(/Washington,? D\.?C\.?\s*[—–-]/);
+      const nota = desde >= 0 ? cuerpo.slice(desde) : cuerpo;
+      const fecha = cierreEnComunicado(nota);
+      if (!fecha) continue;
+      hallazgos.push({
+        clave_fuente: `cidh-comunicado-${m[2]}-${m[3]}`,
+        sistema: 'OEA',
+        mecanismo: /audiencia/i.test(titulo) ? 'CIDH · audiencias' : 'CIDH · consultas públicas',
+        titulo,
+        resumen: nota.replace(/^Washington,? D\.?C\.?\s*[—–-]\s*/, '').slice(0, 600),
+        tema: adivinarTema(titulo + ' ' + nota.slice(0, 1500)),
+        fecha_limite: fecha,
+        fuente_nombre: `CIDH · Comunicado ${m[3]}/${m[2].slice(2)}`,
+        fuente_url: url,
+      });
+    } catch {
+      // Si un comunicado no se puede leer, se sigue con los demás.
+    }
+  }
+  return hallazgos;
+}
+
 async function deGeneva(): Promise<Hallazgo[]> {
   const html = await leer(GEN_URL);
   const hallazgos: Hallazgo[] = [];
@@ -168,7 +228,7 @@ Deno.serve(async () => {
   const informe: Record<string, unknown> = {};
   const todos: Hallazgo[] = [];
 
-  for (const [nombre, fuente] of [['cidh', deCidh], ['geneva', deGeneva]] as const) {
+  for (const [nombre, fuente] of [['cidh', deCidh], ['cidh-comunicados', deComunicadosCidh], ['geneva', deGeneva]] as const) {
     try {
       const h = await fuente();
       todos.push(...h);

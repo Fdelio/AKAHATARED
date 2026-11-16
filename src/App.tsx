@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Building2, CheckCheck, House, MessagesSquare, Network, Newspaper, Radar, UserRound } from 'lucide-react';
 import type {
-  EstadoRevision, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Pantalla, Participacion, PedidoApoyo, Sesion,
+  EstadoRevision, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevaSesion, NuevoPedido, Oportunidad, Organizacion, Pantalla, Participacion, PedidoApoyo, Sesion,
   SesionOrgano, SolicitudUnion, Visibilidad, MensajePrivado, PersonaRed,
 } from './types';
 import * as datos from './lib/datos';
@@ -216,6 +216,19 @@ export default function App() {
     }
   };
 
+  const guardarSesion = async (id: string | null, s: NuevaSesion) => {
+    try {
+      await datos.guardarSesionOrgano(id, s);
+      setSesiones(await datos.listarSesiones());
+      setAviso(id ? 'Sesión actualizada' : 'Sesión agregada al calendario');
+      return true;
+    } catch (e) {
+      console.error(e);
+      setAviso('No se pudo guardar. Intentá de nuevo.');
+      return false;
+    }
+  };
+
   const notaEnEdicion = ruta.notaEditar && ruta.notaEditar !== 'nueva'
     ? [...noticiasPendientes, ...noticias].find((x) => x.id === ruta.notaEditar)
     : undefined;
@@ -366,6 +379,8 @@ export default function App() {
             miOrg={miOrg}
             sesiones={sesiones}
             onAbrir={(id) => ir('op-' + id)}
+            onGuardarSesion={revisora ? guardarSesion : undefined}
+            onBorrarSesion={revisora ? (id) => ejecutar(() => datos.borrarSesionOrgano(id), 'Sesión borrada del calendario') : undefined}
           />
         ) : ruta.pantalla === 'cuenta' ? (
           <CuentaView

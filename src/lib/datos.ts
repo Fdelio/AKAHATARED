@@ -4,7 +4,7 @@
  */
 import type {
   Comentario, MensajePrivado, Perfil, PersonaRed, EstadoPedido, EstadoRevision, Mensaje, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Participacion,
-  PedidoApoyo, Sesion, SesionOrgano, SolicitudUnion, Trabajo, Visibilidad,
+  NuevaSesion, PedidoApoyo, Sesion, SesionOrgano, SolicitudUnion, Trabajo, Visibilidad,
 } from '../types';
 import { supabase } from './supabaseClient';
 import * as ejemplo from '../data/datosEjemplo';
@@ -21,6 +21,7 @@ const mem = {
   perfil: { ...ejemplo.MI_PERFIL },
   privados: [...ejemplo.PRIVADOS],
   comentarios: [...ejemplo.COMENTARIOS],
+  sesiones: [...ejemplo.SESIONES],
   fotoEn: null as string | null,
   logoEn: new Map<string, string | null>(),
   /** Modo ejemplo: imágenes subidas en esta visita. */
@@ -75,9 +76,37 @@ export async function listarSesiones(): Promise<SesionOrgano[]> {
       .or(`fecha_fin.gte.${hoy},and(fecha_fin.is.null,fecha_inicio.gte.${hoy})`)
       .order('fecha_inicio');
     if (error) throw error;
-    return data as SesionOrgano[];
+    return (data as SesionOrgano[]).map((x) => ({ ...x, fechas_clave: x.fechas_clave ?? [] }));
   }
-  return ejemplo.SESIONES;
+  return [...mem.sesiones].sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio));
+}
+
+/** El equipo de Akãhatã carga o corrige una sesión del calendario (fechas, enlaces, plazos). */
+export async function guardarSesionOrgano(id: string | null, s: NuevaSesion) {
+  const fila = {
+    ...s,
+    fecha_fin: s.fecha_fin || null,
+    fuente_url: s.fuente_url?.trim() || null,
+    fechas_clave: [...s.fechas_clave].sort((a, b) => a.fecha.localeCompare(b.fecha)),
+  };
+  if (supabase) {
+    const { error } = id
+      ? await supabase.from('sesiones').update(fila).eq('id', id)
+      : await supabase.from('sesiones').insert(fila);
+    if (error) throw error;
+    return;
+  }
+  if (id) mem.sesiones = mem.sesiones.map((x) => (x.id === id ? { ...fila, id } : x));
+  else mem.sesiones.push({ ...fila, id: 'ses-' + Date.now() });
+}
+
+export async function borrarSesionOrgano(id: string) {
+  if (supabase) {
+    const { error } = await supabase.from('sesiones').delete().eq('id', id);
+    if (error) throw error;
+    return;
+  }
+  mem.sesiones = mem.sesiones.filter((x) => x.id !== id);
 }
 
 // ---------- Ingreso ----------

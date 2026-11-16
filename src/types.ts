@@ -197,4 +197,18 @@ export interface SesionOrgano {
   lugar: string;
   descripcion: string;
   fuente_url: string | null;
+  /** Plazos para participar: inscripción, informes, eventos paralelos, audiencias… */
+  fechas_clave: FechaClave[];
 }
+
+/** Un plazo dentro de una sesión. */
+export interface FechaClave {
+  fecha: string; // YYYY-MM-DD
+  texto: string;
+  /** Enlace a la página específica (formulario, inscripción, guía). */
+  url: string | null;
+  /** La fecha es estimada (por ejemplo, calculada según años anteriores). */
+  aprox: boolean;
+}
+
+export type NuevaSesion = Omit<SesionOrgano, 'id'>;
