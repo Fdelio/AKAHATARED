@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Building2, CheckCheck, MessagesSquare, Network, Newspaper, Radar, UserRound } from 'lucide-react';
+import { Building2, CheckCheck, House, MessagesSquare, Network, Newspaper, Radar, UserRound } from 'lucide-react';
 import type {
   EstadoRevision, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Pantalla, Participacion, PedidoApoyo, Sesion,
   SesionOrgano, SolicitudUnion, Visibilidad, MensajePrivado, PersonaRed,
@@ -23,6 +23,7 @@ import { Boton, useImagen } from './components/ui';
 
 type ItemNav = { id: Pantalla; label: string; Icono: typeof Radar };
 const NAV: ItemNav[] = [
+  { id: 'inicio', label: 'Inicio', Icono: House },
   { id: 'noticias', label: 'Noticias', Icono: Newspaper },
   { id: 'radar', label: 'Oportunidades', Icono: Radar },
   { id: 'red', label: 'Red', Icono: Network },
@@ -31,6 +32,7 @@ const NAV: ItemNav[] = [
 ];
 
 const TITULOS: Record<Pantalla, [string, string]> = {
+  inicio: ['Inicio', 'Radar de Incidencia Internacional'],
   noticias: ['Noticias', 'Lo que pasa en los espacios internacionales'],
   radar: ['Oportunidades de participar', 'ONU, OEA y Mercosur, en todos los temas'],
   red: ['La red', 'Organizaciones, personas y su trabajo'],
@@ -41,7 +43,7 @@ const TITULOS: Record<Pantalla, [string, string]> = {
   cargar: ['Cargar oportunidad', 'Se suma al radar de incidencia'],
 };
 
-const RUTAS: Pantalla[] = ['noticias', 'radar', 'red', 'chat', 'mias', 'revision', 'cuenta', 'cargar'];
+const RUTAS: Pantalla[] = ['inicio', 'noticias', 'radar', 'red', 'chat', 'mias', 'revision', 'cuenta', 'cargar'];
 
 /** La ruta vive en el hash (#radar, #op-<id>, #red…) para que los links se puedan compartir. */
 function leerRuta(): {
@@ -265,7 +267,7 @@ export default function App() {
   }
 
   // Quien no ingresó ve la portada con el ingreso. (#bienvenida la muestra igual, para revisarla.)
-  if ((!sesion && !visitante) || window.location.hash === '#bienvenida') {
+  if ((!sesion && (!visitante || ruta.pantalla === 'inicio')) || window.location.hash === '#bienvenida') {
     return (
       <BienvenidaView
         modoEjemplo={modoEjemplo}
@@ -304,6 +306,11 @@ export default function App() {
           Modo ejemplo · datos inventados
         </div>
       )}
+      {ruta.pantalla === 'inicio' ? (
+        <main className="flex-1">
+          <BienvenidaView modoEjemplo={modoEjemplo} enLaApp onVerOportunidades={() => ir('radar')} onIr={ir} />
+        </main>
+      ) : (<>
       <div className="relative isolate mx-3 mt-3 flex items-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-br from-magenta via-magenta-dark to-berenjena px-5 pt-5 pb-6 text-white shadow-[0_10px_30px_-12px_rgb(163_13_95/0.8)]">
         <div className="absolute -bottom-[92px] -left-[70px] -z-10 h-[120px] w-[200px] rounded-full bg-naranja" />
         <div className="absolute -top-[26px] -right-[26px] -z-10 size-24 rounded-full border-2 border-naranja" />
@@ -504,8 +511,9 @@ export default function App() {
           />
         )}
       </main>
+      </>)}
 
-      <nav className="sticky bottom-0 z-20 grid grid-cols-5 border-t border-line bg-fondo/90 backdrop-blur-md sm:rounded-b-3xl pb-[env(safe-area-inset-bottom)]" aria-label="Secciones">
+      <nav className="sticky bottom-0 z-20 grid grid-cols-6 border-t border-line bg-fondo/90 backdrop-blur-md sm:rounded-b-3xl pb-[env(safe-area-inset-bottom)]" aria-label="Secciones">
         {nav.map(({ id, label, Icono }) => {
           const actual = abierta ? id === 'radar' : ruta.pantalla === id;
           return (
