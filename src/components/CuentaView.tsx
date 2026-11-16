@@ -10,7 +10,7 @@ const TEMAS = [
 ];
 
 export const campo =
-  'w-full rounded border-2 border-line bg-white px-3 py-2.5 text-[15px] text-ink focus:border-magenta focus:outline-none';
+  'w-full rounded border-2 border-line bg-tarjeta px-3 py-2.5 text-[15px] text-ink focus:border-rosa focus:outline-none';
 export const etiqueta = 'flex flex-col gap-1 text-[13px] font-bold text-ink';
 
 interface Props {
@@ -74,7 +74,7 @@ export default function CuentaView({
           <Iniciales org={org} grande />
           <div className="min-w-0">
             <div className="text-[11px] font-extrabold uppercase tracking-widest text-naranja-dark">Tu organización</div>
-            <b className="block text-lg leading-tight text-magenta">{org.nombre}</b>
+            <b className="block text-lg leading-tight text-rosa">{org.nombre}</b>
             <span className="text-sm text-ink-soft">{org.pais}{org.temas.length > 0 && ' · ' + org.temas.join(', ')}</span>
           </div>
         </div>
@@ -127,8 +127,8 @@ function DarmeDeBaja({ tieneOrganizacion, onListo }: { tieneOrganizacion: boolea
   };
 
   return (
-    <form onSubmit={enviar} className="flex flex-col gap-3 rounded-lg border-2 border-magenta/40 p-3.5">
-      <b className="text-magenta">Darme de baja</b>
+    <form onSubmit={enviar} className="flex flex-col gap-3 rounded-lg border-2 border-rosa/40 p-3.5">
+      <b className="text-rosa">Darme de baja</b>
       <p className="m-0 text-sm text-ink">
         Se borra tu cuenta de la app: tu correo, tu contraseña, tu perfil y tus mensajes privados. No te vamos a mandar
         más correos. No se puede deshacer: si querés volver, creás una cuenta nueva.
@@ -140,7 +140,7 @@ function DarmeDeBaja({ tieneOrganizacion, onListo }: { tieneOrganizacion: boolea
         </p>
       )}
       <label className="flex items-start gap-2.5 text-sm text-ink">
-        <input type="checkbox" className="mt-1 size-4 accent-magenta" checked={borrarLoQueEscribi} onChange={(e) => setBorrarLoQueEscribi(e.target.checked)} />
+        <input type="checkbox" className="mt-1 size-4 accent-rosa" checked={borrarLoQueEscribi} onChange={(e) => setBorrarLoQueEscribi(e.target.checked)} />
         <span>Borrar también todo lo que escribí en el chat y en los comentarios de noticias.</span>
       </label>
       <label className={etiqueta}>
@@ -148,12 +148,12 @@ function DarmeDeBaja({ tieneOrganizacion, onListo }: { tieneOrganizacion: boolea
         <input className={campo} value={confirmacion} onChange={(e) => setConfirmacion(e.target.value)} autoComplete="off" />
       </label>
       {estado === 'ultima' && (
-        <p className="m-0 text-sm text-magenta">
+        <p className="m-0 text-sm text-rosa">
           Sos la única persona del equipo de Akãhatã que puede revisar. Antes de darte de baja, sumá a otra persona al
           equipo.
         </p>
       )}
-      {estado === 'error' && <p className="m-0 text-sm text-magenta">No se pudo borrar la cuenta. Intentá de nuevo.</p>}
+      {estado === 'error' && <p className="m-0 text-sm text-rosa">No se pudo borrar la cuenta. Intentá de nuevo.</p>}
       <div className="flex flex-wrap gap-2">
         <button
           type="submit"
@@ -219,8 +219,8 @@ function EquipoAkahata() {
           Si ya tiene cuenta, el rol es inmediato. Si no, lo recibe cuando cree su cuenta con ese correo y lo confirme.
         </span>
       </label>
-      {estado === 'listo' && <p className="m-0 text-sm font-bold text-magenta">Listo, la sumamos al equipo.</p>}
-      {estado === 'error' && <p className="m-0 text-sm text-magenta">No se pudo sumar. Revisá el correo.</p>}
+      {estado === 'listo' && <p className="m-0 text-sm font-bold text-rosa">Listo, la sumamos al equipo.</p>}
+      {estado === 'error' && <p className="m-0 text-sm text-rosa">No se pudo sumar. Revisá el correo.</p>}
       <Boton variante="borde">{estado === 'guardando' ? 'Sumando…' : 'Sumar al equipo'}</Boton>
     </form>
   );
@@ -281,18 +281,18 @@ function TuPerfil({
         <textarea className={campo} rows={3} maxLength={400} value={p.presentacion} onChange={(e) => cambiar('presentacion', e.target.value)} placeholder="Temas en los que trabajás, idiomas, espacios donde participaste…" />
       </label>
       <label className="flex items-start gap-2.5 text-sm text-ink">
-        <input type="checkbox" className="mt-1 size-4 accent-magenta" checked={p.visible_en_red} onChange={(e) => cambiar('visible_en_red', e.target.checked)} />
+        <input type="checkbox" className="mt-1 size-4 accent-rosa" checked={p.visible_en_red} onChange={(e) => cambiar('visible_en_red', e.target.checked)} />
         <span><b>Aparecer en la red.</b> Tu nombre, lo que hacés y tu organización se ven solo para organizaciones aprobadas.</span>
       </label>
       <label className="flex items-start gap-2.5 text-sm text-ink">
-        <input type="checkbox" className="mt-1 size-4 accent-magenta" checked={p.acepta_mensajes} onChange={(e) => cambiar('acepta_mensajes', e.target.checked)} />
+        <input type="checkbox" className="mt-1 size-4 accent-rosa" checked={p.acepta_mensajes} onChange={(e) => cambiar('acepta_mensajes', e.target.checked)} />
         <span><b>Recibir mensajes privados</b> dentro de la app. Nadie ve tu correo.</span>
       </label>
       {!aprobada && p.visible_en_red && (
         <p className="m-0 text-xs text-naranja-dark">Vas a aparecer cuando Akãhatã apruebe tu organización.</p>
       )}
-      {estado === 'listo' && <p className="m-0 text-sm font-bold text-magenta">Listo, guardamos tu perfil.</p>}
-      {estado === 'error' && <p className="m-0 text-sm text-magenta">No se pudo guardar. Intentá de nuevo.</p>}
+      {estado === 'listo' && <p className="m-0 text-sm font-bold text-rosa">Listo, guardamos tu perfil.</p>}
+      {estado === 'error' && <p className="m-0 text-sm text-rosa">No se pudo guardar. Intentá de nuevo.</p>}
       <Boton variante="borde">{estado === 'guardando' ? 'Guardando…' : 'Guardar perfil'}</Boton>
     </form>
   );
@@ -320,7 +320,7 @@ function CambiarImagen({
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
       <div className="flex flex-wrap gap-x-3 gap-y-1">
-        <label className="cursor-pointer text-sm font-bold text-magenta underline">
+        <label className="cursor-pointer text-sm font-bold text-rosa underline">
           {estado === 'subiendo' ? 'Guardando…' : tiene ? textoCambiar : textoSubir}
           <input
             type="file"
@@ -339,7 +339,7 @@ function CambiarImagen({
         )}
       </div>
       <span className="text-xs text-ink-soft">{ayuda}</span>
-      {estado === 'error' && <span className="text-xs text-magenta">No se pudo guardar la imagen. Probá con otra.</span>}
+      {estado === 'error' && <span className="text-xs text-rosa">No se pudo guardar la imagen. Probá con otra.</span>}
     </div>
   );
 }
@@ -347,10 +347,10 @@ function CambiarImagen({
 function CambiarContrasena() {
   const [abierto, setAbierto] = useState(false);
   const [listo, setListo] = useState(false);
-  if (listo) return <p className="m-0 text-sm font-bold text-magenta">Guardamos tu contraseña. La próxima vez entrá con tu correo y esa contraseña.</p>;
+  if (listo) return <p className="m-0 text-sm font-bold text-rosa">Guardamos tu contraseña. La próxima vez entrá con tu correo y esa contraseña.</p>;
   if (!abierto)
     return (
-      <button type="button" className="self-start text-sm font-bold text-magenta underline" onClick={() => setAbierto(true)}>
+      <button type="button" className="self-start text-sm font-bold text-rosa underline" onClick={() => setAbierto(true)}>
         Crear o cambiar tu contraseña
       </button>
     );
@@ -422,7 +422,7 @@ export function Ingreso({ modoEjemplo }: { modoEjemplo: boolean }) {
           ? 'Te mandamos un correo con un enlace para elegir una contraseña nueva.'
           : 'Te mandamos un enlace para entrar. Abrilo desde este mismo dispositivo.';
     return (
-      <div className="flex flex-col gap-3 rounded-lg bg-magenta-light p-4 text-magenta">
+      <div className="flex flex-col gap-3 rounded-lg bg-magenta-light p-4 text-rosa">
         <b className="text-lg">Revisá tu correo</b>
         <p className="m-0 text-sm text-ink">
           {texto} Lo mandamos a <b>{email}</b>. Si no llega en unos minutos, mirá la carpeta de spam.
@@ -436,7 +436,7 @@ export function Ingreso({ modoEjemplo }: { modoEjemplo: boolean }) {
   return (
     <form onSubmit={enviar} className="flex flex-col gap-4">
       {(modo === 'entrar' || modo === 'crear') && (
-        <div className="grid grid-cols-2 rounded-lg bg-white p-1" role="tablist">
+        <div className="grid grid-cols-2 rounded-lg bg-tarjeta p-1" role="tablist">
           {(['entrar', 'crear'] as const).map((m) => (
             <button
               type="button"
@@ -483,7 +483,7 @@ export function Ingreso({ modoEjemplo }: { modoEjemplo: boolean }) {
         </label>
       )}
       {modoEjemplo && <p className="m-0 text-xs text-naranja-dark">En modo ejemplo no se manda ningún correo.</p>}
-      {error && <p className="m-0 text-sm text-magenta">{error}</p>}
+      {error && <p className="m-0 text-sm text-rosa">{error}</p>}
       <Boton>
         {estado === 'enviando'
           ? 'Un momento…'
@@ -497,7 +497,7 @@ export function Ingreso({ modoEjemplo }: { modoEjemplo: boolean }) {
       </Boton>
       <div className="flex flex-col items-start gap-1.5 text-sm">
         {modo === 'entrar' && (
-          <button type="button" className="font-bold text-magenta underline" onClick={() => cambiarModo('olvide')}>¿Olvidaste tu contraseña? (o todavía no tenés)</button>
+          <button type="button" className="font-bold text-rosa underline" onClick={() => cambiarModo('olvide')}>¿Olvidaste tu contraseña? (o todavía no tenés)</button>
         )}
         {modo !== 'enlace' && (
           <button type="button" className="text-ink-soft underline" onClick={() => cambiarModo('enlace')}>Entrar con un enlace por correo, sin contraseña</button>
@@ -543,7 +543,7 @@ export function NuevaContrasena({ titulo, onListo }: { titulo: string; onListo: 
 
   return (
     <form onSubmit={enviar} className="flex flex-col gap-3 rounded-lg border border-line p-3.5">
-      <b className="text-magenta">{titulo}</b>
+      <b className="text-rosa">{titulo}</b>
       <label className={etiqueta}>
         Contraseña nueva
         <input type="password" required minLength={8} autoComplete="new-password" className={campo} value={c1} onChange={(e) => setC1(e.target.value)} />
@@ -552,7 +552,7 @@ export function NuevaContrasena({ titulo, onListo }: { titulo: string; onListo: 
         Repetila
         <input type="password" required minLength={8} autoComplete="new-password" className={campo} value={c2} onChange={(e) => setC2(e.target.value)} />
       </label>
-      {error && <p className="m-0 text-sm text-magenta">{error}</p>}
+      {error && <p className="m-0 text-sm text-rosa">{error}</p>}
       <Boton variante="borde">{guardando ? 'Guardando…' : 'Guardar contraseña'}</Boton>
     </form>
   );
@@ -583,14 +583,14 @@ function SinOrganizacion({
       <p className="m-0 text-sm text-ink-soft">
         Hola, <b className="text-ink">{email}</b>. ¿Tu organización ya está en la red?
       </p>
-      <div className="grid grid-cols-2 rounded-lg bg-crema p-1" role="tablist">
+      <div className="grid grid-cols-2 rounded-lg bg-panel p-1" role="tablist">
         {(['unirme', 'nueva'] as const).map((m) => (
           <button
             key={m}
             role="tab"
             aria-selected={modo === m}
             onClick={() => setModo(m)}
-            className={`rounded-md px-1 py-2 text-[12px] font-extrabold uppercase tracking-wider ${modo === m ? 'bg-white text-magenta shadow-sm' : 'text-ink-soft'}`}
+            className={`rounded-md px-1 py-2 text-[12px] font-extrabold uppercase tracking-wider ${modo === m ? 'bg-magenta text-white shadow-sm' : 'text-ink-soft'}`}
           >
             {m === 'unirme' ? 'Ya está en la red' : 'Registrar una nueva'}
           </button>
@@ -662,7 +662,7 @@ function AltaOrganizacion({ email, onCrear, onSalir }: { email: string; onCrear:
                 key={t}
                 aria-pressed={activo}
                 onClick={() => alternarTema(t)}
-                className={`rounded-full border-2 px-3 py-1 text-xs font-bold ${activo ? 'border-magenta bg-magenta text-white' : 'border-line text-ink-soft'}`}
+                className={`rounded-full border-2 px-3 py-1 text-xs font-bold ${activo ? 'border-rosa bg-magenta text-white' : 'border-line text-ink-soft'}`}
               >
                 {t}
               </button>

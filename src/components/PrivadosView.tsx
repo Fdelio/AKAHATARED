@@ -119,7 +119,7 @@ export default function PrivadosView({ privados, usuariaId, personaId, personas,
 
   return (
     <div className="flex flex-col gap-3">
-      <button onClick={() => onAbrir(null)} className="flex items-center gap-1 self-start text-sm font-bold text-magenta">
+      <button onClick={() => onAbrir(null)} className="flex items-center gap-1 self-start text-sm font-bold text-rosa">
         <ArrowLeft size={16} /> Mensajes privados
       </button>
       <div className="flex items-center gap-3 rounded-lg border border-line p-3">
@@ -133,7 +133,7 @@ export default function PrivadosView({ privados, usuariaId, personaId, personas,
         {conversacion.map((m) => {
           const mio = m.de === usuariaId;
           return (
-            <div key={m.id} className={`max-w-[85%] rounded-lg px-3 py-2 text-[14px] ${mio ? 'self-end bg-magenta text-white' : 'self-start bg-white text-ink'}`}>
+            <div key={m.id} className={`max-w-[85%] rounded-lg px-3 py-2 text-[14px] ${mio ? 'self-end bg-magenta text-white' : 'self-start bg-tarjeta text-ink'}`}>
               <div className="whitespace-pre-wrap break-words">{m.texto}</div>
               <div className={`mt-0.5 text-[10px] ${mio ? 'text-white/80' : 'text-ink-soft'}`}>{hora(m.creado_en)}</div>
             </div>
@@ -145,7 +145,7 @@ export default function PrivadosView({ privados, usuariaId, personaId, personas,
       {habilitado ? (
         <form onSubmit={enviar} className="flex gap-2">
           <textarea
-            className="min-h-11 flex-1 resize-none rounded border-2 border-line bg-white px-3 py-2 text-[15px] focus:border-magenta focus:outline-none"
+            className="min-h-11 flex-1 resize-none rounded border-2 border-line bg-tarjeta px-3 py-2 text-[15px] focus:border-rosa focus:outline-none"
             rows={1}
             maxLength={4000}
             value={texto}

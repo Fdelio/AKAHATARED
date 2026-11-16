@@ -13,9 +13,9 @@ function Etiquetas({ n }: { n: Noticia }) {
     n.tipo === 'nota_akahata'
       ? 'bg-magenta text-white'
       : n.sistema === 'OEA'
-        ? 'bg-magenta-light text-magenta'
+        ? 'bg-magenta-light text-rosa'
         : n.sistema === 'Mercosur'
-          ? 'bg-berenjena text-rosa'
+          ? 'bg-berenjena text-rosa ring-1 ring-inset ring-rosa/40'
           : 'bg-naranja-light text-naranja-dark';
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -39,7 +39,7 @@ export function Portada({ n, grande = false }: { n: Noticia; grande?: boolean })
         loading="lazy"
         referrerPolicy="no-referrer"
         onError={() => setFallo(true)}
-        className={`${alto} w-full rounded-t-lg bg-crema object-cover`}
+        className={`${alto} w-full rounded-t-lg bg-panel object-cover`}
       />
     );
   }
@@ -58,7 +58,7 @@ export function Portada({ n, grande = false }: { n: Noticia; grande?: boolean })
 
 function Conversacion({ cantidad }: { cantidad: number }) {
   return (
-    <span className="ml-auto flex flex-none items-center gap-1 rounded-full bg-magenta-light px-2.5 py-1 text-[12px] font-extrabold text-magenta">
+    <span className="ml-auto flex flex-none items-center gap-1 rounded-full bg-magenta-light px-2.5 py-1 text-[12px] font-extrabold text-rosa">
       <MessageCircle size={14} />
       {cantidad > 0 ? `${cantidad} ${cantidad === 1 ? 'comentario' : 'comentarios'}` : 'Comentá'}
     </span>
@@ -90,7 +90,7 @@ export default function NoticiasView({ noticias, comentarios, onAbrir }: ListaPr
           <button
             key={f}
             onClick={() => setFiltro(f)}
-            className={`flex-none rounded-full border-2 px-3 py-1 text-[13px] font-bold ${filtro === f ? 'border-magenta bg-magenta text-white' : 'border-line text-ink-soft'}`}
+            className={`flex-none rounded-full border-2 px-3 py-1 text-[13px] font-bold ${filtro === f ? 'border-rosa bg-magenta text-white' : 'border-line text-ink-soft'}`}
           >
             {f}
           </button>
@@ -101,12 +101,12 @@ export default function NoticiasView({ noticias, comentarios, onAbrir }: ListaPr
         <button
           key={n.id}
           onClick={() => onAbrir(n.id)}
-          className={`flex w-full flex-col overflow-hidden rounded-lg border bg-white p-0 text-left hover:border-magenta ${n.tipo === 'nota_akahata' ? 'border-magenta' : 'border-line'}`}
+          className={`flex w-full flex-col overflow-hidden rounded-lg border bg-tarjeta p-0 text-left hover:border-rosa ${n.tipo === 'nota_akahata' ? 'border-rosa' : 'border-line'}`}
         >
           <Portada n={n} />
           <div className="flex flex-col gap-2 p-3.5">
             <Etiquetas n={n} />
-            <h3 className="m-0 text-base font-extrabold leading-snug text-magenta">{n.titulo}</h3>
+            <h3 className="m-0 text-base font-extrabold leading-snug text-rosa">{n.titulo}</h3>
             {n.resumen && <p className="m-0 line-clamp-3 text-sm text-ink">{n.resumen}</p>}
             {n.comentario_akahata && (
               <span className="self-start rounded bg-naranja-light px-2 py-0.5 text-[12px] font-bold text-naranja-dark">Con comentario de Akãhatã</span>
@@ -187,11 +187,11 @@ export function NotaView({ n, organizaciones, miOrg, usuariaId, revisora, onEdit
       </div>
       <Etiquetas n={n} />
       {onEditar && (
-        <button onClick={onEditar} className="self-start rounded border-2 border-magenta px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-magenta">
+        <button onClick={onEditar} className="self-start rounded border-2 border-rosa px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-rosa">
           Editar (equipo Akãhatã)
         </button>
       )}
-      <h2 className="m-0 text-[22px] font-black leading-tight text-magenta">{n.titulo}</h2>
+      <h2 className="m-0 text-[22px] font-black leading-tight text-rosa">{n.titulo}</h2>
       {n.resumen && <p className="m-0 whitespace-pre-wrap">{n.resumen}</p>}
       {n.comentario_akahata && (
         <div className="flex flex-col gap-1 rounded-lg border-2 border-naranja px-3.5 py-3">
@@ -208,11 +208,11 @@ export function NotaView({ n, organizaciones, miOrg, usuariaId, revisora, onEdit
         Fuente: {n.fuente_nombre}. {n.recolectada_automaticamente ? 'Recolectada automáticamente y elegida por Akãhatã.' : 'Publicada por Akãhatã.'}
       </div>
 
-      <h3 className="mt-2 mb-0 text-base font-extrabold text-magenta">Foro de la red</h3>
+      <h3 className="mt-2 mb-0 text-base font-extrabold text-rosa">Foro de la red</h3>
       {!puedeLeer ? (
-        <div className="flex flex-col gap-2 rounded-lg bg-crema p-3.5 text-sm">
+        <div className="flex flex-col gap-2 rounded-lg bg-panel p-3.5 text-sm">
           El foro es para las organizaciones de la red, para cuidar a quienes trabajan en contextos de riesgo.
-          <button className="self-start font-bold text-magenta underline" onClick={onIngresar}>Entrar con mi organización</button>
+          <button className="self-start font-bold text-rosa underline" onClick={onIngresar}>Entrar con mi organización</button>
         </div>
       ) : (
         <>
@@ -224,9 +224,9 @@ export function NotaView({ n, organizaciones, miOrg, usuariaId, revisora, onEdit
               return (
                 <div key={c.id} className="flex gap-2.5">
                   <Iniciales org={org ?? { nombre: '?' }} />
-                  <div className="min-w-0 flex-1 rounded-lg bg-crema px-3 py-2 text-sm">
+                  <div className="min-w-0 flex-1 rounded-lg bg-panel px-3 py-2 text-sm">
                     <div className="flex flex-wrap items-baseline gap-x-2 text-xs">
-                      <b className="text-magenta">{org?.nombre ?? 'Organización'}</b>
+                      <b className="text-rosa">{org?.nombre ?? 'Organización'}</b>
                       <span className="text-ink-soft">{fechaCorta(c.creado_en)}</span>
                     </div>
                     <div className={`whitespace-pre-wrap break-words ${c.borrado ? 'italic text-ink-soft' : ''}`}>{c.texto}</div>
@@ -245,7 +245,7 @@ export function NotaView({ n, organizaciones, miOrg, usuariaId, revisora, onEdit
               <textarea
                 rows={3}
                 maxLength={4000}
-                className="w-full rounded border-2 border-line px-3 py-2 text-[15px] focus:border-magenta focus:outline-none"
+                className="w-full rounded border-2 border-line px-3 py-2 text-[15px] focus:border-rosa focus:outline-none"
                 placeholder="Tu comentario va firmado con el nombre de tu organización"
                 value={texto}
                 onChange={(e) => setTexto(e.target.value)}

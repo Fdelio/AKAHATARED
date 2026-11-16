@@ -72,7 +72,7 @@ export default function CargarView({ inicial, onGuardar, onCancelar }: Props) {
       <fieldset className="m-0 flex gap-2 border-0 p-0">
         <legend className="mb-1 text-[13px] font-bold">Sistema</legend>
         {(Object.keys(MECANISMOS) as Sistema[]).map((s) => (
-          <label key={s} className={`flex-1 cursor-pointer rounded border-2 px-2 py-2 text-center text-sm font-bold ${o.sistema === s ? 'border-magenta bg-magenta text-white' : 'border-line text-ink-soft'}`}>
+          <label key={s} className={`flex-1 cursor-pointer rounded border-2 px-2 py-2 text-center text-sm font-bold ${o.sistema === s ? 'border-rosa bg-magenta text-white' : 'border-line text-ink-soft'}`}>
             <input type="radio" name="sistema" className="sr-only" checked={o.sistema === s} onChange={() => cambiar('sistema', s)} />
             {s}
           </label>
@@ -138,7 +138,7 @@ export default function CargarView({ inicial, onGuardar, onCancelar }: Props) {
       </div>
 
       <label className="flex items-center gap-2 text-sm font-bold">
-        <input type="checkbox" className="size-4 accent-magenta" checked={publicar} onChange={(e) => setPublicar(e.target.checked)} />
+        <input type="checkbox" className="size-4 accent-rosa" checked={publicar} onChange={(e) => setPublicar(e.target.checked)} />
         {inicial?.estado === 'publicada' ? 'Visible en el radar (si lo destildás, vuelve a Revisión)' : 'Publicar ya en el radar (si no, queda en Revisión)'}
       </label>
 

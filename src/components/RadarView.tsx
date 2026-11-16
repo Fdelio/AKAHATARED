@@ -23,7 +23,7 @@ export default function RadarView({ oportunidades, organizaciones, participacion
   const orgPorId = new Map(organizaciones.map((o) => [o.id, o]));
 
   const pestanas = (
-    <div className="grid grid-cols-2 rounded-lg bg-crema p-1" role="tablist">
+    <div className="grid grid-cols-2 rounded-lg bg-panel p-1" role="tablist">
       {(['convocatorias', 'calendario'] as const).map((v) => (
         <button
           key={v}
@@ -31,7 +31,7 @@ export default function RadarView({ oportunidades, organizaciones, participacion
           aria-selected={vista === v}
           onClick={() => setVista(v)}
           className={`rounded-md py-2 text-[13px] font-extrabold uppercase tracking-wider ${
-            vista === v ? 'bg-white text-magenta shadow-sm' : 'text-ink-soft'
+            vista === v ? 'bg-magenta text-white shadow-sm' : 'text-ink-soft'
           }`}
         >
           {v === 'convocatorias' ? `Convocatorias (${abiertas.length})` : 'Calendario'}
@@ -53,7 +53,7 @@ export default function RadarView({ oportunidades, organizaciones, participacion
     <div className="flex flex-col gap-3.5">
       {pestanas}
       <div className="rounded-lg bg-magenta-light px-3.5 py-3 text-sm">
-        <b className="font-extrabold text-magenta">Llevá tu agenda a nuevos espacios.</b> Ambiente, desarrollo,
+        <b className="font-extrabold text-rosa">Llevá tu agenda a nuevos espacios.</b> Ambiente, desarrollo,
         economía o migración también se discuten en la ONU, la OEA y el Mercosur. Tu mirada feminista y de
         diversidad cambia esos debates.
       </div>
@@ -64,7 +64,7 @@ export default function RadarView({ oportunidades, organizaciones, participacion
             aria-pressed={t === tema}
             onClick={() => setTema(t)}
             className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-sm ${
-              t === tema ? 'border-magenta bg-magenta font-bold text-white' : 'border-line bg-white text-ink'
+              t === tema ? 'border-rosa bg-magenta font-bold text-white' : 'border-line bg-tarjeta text-ink'
             }`}
           >
             {t === 'Todos los temas' ? 'Revisión general (EPU)' : t}

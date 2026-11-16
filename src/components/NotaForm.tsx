@@ -86,7 +86,7 @@ export default function NotaForm({ inicial, onGuardar, onCancelar }: Props) {
       </label>
       {n.imagen_url && <img src={n.imagen_url} alt="" referrerPolicy="no-referrer" className="aspect-video w-full rounded-lg object-cover" />}
       <label className="flex items-center gap-2 text-sm font-bold">
-        <input type="checkbox" className="size-4 accent-magenta" checked={publicar} onChange={(e) => setPublicar(e.target.checked)} />
+        <input type="checkbox" className="size-4 accent-rosa" checked={publicar} onChange={(e) => setPublicar(e.target.checked)} />
         Publicar en Noticias (si no, queda en Revisión)
       </label>
       <Boton>{guardando ? 'Guardando…' : publicar ? 'Publicar' : 'Guardar para revisar'}</Boton>

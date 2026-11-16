@@ -42,12 +42,12 @@ export default function OportunidadView({ o, organizaciones, participaciones, mi
       {onEditar && (
         <button
           onClick={onEditar}
-          className="self-start rounded border-2 border-magenta px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-magenta"
+          className="self-start rounded border-2 border-rosa px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-rosa"
         >
           Editar (equipo Akãhatã)
         </button>
       )}
-      <h2 className="m-0 text-[22px] font-black leading-tight text-magenta">{o.titulo}</h2>
+      <h2 className="m-0 text-[22px] font-black leading-tight text-rosa">{o.titulo}</h2>
       <div className="text-sm text-ink-soft">
         {o.pais} · {o.tema}
       </div>
@@ -60,7 +60,7 @@ export default function OportunidadView({ o, organizaciones, participaciones, mi
 
       {o.pasos.length > 0 && (
         <>
-          <h3 className="mt-2 mb-0 text-base font-extrabold text-magenta">Cómo participar</h3>
+          <h3 className="mt-2 mb-0 text-base font-extrabold text-rosa">Cómo participar</h3>
           <ol className="m-0 flex list-decimal flex-col gap-1.5 pl-5 marker:font-extrabold marker:text-naranja">
             {o.pasos.map((p) => (
               <li key={p}>{p}</li>
@@ -69,7 +69,7 @@ export default function OportunidadView({ o, organizaciones, participaciones, mi
         </>
       )}
 
-      <h3 className="mt-2 mb-0 text-base font-extrabold text-magenta">Quiénes se sumaron ({otras.length + (mia ? 1 : 0)})</h3>
+      <h3 className="mt-2 mb-0 text-base font-extrabold text-rosa">Quiénes se sumaron ({otras.length + (mia ? 1 : 0)})</h3>
       <div>
         {otras.map((p) => {
           const org = orgPorId.get(p.organizacion_id);
@@ -101,14 +101,14 @@ export default function OportunidadView({ o, organizaciones, participaciones, mi
         )}
       </div>
 
-      <fieldset className="flex flex-col gap-2 rounded-lg border-0 bg-crema px-3.5 py-3">
+      <fieldset className="flex flex-col gap-2 rounded-lg border-0 bg-panel px-3.5 py-3">
         <legend className="float-left mb-1 font-bold">Si te sumás, ¿quién lo puede ver?</legend>
         {OPCIONES.map((op) => (
           <label key={op.v} className="flex cursor-pointer items-start gap-2.5 text-sm">
             <input
               type="radio"
               name="visibilidad"
-              className="mt-1 accent-magenta"
+              className="mt-1 accent-rosa"
               checked={vis === op.v}
               onChange={() => setVis(op.v)}
             />
@@ -139,7 +139,7 @@ export default function OportunidadView({ o, organizaciones, participaciones, mi
       )}
       <Boton variante="borde" onClick={onConversar}>Conversar con la red sobre esta oportunidad</Boton>
       <div className="border-l-[3px] border-line pl-2.5 text-[13px] text-ink-soft">
-        Fuente: {o.fuente_url ? <a className="text-magenta" href={o.fuente_url} target="_blank" rel="noreferrer">{o.fuente_nombre}</a> : o.fuente_nombre}.{' '}
+        Fuente: {o.fuente_url ? <a className="text-rosa" href={o.fuente_url} target="_blank" rel="noreferrer">{o.fuente_nombre}</a> : o.fuente_nombre}.{' '}
         {o.recolectada_automaticamente ? 'Recolectada automáticamente y revisada por Akãhatã.' : 'Cargada por Akãhatã.'}
       </div>
     </div>

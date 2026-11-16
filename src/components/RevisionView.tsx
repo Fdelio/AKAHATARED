@@ -34,7 +34,7 @@ export default function RevisionView({ pendientes, orgsPendientes, pedidos, orga
         + Cargar una oportunidad a mano
       </button>
       <button
-        className="rounded border-2 border-magenta px-4 py-2.5 text-[13px] font-extrabold uppercase tracking-widest text-magenta"
+        className="rounded border-2 border-rosa px-4 py-2.5 text-[13px] font-extrabold uppercase tracking-widest text-rosa"
         onClick={onNuevaNota}
       >
         + Escribir una nota para Noticias
@@ -47,11 +47,11 @@ export default function RevisionView({ pendientes, orgsPendientes, pedidos, orga
             const org = organizaciones.find((o) => o.id === p.organizacion_id);
             const op = oportunidades.find((o) => o.id === p.oportunidad_id);
             return (
-              <div key={p.id} className="flex flex-col gap-1.5 rounded-lg border border-magenta bg-magenta-light/40 p-3.5 text-sm">
+              <div key={p.id} className="flex flex-col gap-1.5 rounded-lg border border-rosa bg-magenta-light/40 p-3.5 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
-                  <b className="text-magenta">{org?.nombre ?? 'Organización'}</b>
+                  <b className="text-rosa">{org?.nombre ?? 'Organización'}</b>
                   {org && <span className="text-[13px] text-ink-soft">{org.pais}</span>}
-                  <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-xs font-bold text-naranja-dark">
+                  <span className="ml-auto rounded-full bg-tarjeta px-2 py-0.5 text-xs font-bold text-naranja-dark">
                     {p.estado === 'nuevo' ? 'Nuevo' : 'En curso'}
                   </span>
                 </div>
@@ -59,7 +59,7 @@ export default function RevisionView({ pendientes, orgsPendientes, pedidos, orga
                 <span>{p.mensaje}</span>
                 <span className="text-[13px]">
                   Contacto:{' '}
-                  {p.contacto.includes('@') ? <a className="font-bold text-magenta" href={'mailto:' + p.contacto}>{p.contacto}</a> : <b>{p.contacto}</b>}
+                  {p.contacto.includes('@') ? <a className="font-bold text-rosa" href={'mailto:' + p.contacto}>{p.contacto}</a> : <b>{p.contacto}</b>}
                 </span>
                 <div className="grid grid-cols-2 gap-2">
                   {p.estado === 'nuevo' ? (
@@ -96,7 +96,7 @@ export default function RevisionView({ pendientes, orgsPendientes, pedidos, orga
           </h3>
           {orgsPendientes.map((org) => (
             <div key={org.id} className="flex flex-col gap-2 rounded-lg border border-naranja bg-naranja-light/40 p-3.5">
-              <b className="text-magenta">{org.nombre}</b>
+              <b className="text-rosa">{org.nombre}</b>
               <span className="text-[13px] text-ink-soft">
                 {org.pais}{org.temas.length > 0 && ' · ' + org.temas.join(', ')}
               </span>
@@ -124,25 +124,25 @@ export default function RevisionView({ pendientes, orgsPendientes, pedidos, orga
             Llegan solas cada mañana. Publicá las que le sirven a la red; podés sumar un comentario de Akãhatã con Editar.
           </p>
           {notas.map((n) => (
-            <div key={n.id} className="flex flex-col gap-1.5 rounded-lg border border-dashed border-line bg-white p-3">
+            <div key={n.id} className="flex flex-col gap-1.5 rounded-lg border border-dashed border-line bg-tarjeta p-3">
               <span className="text-[11px] font-extrabold uppercase tracking-wider text-ink-soft">
                 {n.fuente_nombre} · {new Date(n.publicada_en).toLocaleDateString('es', { day: 'numeric', month: 'short' })}
               </span>
               {n.url ? (
-                <a href={n.url} target="_blank" rel="noreferrer" className="text-[15px] font-extrabold leading-snug text-magenta">{n.titulo}</a>
+                <a href={n.url} target="_blank" rel="noreferrer" className="text-[15px] font-extrabold leading-snug text-rosa">{n.titulo}</a>
               ) : (
-                <b className="text-[15px] leading-snug text-magenta">{n.titulo}</b>
+                <b className="text-[15px] leading-snug text-rosa">{n.titulo}</b>
               )}
               {n.resumen && <span className="line-clamp-2 text-[13px] text-ink-soft">{n.resumen}</span>}
               <div className="grid grid-cols-3 gap-2">
                 <button className="rounded bg-magenta px-1.5 py-2 text-xs font-extrabold uppercase text-white" onClick={() => onRevisarNota(n.id, 'publicada')}>Publicar</button>
-                <button className="rounded border-2 border-magenta px-1.5 py-1.5 text-xs font-extrabold uppercase text-magenta" onClick={() => onEditarNota(n.id)}>Editar</button>
+                <button className="rounded border-2 border-rosa px-1.5 py-1.5 text-xs font-extrabold uppercase text-rosa" onClick={() => onEditarNota(n.id)}>Editar</button>
                 <button className="rounded border-2 border-line px-1.5 py-1.5 text-xs font-extrabold uppercase text-ink-soft" onClick={() => onRevisarNota(n.id, 'descartada')}>Descartar</button>
               </div>
             </div>
           ))}
           {noticiasPendientes.length > notas.length && (
-            <button className="self-start text-sm font-bold text-magenta underline" onClick={() => setVerTodas(true)}>
+            <button className="self-start text-sm font-bold text-rosa underline" onClick={() => setVerTodas(true)}>
               Ver las {noticiasPendientes.length - notas.length} restantes
             </button>
           )}
@@ -156,15 +156,15 @@ export default function RevisionView({ pendientes, orgsPendientes, pedidos, orga
           : `${pendientes.length} ${pendientes.length === 1 ? 'oportunidad nueva espera' : 'oportunidades nuevas esperan'} revisión. Solo el equipo de Akãhatã ve esta sección.`}
       </p>
       {pendientes.map((o) => (
-        <div key={o.id} className="flex flex-col gap-2 rounded-lg border border-dashed border-line bg-white p-3.5">
+        <div key={o.id} className="flex flex-col gap-2 rounded-lg border border-dashed border-line bg-tarjeta p-3.5">
           <EtiquetaSistema sistema={o.sistema} mecanismo={o.mecanismo} />
-          <h3 className="m-0 text-base font-extrabold text-magenta">{o.titulo}</h3>
+          <h3 className="m-0 text-base font-extrabold text-rosa">{o.titulo}</h3>
           <div className="border-l-[3px] border-line pl-2.5 text-[13px] text-ink-soft">
             Fuente: {o.fuente_nombre}.{o.recolectada_automaticamente && " Resumen generado por IA en español y portugués."}{!o.recolectada_automaticamente && " Cargada a mano."}
           </div>
           <div className="grid grid-cols-3 gap-2">
             <button className="rounded bg-magenta px-1.5 py-2.5 text-xs font-extrabold uppercase text-white" onClick={() => onRevisar(o.id, 'publicada')}>Publicar</button>
-            <button className="rounded border-2 border-magenta px-1.5 py-2 text-xs font-extrabold uppercase text-magenta" onClick={() => onEditar(o.id)}>Editar</button>
+            <button className="rounded border-2 border-rosa px-1.5 py-2 text-xs font-extrabold uppercase text-rosa" onClick={() => onEditar(o.id)}>Editar</button>
             <button className="rounded border-2 border-line px-1.5 py-2 text-xs font-extrabold uppercase text-ink-soft" onClick={() => onRevisar(o.id, 'descartada')}>Descartar</button>
           </div>
         </div>

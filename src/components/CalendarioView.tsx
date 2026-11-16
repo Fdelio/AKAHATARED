@@ -32,15 +32,15 @@ export default function CalendarioView({ sesiones }: { sesiones: SesionOrgano[] 
       {sesiones.map((s) => {
         const i = partes(s.fecha_inicio);
         return (
-          <article key={s.id} className="flex gap-3 rounded-lg border border-line bg-white p-3.5">
-            <div className="flex w-14 flex-none flex-col items-center rounded-lg bg-magenta-light py-2 text-magenta">
+          <article key={s.id} className="flex gap-3 rounded-lg border border-line bg-tarjeta p-3.5">
+            <div className="flex w-14 flex-none flex-col items-center rounded-lg bg-magenta-light py-2 text-rosa">
               <span className="text-[11px] font-extrabold uppercase">{MESES[i.m]}</span>
               <span className="text-xl font-black leading-none">{s.a_confirmar && !s.fecha_fin ? '·' : i.d}</span>
               <span className="text-[11px] font-bold">{i.a}</span>
             </div>
             <div className="flex min-w-0 flex-col gap-1">
               <EtiquetaSistema sistema={s.sistema} mecanismo={s.organo} />
-              <h3 className="m-0 text-[15px] font-extrabold leading-snug text-magenta">{s.nombre}</h3>
+              <h3 className="m-0 text-[15px] font-extrabold leading-snug text-rosa">{s.nombre}</h3>
               <span className="text-[13px] font-bold text-ink">
                 {rangoFechas(s)}
                 {s.lugar && ` · ${s.lugar}`}
@@ -48,7 +48,7 @@ export default function CalendarioView({ sesiones }: { sesiones: SesionOrgano[] 
               </span>
               {s.descripcion && <p className="m-0 text-[13px] text-ink-soft">{s.descripcion}</p>}
               {s.fuente_url && (
-                <a href={s.fuente_url} target="_blank" rel="noopener noreferrer" className="text-[13px] font-bold text-magenta">
+                <a href={s.fuente_url} target="_blank" rel="noopener noreferrer" className="text-[13px] font-bold text-rosa">
                   Más información
                 </a>
               )}

@@ -58,7 +58,7 @@ export default function MiOrganizacionView({
       <div className="flex items-center gap-3 rounded-lg border border-line p-3.5">
         <Iniciales org={org} grande />
         <div className="min-w-0">
-          <b className="block text-lg leading-tight text-magenta">{org.nombre}</b>
+          <b className="block text-lg leading-tight text-rosa">{org.nombre}</b>
           <span className="text-sm text-ink-soft">{org.pais}{org.temas.length > 0 && ' · ' + org.temas.join(', ')}</span>
         </div>
       </div>
@@ -91,10 +91,10 @@ export default function MiOrganizacionView({
           <Boton variante="borde" onClick={() => setPidiendo('')}>Pedir apoyo para redactar un documento</Boton>
         )}
         {pedidos.map((p) => (
-          <div key={p.id} className="rounded-lg bg-crema p-3 text-sm">
+          <div key={p.id} className="rounded-lg bg-panel p-3 text-sm">
             <div className="flex flex-wrap items-center gap-2">
               <b>{TIPOS_APORTE[p.tipo_documento]}</b>
-              <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-xs font-bold text-naranja-dark">{ESTADO_PEDIDO[p.estado]}</span>
+              <span className="ml-auto rounded-full bg-tarjeta px-2 py-0.5 text-xs font-bold text-naranja-dark">{ESTADO_PEDIDO[p.estado]}</span>
             </div>
             {titulo(p.oportunidad_id) && <div className="text-[13px] text-ink-soft">Para: {titulo(p.oportunidad_id)}</div>}
             <div className="mt-1">{p.mensaje}</div>
@@ -138,13 +138,13 @@ function Trabajo({
 }) {
   const [t, setT] = useState<Trabajo>({ tipo_aporte: p.tipo_aporte, enviado: p.enviado, enlace: p.enlace, resultado: p.resultado });
   return (
-    <div className="flex flex-col gap-2.5 rounded-lg border border-line bg-white p-3.5">
+    <div className="flex flex-col gap-2.5 rounded-lg border border-line bg-tarjeta p-3.5">
       <button onClick={onAbrir} className="flex flex-col gap-2 border-0 bg-transparent p-0 text-left">
         <div className="flex flex-wrap items-center gap-2">
           <EtiquetaSistema sistema={o.sistema} mecanismo={o.mecanismo} />
           <Plazo fecha={o.fecha_limite} />
         </div>
-        <h3 className="m-0 text-base font-extrabold text-magenta">{o.titulo}</h3>
+        <h3 className="m-0 text-base font-extrabold text-rosa">{o.titulo}</h3>
       </button>
       <label className={etiqueta}>
         Qué documento preparan
@@ -160,7 +160,7 @@ function Trabajo({
         </select>
       </label>
       <label className="flex items-center gap-2 text-sm font-bold">
-        <input type="checkbox" className="size-4 accent-magenta" checked={t.enviado} onChange={(e) => setT({ ...t, enviado: e.target.checked })} />
+        <input type="checkbox" className="size-4 accent-rosa" checked={t.enviado} onChange={(e) => setT({ ...t, enviado: e.target.checked })} />
         Ya lo enviamos
       </label>
       {t.enviado && (
@@ -183,7 +183,7 @@ function Trabajo({
       )}
       <Boton variante="borde" onClick={() => onGuardar(t)}>Guardar</Boton>
       {pidiendo ? formPedido : !t.enviado && (
-        <button className="self-start text-sm font-bold text-magenta underline" onClick={onPedir}>
+        <button className="self-start text-sm font-bold text-rosa underline" onClick={onPedir}>
           Pedir apoyo de Akãhatã para redactarlo
         </button>
       )}

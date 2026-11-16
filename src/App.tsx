@@ -245,11 +245,11 @@ export default function App() {
       ? ['Editar oportunidad', 'Revisá el texto antes de publicar']
       : TITULOS[ruta.pantalla];
 
-  if (!listo) return <div className="min-h-screen bg-white" aria-busy="true" />;
+  if (!listo) return <div className="min-h-screen bg-fondo" aria-busy="true" />;
 
   if (recuperando && sesion) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-[480px] flex-col gap-4 bg-white p-5">
+      <div className="mx-auto flex min-h-screen max-w-[480px] flex-col gap-4 bg-fondo p-5">
         <img src={import.meta.env.BASE_URL + 'logo-marca.png'} alt="Akãhatã" className="h-10 self-start" />
         <p className="m-0 text-sm text-ink-soft">Elegí tu contraseña nueva. Después entrás con tu correo y esta contraseña, sin esperar correos.</p>
         <NuevaContrasena
@@ -278,16 +278,20 @@ export default function App() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-[480px] flex-col bg-white sm:my-6 sm:min-h-0 sm:rounded-3xl sm:border sm:border-line">
-      <header className="flex items-center gap-2.5 border-b border-line px-5 py-3.5">
-        <img src={import.meta.env.BASE_URL + 'logo-marca.png'} alt="" className="size-9" />
-        <b className="text-xl font-extrabold tracking-tight text-magenta">Akãhatã</b>
-        <span className="ml-auto text-right text-[10px] font-bold leading-tight whitespace-nowrap">Radar de Incidencia<br />Internacional</span>
+    <div className="mx-auto flex min-h-screen max-w-[480px] flex-col bg-fondo sm:my-6 sm:min-h-0 sm:rounded-3xl sm:border sm:border-line">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-fondo/90 px-5 py-3.5 backdrop-blur-md sm:rounded-t-3xl">
+        <img src={import.meta.env.BASE_URL + 'logo-marca.png'} alt="" className="size-11 flex-none drop-shadow-[0_0_10px_rgb(247_148_29/0.35)]" />
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-naranja">Akãhatã</div>
+          <div className="text-[19px] font-black leading-[1.08] tracking-tight text-ink sm:text-[21px]">
+            Radar de Incidencia <span className="text-rosa">Internacional</span>
+          </div>
+        </div>
         {revisora && (
-          <button aria-label="Revisión" onClick={() => ir('revision')} className="relative grid size-9 flex-none place-items-center rounded-full bg-magenta-light text-magenta">
+          <button aria-label="Revisión" onClick={() => ir('revision')} className="relative grid size-9 flex-none place-items-center rounded-full bg-magenta-light text-rosa">
             <CheckCheck size={18} />
             {porRevisar > 0 && (
-              <span className="absolute -top-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full bg-naranja px-1 text-[10px] font-extrabold text-white">
+              <span className="absolute -top-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full bg-naranja px-1 text-[10px] font-extrabold text-berenjena">
                 {porRevisar > 99 ? '99+' : porRevisar}
               </span>
             )}
@@ -300,22 +304,22 @@ export default function App() {
           Modo ejemplo · datos inventados
         </div>
       )}
-      <div className="relative isolate flex items-center gap-3 overflow-hidden bg-magenta px-5 pt-5 pb-6 text-white">
-        <div className="absolute -bottom-[70px] -left-[60px] -z-10 h-[120px] w-[200px] rounded-full bg-naranja" />
+      <div className="relative isolate mx-3 mt-3 flex items-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-br from-magenta via-magenta-dark to-berenjena px-5 pt-5 pb-6 text-white shadow-[0_10px_30px_-12px_rgb(163_13_95/0.8)]">
+        <div className="absolute -bottom-[92px] -left-[70px] -z-10 h-[120px] w-[200px] rounded-full bg-naranja" />
         <div className="absolute -top-[26px] -right-[26px] -z-10 size-24 rounded-full border-2 border-naranja" />
         {(abierta || notaAbierta) && (
-          <button aria-label="Volver" onClick={() => ir(abierta ? 'radar' : 'noticias')} className="grid size-9 flex-none place-items-center rounded-full bg-white text-lg font-extrabold text-magenta">
+          <button aria-label="Volver" onClick={() => ir(abierta ? 'radar' : 'noticias')} className="grid size-9 flex-none place-items-center rounded-full bg-white text-lg font-extrabold text-magenta shadow-md">
             ←
           </button>
         )}
         <div>
           <h1 className="m-0 text-2xl font-black leading-tight">{titulo}</h1>
-          <div className="text-[13px] font-semibold text-magenta-light">{subtitulo}</div>
+          <div className="text-[13px] font-semibold text-white/85">{subtitulo}</div>
         </div>
       </div>
 
       <main className="flex-1 px-5 pt-4 pb-6">
-        {error && <p className="rounded bg-magenta-light p-3 text-sm text-magenta">{error}</p>}
+        {error && <p className="rounded bg-magenta-light p-3 text-sm text-rosa">{error}</p>}
         {notaAbierta ? (
           <NotaView
             key={notaAbierta.id}
@@ -401,7 +405,7 @@ export default function App() {
           )
         ) : ruta.pantalla === 'chat' ? (
           <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 rounded-lg bg-crema p-1" role="tablist">
+          <div className="grid grid-cols-2 rounded-lg bg-panel p-1" role="tablist">
             {([['salas', 'Salas de la red'], ['privados', 'Privados' + (sinLeer ? ` (${sinLeer})` : '')]] as const).map(([id, t]) => {
               const activa = id === 'privados' ? ruta.privado !== undefined : ruta.privado === undefined;
               return (
@@ -501,7 +505,7 @@ export default function App() {
         )}
       </main>
 
-      <nav className="sticky bottom-0 grid grid-cols-5 border-t border-line bg-white pb-[env(safe-area-inset-bottom)]" aria-label="Secciones">
+      <nav className="sticky bottom-0 z-20 grid grid-cols-5 border-t border-line bg-fondo/90 backdrop-blur-md sm:rounded-b-3xl pb-[env(safe-area-inset-bottom)]" aria-label="Secciones">
         {nav.map(({ id, label, Icono }) => {
           const actual = abierta ? id === 'radar' : ruta.pantalla === id;
           return (
@@ -509,12 +513,12 @@ export default function App() {
               key={id}
               onClick={() => ir(id)}
               aria-current={actual ? 'page' : undefined}
-              className={`flex flex-col items-center gap-0.5 border-0 bg-transparent px-0 pt-2.5 pb-3 text-[10px] leading-tight ${actual ? 'font-bold text-magenta' : 'text-ink-soft'}`}
+              className={`flex flex-col items-center gap-0.5 border-0 bg-transparent px-0 pt-2 pb-2.5 text-[10px] leading-tight ${actual ? 'font-bold text-ink' : 'text-ink-soft'}`}
             >
-              <span className="relative">
-                <Icono size={22} />
+              <span className={`relative grid h-7 w-12 place-items-center rounded-full transition-colors ${actual ? 'bg-magenta text-white' : ''}`}>
+                <Icono size={20} />
                 {id === 'chat' && sinLeer > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 min-w-4 rounded-full bg-naranja px-1 text-[10px] font-extrabold leading-4 text-white">
+                  <span className="absolute -top-1.5 -right-2.5 min-w-4 rounded-full bg-naranja px-1 text-[10px] font-extrabold leading-4 text-berenjena">
                     {sinLeer}
                   </span>
                 )}
@@ -528,7 +532,7 @@ export default function App() {
       <div
         role="status"
         aria-live="polite"
-        className={`pointer-events-none fixed bottom-24 left-1/2 -translate-x-1/2 rounded-lg bg-ink px-4 py-2.5 text-sm text-white transition-opacity ${aviso ? 'opacity-100' : 'opacity-0'}`}
+        className={`pointer-events-none fixed bottom-24 left-1/2 -translate-x-1/2 rounded-lg bg-ink px-4 py-2.5 text-sm font-semibold text-berenjena shadow-lg transition-opacity ${aviso ? 'opacity-100' : 'opacity-0'}`}
       >
         {aviso}
       </div>
@@ -540,7 +544,7 @@ export default function App() {
 function BotonCuenta({ sesion, onClick }: { sesion: Sesion | null; onClick: () => void }) {
   const foto = useImagen(sesion ? `perfiles/${sesion.id}.jpg` : null, sesion?.foto_en);
   return (
-    <button aria-label="Tu cuenta" onClick={onClick} className="grid size-9 flex-none place-items-center overflow-hidden rounded-full bg-magenta-light text-magenta">
+    <button aria-label="Tu cuenta" onClick={onClick} className="grid size-9 flex-none place-items-center overflow-hidden rounded-full bg-magenta-light text-rosa">
       {foto ? <img src={foto} alt="" className="size-full object-cover" /> : <UserRound size={18} />}
     </button>
   );
