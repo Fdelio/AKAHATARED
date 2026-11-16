@@ -43,8 +43,8 @@ const PASOS = [
 /** Portada para quien todavía no ingresó: qué es la app y cómo entrar. */
 export default function BienvenidaView({ modoEjemplo, onVerOportunidades }: Props) {
   return (
-    <div className="mx-auto flex min-h-screen max-w-[480px] flex-col bg-white sm:my-6 sm:min-h-0 sm:overflow-hidden sm:rounded-3xl sm:border sm:border-line">
-      <section className="relative isolate overflow-hidden bg-magenta px-6 pt-8 pb-12 text-white">
+    <div className="mx-auto flex min-h-screen max-w-[480px] flex-col bg-fondo sm:my-6 sm:min-h-0 sm:overflow-hidden sm:rounded-3xl sm:border sm:border-line">
+      <section className="relative isolate overflow-hidden bg-gradient-to-br from-magenta via-magenta-dark to-berenjena px-6 pt-8 pb-12 text-white">
         <div className="absolute -bottom-[120px] -left-[90px] -z-10 h-[160px] w-[240px] rounded-full bg-naranja" />
         <div className="absolute -top-[40px] -right-[40px] -z-10 size-36 rounded-full border-2 border-naranja" />
         <div className="flex items-center gap-2.5">
@@ -52,7 +52,7 @@ export default function BienvenidaView({ modoEjemplo, onVerOportunidades }: Prop
           <b className="text-xl font-extrabold tracking-tight">Akãhatã</b>
         </div>
         <h1 className="mt-6 mb-3 text-[32px] font-black leading-[1.05]">Radar de Incidencia Internacional</h1>
-        <p className="m-0 text-[15px] font-semibold leading-snug text-magenta-light">
+        <p className="m-0 text-[15px] font-semibold leading-snug text-white/85">
           Para que las organizaciones de América Latina lleven sus agendas a la ONU, la OEA y el Mercosur, en todos los
           temas, y no vayan solas.
         </p>
@@ -82,11 +82,11 @@ export default function BienvenidaView({ modoEjemplo, onVerOportunidades }: Prop
           <h2 className="m-0 text-[13px] font-extrabold uppercase tracking-wider text-naranja-dark">Qué encontrás</h2>
           {QUE_HAY.map(({ Icono, titulo, texto }) => (
             <div key={titulo} className="flex gap-3">
-              <div className="grid size-10 flex-none place-items-center rounded-full bg-magenta-light text-magenta">
+              <div className="grid size-10 flex-none place-items-center rounded-full bg-magenta-light text-rosa">
                 <Icono size={20} />
               </div>
               <div>
-                <b className="block text-magenta">{titulo}</b>
+                <b className="block text-rosa">{titulo}</b>
                 <span className="text-sm text-ink-soft">{texto}</span>
               </div>
             </div>
@@ -100,18 +100,18 @@ export default function BienvenidaView({ modoEjemplo, onVerOportunidades }: Prop
           </ol>
         </section>
 
-        <section id="entrar" className="flex flex-col gap-3 rounded-lg bg-crema p-4">
-          <h2 className="m-0 text-lg font-black text-magenta">Entrar</h2>
+        <section id="entrar" className="flex flex-col gap-3 rounded-lg bg-panel p-4">
+          <h2 className="m-0 text-lg font-black text-rosa">Entrar</h2>
           <Ingreso modoEjemplo={modoEjemplo} />
         </section>
 
-        <button className="self-center text-sm font-bold text-magenta underline" onClick={onVerOportunidades}>
+        <button className="self-center text-sm font-bold text-rosa underline" onClick={onVerOportunidades}>
           Ver noticias y oportunidades sin registrarme
         </button>
 
         <p className="m-0 -mt-2 text-center text-xs text-ink-soft">
           Una iniciativa de{' '}
-          <a className="font-bold text-magenta" href="https://www.akahataorg.org" target="_blank" rel="noreferrer">Akãhatã</a>.
+          <a className="font-bold text-rosa" href="https://www.akahataorg.org" target="_blank" rel="noreferrer">Akãhatã</a>.
           Pedimos pocos datos y cada organización elige qué es público.
         </p>
       </main>

@@ -20,9 +20,9 @@ export function useImagen(ruta: string | null, version: string | null | undefine
 export function EtiquetaSistema({ sistema, mecanismo }: { sistema: Sistema; mecanismo: string }) {
   const estilo =
     sistema === 'OEA'
-      ? 'bg-magenta-light text-magenta'
+      ? 'bg-magenta-light text-rosa'
       : sistema === 'Mercosur'
-        ? 'bg-berenjena text-rosa'
+        ? 'bg-berenjena text-rosa ring-1 ring-inset ring-rosa/40'
         : 'bg-naranja-light text-naranja-dark';
   return (
     <span className={`rounded px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wider ${estilo}`}>
@@ -35,7 +35,7 @@ export function Plazo({ fecha }: { fecha: string }) {
   const d = diasHasta(fecha);
   const texto = d < 0 ? 'Cerrada' : d === 0 ? 'Cierra hoy' : `Cierra en ${d} ${d === 1 ? 'día' : 'días'}`;
   return (
-    <span className={`ml-auto text-[13px] font-bold tabular-nums ${d <= 14 ? 'text-magenta' : 'text-ink-soft'}`}>
+    <span className={`ml-auto text-[13px] font-bold tabular-nums ${d <= 14 ? 'text-rosa' : 'text-ink-soft'}`}>
       {texto}
     </span>
   );
@@ -49,7 +49,7 @@ export function Iniciales({
     return grande ? (
       <img src={logo} alt="" className="size-10 flex-none rounded-full border-2 border-naranja bg-white object-cover" />
     ) : (
-      <img src={logo} alt="" className="-ml-1.5 size-[22px] rounded-full border-2 border-white bg-white object-cover first:ml-0" />
+      <img src={logo} alt="" className="-ml-1.5 size-[22px] rounded-full border-2 border-tarjeta bg-white object-cover first:ml-0" />
     );
   const ini = org.nombre
     .split(' ')
@@ -58,11 +58,11 @@ export function Iniciales({
     .map((w) => w[0])
     .join('');
   return grande ? (
-    <div className="grid size-10 flex-none place-items-center rounded-full border-2 border-naranja bg-magenta-light font-bold text-magenta">
+    <div className="grid size-10 flex-none place-items-center rounded-full border-2 border-naranja bg-magenta-light font-bold text-rosa">
       {ini}
     </div>
   ) : (
-    <span className="-ml-1.5 grid size-[22px] place-items-center rounded-full border-2 border-white bg-magenta text-[10px] font-bold text-white first:ml-0">
+    <span className="-ml-1.5 grid size-[22px] place-items-center rounded-full border-2 border-tarjeta bg-magenta text-[10px] font-bold text-white first:ml-0">
       {ini}
     </span>
   );
@@ -73,7 +73,7 @@ export function Boton({
 }: { children: ReactNode; onClick?: () => void; variante?: 'lleno' | 'borde' | 'hecho'; className?: string }) {
   const estilos = {
     lleno: 'bg-magenta text-white',
-    borde: 'border-2 border-magenta text-magenta bg-transparent',
+    borde: 'border-2 border-rosa text-rosa bg-transparent',
     hecho: 'bg-ok-light text-ok',
   };
   return (
@@ -93,13 +93,13 @@ export function TarjetaOportunidad({
   return (
     <button
       onClick={onAbrir}
-      className="flex w-full flex-col gap-2 rounded-lg border border-line border-l-[5px] border-l-naranja bg-white p-3.5 text-left hover:border-magenta"
+      className="flex w-full flex-col gap-2 rounded-lg border border-line border-l-[5px] border-l-naranja bg-tarjeta p-3.5 text-left hover:border-rosa"
     >
       <div className="flex flex-wrap items-center gap-2">
         <EtiquetaSistema sistema={o.sistema} mecanismo={o.mecanismo} />
         <Plazo fecha={o.fecha_limite} />
       </div>
-      <h3 className="m-0 text-base font-extrabold leading-snug text-magenta">{o.titulo}</h3>
+      <h3 className="m-0 text-base font-extrabold leading-snug text-rosa">{o.titulo}</h3>
       <div className="text-sm text-ink-soft">
         {o.pais} · {o.tema}
       </div>

@@ -83,7 +83,7 @@ export default function ChatView({ sala, oportunidades, organizaciones, miOrg, u
       <label className="flex flex-col gap-1 text-[13px] font-bold">
         Conversación
         <select
-          className="w-full rounded border-2 border-line bg-white px-3 py-2.5 text-[15px] focus:border-magenta focus:outline-none"
+          className="w-full rounded border-2 border-line bg-tarjeta px-3 py-2.5 text-[15px] focus:border-rosa focus:outline-none"
           value={sala ?? ''}
           onChange={(e) => onCambiarSala(e.target.value || null)}
         >
@@ -103,7 +103,7 @@ export default function ChatView({ sala, oportunidades, organizaciones, miOrg, u
         Solo lo ven las organizaciones aprobadas y Akãhatã.
       </p>
 
-      <div className="flex flex-col gap-2.5 rounded-lg bg-crema p-3">
+      <div className="flex flex-col gap-2.5 rounded-lg bg-panel p-3">
         {mensajes.length === 0 && <p className="m-0 text-sm text-ink-soft">Todavía no hay mensajes. Escribí el primero.</p>}
         {mensajes.map((m) => {
           const org = orgPorId.get(m.organizacion_id);
@@ -112,9 +112,9 @@ export default function ChatView({ sala, oportunidades, organizaciones, miOrg, u
           return (
             <div key={m.id} className={`flex gap-2 ${propia ? 'flex-row-reverse' : ''}`}>
               <Iniciales org={org ?? { nombre: '?' }} />
-              <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${propia ? 'bg-magenta-light' : 'bg-white'}`}>
+              <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${propia ? 'bg-magenta-light' : 'bg-tarjeta'}`}>
                 <div className="flex flex-wrap items-baseline gap-x-2 text-xs">
-                  <b className="text-magenta">{org?.nombre ?? 'Organización'}</b>
+                  <b className="text-rosa">{org?.nombre ?? 'Organización'}</b>
                   <span className="text-ink-soft">{hora(m.creado_en)}</span>
                 </div>
                 <div className={`whitespace-pre-wrap break-words ${m.borrado ? 'italic text-ink-soft' : ''}`}>{m.texto}</div>
@@ -135,7 +135,7 @@ export default function ChatView({ sala, oportunidades, organizaciones, miOrg, u
           <textarea
             rows={2}
             maxLength={2000}
-            className="flex-1 rounded border-2 border-line px-3 py-2 text-[15px] focus:border-magenta focus:outline-none"
+            className="flex-1 rounded border-2 border-line px-3 py-2 text-[15px] focus:border-rosa focus:outline-none"
             placeholder="Escribí un mensaje…"
             value={texto}
             onChange={(e) => setTexto(e.target.value)}

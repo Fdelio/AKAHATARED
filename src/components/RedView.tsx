@@ -25,7 +25,7 @@ export default function RedView(props: Props) {
   const otras = props.personas.filter((p) => p.id !== props.usuariaId).length;
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 rounded-lg bg-crema p-1" role="tablist">
+      <div className="grid grid-cols-2 rounded-lg bg-panel p-1" role="tablist">
         {([['orgs', `Organizaciones (${props.organizaciones.length})`], ['personas', `Personas (${otras})`]] as const).map(([id, t]) => (
           <button
             key={id}
@@ -61,7 +61,7 @@ function Personas({ personas, organizaciones, usuariaId, apareceEnRed, onEscribi
         <div className="flex flex-col gap-1.5 rounded-lg bg-naranja-light p-3.5 text-sm text-naranja-dark">
           <b>Todavía no aparecés en esta lista.</b>
           <span className="text-ink">Completá tu perfil y elegí si querés aparecer y recibir mensajes. Tu correo nunca se muestra.</span>
-          <button className="self-start font-bold text-magenta underline" onClick={onCompletarPerfil}>Completar mi perfil</button>
+          <button className="self-start font-bold text-rosa underline" onClick={onCompletarPerfil}>Completar mi perfil</button>
         </div>
       )}
       <p className="m-0 text-sm text-ink-soft">
@@ -69,7 +69,7 @@ function Personas({ personas, organizaciones, usuariaId, apareceEnRed, onEscribi
       </p>
       <input
         type="search"
-        className="w-full rounded border-2 border-line px-3 py-2 text-[15px] focus:border-magenta focus:outline-none"
+        className="w-full rounded border-2 border-line px-3 py-2 text-[15px] focus:border-rosa focus:outline-none"
         placeholder="Buscar por nombre, organización, país o tema"
         value={busqueda}
         onChange={(e) => setBusqueda(e.target.value)}
@@ -127,14 +127,14 @@ function Organizaciones({ organizaciones, participaciones, oportunidades, miOrg,
       </p>
 
       <div className="flex flex-col gap-1.5 rounded-lg bg-magenta-light p-3.5 text-sm">
-        <b className="text-magenta">¿Preparan un informe sombra, una contribución o un reporte?</b>
+        <b className="text-rosa">¿Preparan un informe sombra, una contribución o un reporte?</b>
         <span>Akãhatã puede acompañarlas en la redacción, la revisión o la traducción.</span>
-        <button className="self-start font-bold text-magenta underline" onClick={onPedirApoyo}>Pedir apoyo</button>
+        <button className="self-start font-bold text-rosa underline" onClick={onPedirApoyo}>Pedir apoyo</button>
       </div>
 
       <input
         type="search"
-        className="w-full rounded border-2 border-line px-3 py-2 text-[15px] focus:border-magenta focus:outline-none"
+        className="w-full rounded border-2 border-line px-3 py-2 text-[15px] focus:border-rosa focus:outline-none"
         placeholder="Buscar por nombre, país o tema"
         value={busqueda}
         onChange={(e) => setBusqueda(e.target.value)}
@@ -200,11 +200,11 @@ function Item({ p, o, onAbrir, hecho = false }: { p: Participacion; o: Oportunid
       {hecho ? '✓ ' : '• '}
       {p.tipo_aporte && <b>{TIPOS_APORTE[p.tipo_aporte]}: </b>}
       {abierta ? (
-        <a className="text-magenta underline" href={'#op-' + o.id} onClick={(e) => { e.preventDefault(); onAbrir(o.id); }}>{o.titulo}</a>
+        <a className="text-rosa underline" href={'#op-' + o.id} onClick={(e) => { e.preventDefault(); onAbrir(o.id); }}>{o.titulo}</a>
       ) : (
         <span>{o.titulo}</span>
       )}
-      {p.enlace && <> · <a className="font-bold text-magenta" href={p.enlace} target="_blank" rel="noreferrer">ver documento</a></>}
+      {p.enlace && <> · <a className="font-bold text-rosa" href={p.enlace} target="_blank" rel="noreferrer">ver documento</a></>}
       {p.visibilidad === 'solo_akahata' && <span className="text-ink-soft"> (solo Akãhatã lo ve)</span>}
       {p.resultado && <div className="mt-0.5 border-l-2 border-line pl-2 text-ink-soft">Resultado: {p.resultado}</div>}
     </li>
@@ -214,10 +214,10 @@ function Item({ p, o, onAbrir, hecho = false }: { p: Participacion; o: Oportunid
 export function Avatar({ nombre, perfilId, foto_en, chico = false }: { nombre: string; perfilId?: string; foto_en?: string | null; chico?: boolean }) {
   const foto = useImagen(perfilId ? `perfiles/${perfilId}.jpg` : null, foto_en);
   const tam = chico ? 'size-9' : 'size-10';
-  if (foto) return <img src={foto} alt="" className={`${tam} flex-none rounded-full border-2 border-magenta bg-white object-cover`} />;
+  if (foto) return <img src={foto} alt="" className={`${tam} flex-none rounded-full border-2 border-rosa bg-white object-cover`} />;
   const ini = nombre.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || '·';
   return (
-    <div className={`grid ${tam} flex-none place-items-center rounded-full border-2 border-magenta bg-naranja-light font-bold text-naranja-dark`}>
+    <div className={`grid ${tam} flex-none place-items-center rounded-full border-2 border-rosa bg-naranja-light font-bold text-naranja-dark`}>
       {ini}
     </div>
   );
