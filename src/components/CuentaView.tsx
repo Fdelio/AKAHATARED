@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import type { NuevaOrganizacion, Organizacion, Perfil, Sesion } from '../types';
-import { Boton } from './ui';
+import { Boton, Iniciales } from './ui';
+import { Avatar } from './RedView';
 import * as datos from '../lib/datos';
 
 const TEMAS = [
@@ -68,12 +69,26 @@ export default function CuentaView({
           aprueben vas a poder sumarte a oportunidades y aparecer en la red.
         </p>
       )}
-      <div className="rounded-lg border border-line p-3.5">
-        <div className="text-[11px] font-extrabold uppercase tracking-widest text-naranja-dark">Tu organización</div>
-        <b className="block text-lg text-magenta">{org.nombre}</b>
-        <span className="text-sm text-ink-soft">{org.pais}{org.temas.length > 0 && ' · ' + org.temas.join(', ')}</span>
+      <div className="flex flex-col gap-3 rounded-lg border border-line p-3.5">
+        <div className="flex items-center gap-3">
+          <Iniciales org={org} grande />
+          <div className="min-w-0">
+            <div className="text-[11px] font-extrabold uppercase tracking-widest text-naranja-dark">Tu organización</div>
+            <b className="block text-lg leading-tight text-magenta">{org.nombre}</b>
+            <span className="text-sm text-ink-soft">{org.pais}{org.temas.length > 0 && ' · ' + org.temas.join(', ')}</span>
+          </div>
+        </div>
+        <CambiarImagen
+          tiene={!!org.logo_en}
+          textoSubir="Subir el logo de la organización"
+          textoCambiar="Cambiar el logo"
+          textoBorrar="Sacar el logo"
+          ayuda="Opcional. Lo ven las organizaciones de la red. Lo puede cambiar cualquier persona de tu organización."
+          onCambiar={(a) => datos.cambiarLogo(org.id, a)}
+          onListo={onRecargar}
+        />
       </div>
-      <TuPerfil perfil={sesion.perfil} aprobada={org.aprobada} onGuardado={onRecargar} />
+      <TuPerfil perfil={sesion.perfil} perfilId={sesion.id} fotoEn={sesion.foto_en} aprobada={org.aprobada} onGuardado={onRecargar} />
       <div className="text-sm text-ink-soft">
         Ingresaste como <b className="text-ink">{sesion.email}</b>
         {sesion.rol === 'revisora' && ' (equipo de Akãhatã)'}. Tu correo no se muestra a nadie.
@@ -212,7 +227,9 @@ function EquipoAkahata() {
 }
 
 /** Datos personales opcionales. Cada persona elige si aparece en la red y si se le puede escribir. */
-function TuPerfil({ perfil, aprobada, onGuardado }: { perfil: Perfil; aprobada: boolean; onGuardado: () => void }) {
+function TuPerfil({
+  perfil, perfilId, fotoEn, aprobada, onGuardado,
+}: { perfil: Perfil; perfilId: string; fotoEn: string | null; aprobada: boolean; onGuardado: () => void }) {
   const [p, setP] = useState<Perfil>(perfil);
   const [estado, setEstado] = useState<'' | 'guardando' | 'listo' | 'error'>('');
   const cambiar = <K extends keyof Perfil>(k: K, v: Perfil[K]) => {
@@ -238,6 +255,18 @@ function TuPerfil({ perfil, aprobada, onGuardado }: { perfil: Perfil; aprobada: 
           Todo es opcional. Podés usar un apodo o solo tu nombre de pila. Si tu trabajo te pone en riesgo, no pongas
           nada que te identifique.
         </p>
+      </div>
+      <div className="flex items-center gap-3">
+        <Avatar nombre={p.nombre_visible || '·'} perfilId={perfilId} foto_en={fotoEn} />
+        <CambiarImagen
+          tiene={!!fotoEn}
+          textoSubir="Subir una foto"
+          textoCambiar="Cambiar la foto"
+          textoBorrar="Sacar la foto"
+          ayuda="Opcional. Puede ser una foto tuya, un dibujo o lo que quieras. La ven solo las organizaciones de la red, y solo si elegís aparecer en la red."
+          onCambiar={datos.cambiarMiFoto}
+          onListo={onGuardado}
+        />
       </div>
       <label className={etiqueta}>
         Cómo querés que te vean
@@ -266,6 +295,52 @@ function TuPerfil({ perfil, aprobada, onGuardado }: { perfil: Perfil; aprobada: 
       {estado === 'error' && <p className="m-0 text-sm text-magenta">No se pudo guardar. Intentá de nuevo.</p>}
       <Boton variante="borde">{estado === 'guardando' ? 'Guardando…' : 'Guardar perfil'}</Boton>
     </form>
+  );
+}
+
+/** Subir, cambiar o sacar una imagen (foto de perfil o logo). */
+function CambiarImagen({
+  tiene, textoSubir, textoCambiar, textoBorrar, ayuda, onCambiar, onListo,
+}: {
+  tiene: boolean; textoSubir: string; textoCambiar: string; textoBorrar: string; ayuda: string;
+  onCambiar: (archivo: File | null) => Promise<void>; onListo: () => void;
+}) {
+  const [estado, setEstado] = useState<'' | 'subiendo' | 'error'>('');
+  const cambiar = async (archivo: File | null) => {
+    setEstado('subiendo');
+    try {
+      await onCambiar(archivo);
+      setEstado('');
+      onListo();
+    } catch (err) {
+      console.error(err);
+      setEstado('error');
+    }
+  };
+  return (
+    <div className="flex min-w-0 flex-1 flex-col gap-1">
+      <div className="flex flex-wrap gap-x-3 gap-y-1">
+        <label className="cursor-pointer text-sm font-bold text-magenta underline">
+          {estado === 'subiendo' ? 'Guardando…' : tiene ? textoCambiar : textoSubir}
+          <input
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            disabled={estado === 'subiendo'}
+            onChange={(e) => {
+              const a = e.target.files?.[0];
+              e.target.value = '';
+              if (a) cambiar(a);
+            }}
+          />
+        </label>
+        {tiene && estado !== 'subiendo' && (
+          <button type="button" className="text-sm text-ink-soft underline" onClick={() => cambiar(null)}>{textoBorrar}</button>
+        )}
+      </div>
+      <span className="text-xs text-ink-soft">{ayuda}</span>
+      {estado === 'error' && <span className="text-xs text-magenta">No se pudo guardar la imagen. Probá con otra.</span>}
+    </div>
   );
 }
 

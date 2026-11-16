@@ -1,6 +1,21 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { Oportunidad, Organizacion, Sistema } from '../types';
-import { diasHasta } from '../lib/datos';
+import { diasHasta, enlaceImagen } from '../lib/datos';
+
+/** Enlace para mostrar una imagen privada (foto o logo), o null mientras carga o si no hay. */
+export function useImagen(ruta: string | null, version: string | null | undefined): string | null {
+  const [url, setUrl] = useState<{ clave: string; url: string | null } | null>(null);
+  const clave = ruta && version ? ruta + '?' + version : null;
+  useEffect(() => {
+    if (!ruta || !version) return;
+    let vigente = true;
+    enlaceImagen(ruta, version).then((u) => vigente && setUrl({ clave: ruta + '?' + version, url: u }));
+    return () => {
+      vigente = false;
+    };
+  }, [ruta, version]);
+  return clave && url?.clave === clave ? url.url : null;
+}
 
 export function EtiquetaSistema({ sistema, mecanismo }: { sistema: Sistema; mecanismo: string }) {
   const estilo =
@@ -26,7 +41,16 @@ export function Plazo({ fecha }: { fecha: string }) {
   );
 }
 
-export function Iniciales({ org, grande = false }: { org: Pick<Organizacion, 'nombre'>; grande?: boolean }) {
+export function Iniciales({
+  org, grande = false,
+}: { org: Pick<Organizacion, 'nombre'> & Partial<Pick<Organizacion, 'id' | 'logo_en'>>; grande?: boolean }) {
+  const logo = useImagen(org.id ? `organizaciones/${org.id}.jpg` : null, org.logo_en);
+  if (logo)
+    return grande ? (
+      <img src={logo} alt="" className="size-10 flex-none rounded-full border-2 border-naranja bg-white object-cover" />
+    ) : (
+      <img src={logo} alt="" className="-ml-1.5 size-[22px] rounded-full border-2 border-white bg-white object-cover first:ml-0" />
+    );
   const ini = org.nombre
     .split(' ')
     .filter((w) => w.length > 2)

@@ -14,6 +14,8 @@ export interface Organizacion {
   necesita: string;
   /** Las organizaciones nuevas quedan pendientes hasta que Akãhatã las aprueba. */
   aprobada: boolean;
+  /** Cuándo subió su logo (null o ausente: no tiene). */
+  logo_en?: string | null;
 }
 
 /** Datos de la persona que ingresó. */
@@ -25,6 +27,8 @@ export interface Sesion {
   /** Pidió sumarse a una organización que ya está en la red y espera respuesta. */
   solicitud: { organizacion_id: string; nombre: string } | null;
   perfil: Perfil;
+  /** Cuándo subió su foto (null: no tiene). */
+  foto_en: string | null;
 }
 
 /** Datos personales que cada persona elige mostrar. Nada es obligatorio. */
@@ -46,6 +50,7 @@ export interface PersonaRed {
   presentacion: string;
   organizacion_id: string;
   acepta_mensajes: boolean;
+  foto_en?: string | null;
 }
 
 export interface MensajePrivado {

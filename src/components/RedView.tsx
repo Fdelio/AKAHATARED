@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { TIPOS_APORTE, type Oportunidad, type Organizacion, type Participacion, type PersonaRed } from '../types';
 import { diasHasta } from '../lib/datos';
-import { Iniciales } from './ui';
+import { Iniciales, useImagen } from './ui';
 
 interface Props {
   organizaciones: Organizacion[];
@@ -78,7 +78,7 @@ function Personas({ personas, organizaciones, usuariaId, apareceEnRed, onEscribi
         const o = orgPorId.get(p.organizacion_id);
         return (
           <div key={p.id} className="flex gap-3 border-b border-line py-3 last:border-b-0">
-            <Avatar nombre={p.nombre_visible} />
+            <Avatar nombre={p.nombre_visible} perfilId={p.id} foto_en={p.foto_en} />
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <b>{p.nombre_visible}</b>
               <span className="text-[13px] text-ink-soft">
@@ -211,10 +211,13 @@ function Item({ p, o, onAbrir, hecho = false }: { p: Participacion; o: Oportunid
   );
 }
 
-export function Avatar({ nombre }: { nombre: string }) {
+export function Avatar({ nombre, perfilId, foto_en, chico = false }: { nombre: string; perfilId?: string; foto_en?: string | null; chico?: boolean }) {
+  const foto = useImagen(perfilId ? `perfiles/${perfilId}.jpg` : null, foto_en);
+  const tam = chico ? 'size-9' : 'size-10';
+  if (foto) return <img src={foto} alt="" className={`${tam} flex-none rounded-full border-2 border-magenta bg-white object-cover`} />;
   const ini = nombre.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || '·';
   return (
-    <div className="grid size-10 flex-none place-items-center rounded-full border-2 border-magenta bg-naranja-light font-bold text-naranja-dark">
+    <div className={`grid ${tam} flex-none place-items-center rounded-full border-2 border-magenta bg-naranja-light font-bold text-naranja-dark`}>
       {ini}
     </div>
   );
