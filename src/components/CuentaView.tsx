@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import type { NuevaOrganizacion, Organizacion, Perfil, Sesion } from '../types';
 import { Boton, Iniciales } from './ui';
 import { Avatar } from './RedView';
@@ -12,6 +13,45 @@ const TEMAS = [
 export const campo =
   'w-full rounded border-2 border-line bg-tarjeta px-3 py-2.5 text-[15px] text-ink focus:border-rosa focus:outline-none';
 export const etiqueta = 'flex flex-col gap-1 text-[13px] font-bold text-ink';
+
+/** Campo de contraseña con un ojito para mostrar u ocultar lo que se escribe. */
+function CampoContrasena({
+  value,
+  onChange,
+  autoComplete,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  autoComplete: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <span className="relative block">
+      <input
+        type={visible ? 'text' : 'password'}
+        required
+        minLength={8}
+        autoComplete={autoComplete}
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        className={`${campo} pr-11`}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+        aria-pressed={visible}
+        title={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+        className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-ink-soft hover:text-rosa focus:text-rosa focus:outline-none"
+      >
+        {visible ? <EyeOff size={20} aria-hidden /> : <Eye size={20} aria-hidden />}
+      </button>
+    </span>
+  );
+}
 
 interface Props {
   sesion: Sesion | null;
@@ -464,21 +504,17 @@ export function Ingreso({ modoEjemplo }: { modoEjemplo: boolean }) {
       {conContrasena && (
         <label className={etiqueta}>
           Contraseña
-          <input
-            type="password"
-            required
-            minLength={8}
+          <CampoContrasena
             autoComplete={modo === 'crear' ? 'new-password' : 'current-password'}
-            className={campo}
             value={contrasena}
-            onChange={(e) => setContrasena(e.target.value)}
+            onChange={setContrasena}
           />
         </label>
       )}
       {modo === 'crear' && (
         <label className={etiqueta}>
           Repetí la contraseña
-          <input type="password" required minLength={8} autoComplete="new-password" className={campo} value={repetida} onChange={(e) => setRepetida(e.target.value)} />
+          <CampoContrasena autoComplete="new-password" value={repetida} onChange={setRepetida} />
           <span className="text-xs font-normal text-ink-soft">Al menos 8 caracteres. La primera vez te llega un correo para confirmar tu dirección.</span>
         </label>
       )}
@@ -546,11 +582,11 @@ export function NuevaContrasena({ titulo, onListo }: { titulo: string; onListo: 
       <b className="text-rosa">{titulo}</b>
       <label className={etiqueta}>
         Contraseña nueva
-        <input type="password" required minLength={8} autoComplete="new-password" className={campo} value={c1} onChange={(e) => setC1(e.target.value)} />
+        <CampoContrasena autoComplete="new-password" value={c1} onChange={setC1} />
       </label>
       <label className={etiqueta}>
         Repetila
-        <input type="password" required minLength={8} autoComplete="new-password" className={campo} value={c2} onChange={(e) => setC2(e.target.value)} />
+        <CampoContrasena autoComplete="new-password" value={c2} onChange={setC2} />
       </label>
       {error && <p className="m-0 text-sm text-rosa">{error}</p>}
       <Boton variante="borde">{guardando ? 'Guardando…' : 'Guardar contraseña'}</Boton>
