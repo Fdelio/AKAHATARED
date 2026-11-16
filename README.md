@@ -47,3 +47,8 @@ supabase/
   migrations/          esquema de la base con permisos (RLS)
   functions/           funciones del servidor
 ```
+
+## Apps para celular
+
+La app se empaqueta para Android e iPhone con Capacitor (carpetas `android/` e `ios/`).
+Cómo publicarla en las tiendas: [docs/publicar-en-tiendas.md](docs/publicar-en-tiendas.md).

@@ -6,6 +6,7 @@ import type {
   Comentario, MensajePrivado, Perfil, PersonaRed, EstadoPedido, EstadoRevision, Mensaje, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Participacion,
   NuevaSesion, PedidoApoyo, Sesion, SesionOrgano, SolicitudUnion, Trabajo, Visibilidad,
 } from '../types';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from './supabaseClient';
 import * as ejemplo from '../data/datosEjemplo';
 
@@ -165,17 +166,24 @@ export async function obtenerSesion(): Promise<Sesion | null> {
   };
 }
 
+/**
+ * Adónde vuelve la persona al tocar el enlace del correo. Dentro de la app del celular
+ * la dirección es interna (localhost), así que el enlace abre la versión web publicada.
+ */
+const WEB_PUBLICA = 'https://fdelio.github.io/AKAHATARED/';
+const volverAca = () =>
+  Capacitor.isNativePlatform() ? WEB_PUBLICA : window.location.origin + window.location.pathname;
+
 /** Manda un enlace de ingreso al correo. No hace falta contraseña. */
 export async function enviarEnlace(email: string) {
   if (!supabase) return;
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: window.location.origin + window.location.pathname },
+    options: { emailRedirectTo: volverAca() },
   });
   if (error) throw error;
 }
 
-const volverAca = () => window.location.origin + window.location.pathname;
 
 /** Entrar con correo y contraseña. */
 export async function entrarConContrasena(email: string, contrasena: string) {
