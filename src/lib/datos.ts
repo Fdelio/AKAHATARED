@@ -21,6 +21,10 @@ const mem = {
   perfil: { ...ejemplo.MI_PERFIL },
   privados: [...ejemplo.PRIVADOS],
   comentarios: [...ejemplo.COMENTARIOS],
+  fotoEn: null as string | null,
+  logoEn: new Map<string, string | null>(),
+  /** Modo ejemplo: imágenes subidas en esta visita. */
+  imagenes: new Map<string, string>(),
 };
 
 export async function listarOportunidades(estado: EstadoRevision = 'publicada'): Promise<Oportunidad[]> {
@@ -87,7 +91,7 @@ export async function obtenerSesion(): Promise<Sesion | null> {
     const [{ data, error }, { data: sol }] = await Promise.all([
       supabase
         .from('perfiles')
-        .select('rol, nombre_visible, cargo, presentacion, visible_en_red, acepta_mensajes, organizaciones(*)')
+        .select('rol, nombre_visible, cargo, presentacion, visible_en_red, acepta_mensajes, foto_en, organizaciones(*)')
         .eq('id', usuaria.id)
         .maybeSingle(),
       supabase
@@ -102,6 +106,7 @@ export async function obtenerSesion(): Promise<Sesion | null> {
       id: usuaria.id,
       email: usuaria.email ?? '',
       rol: (data?.rol as Sesion['rol']) ?? 'miembro',
+      foto_en: (data?.foto_en as string | null) ?? null,
       organizacion: (data?.organizaciones as unknown as Organizacion | null) ?? null,
       solicitud: sol
         ? { organizacion_id: sol.organizacion_id, nombre: (sol.organizaciones as unknown as { nombre: string } | null)?.nombre ?? '' }
@@ -120,11 +125,13 @@ export async function obtenerSesion(): Promise<Sesion | null> {
     id: 'yo',
     solicitud: null,
     perfil: mem.perfil,
+    foto_en: mem.fotoEn,
     email: 'ejemplo@akahata.org',
     rol: 'revisora',
     organizacion: {
       id: ejemplo.MI_ORGANIZACION_ID, nombre: 'Tu organización', pais: 'Argentina',
       temas: [], ofrece: '', necesita: '', aprobada: true,
+      logo_en: mem.logoEn.get(ejemplo.MI_ORGANIZACION_ID) ?? null,
     },
   };
 }
@@ -190,6 +197,9 @@ export async function salir() {
  */
 export async function darmeDeBaja(borrarLoQueEscribi: boolean) {
   if (!supabase) return;
+  // Primero la foto, que está guardada aparte.
+  const { data: s } = await supabase.auth.getSession();
+  if (s.session) await supabase.storage.from('imagenes').remove([rutaFoto(s.session.user.id)]);
   const { error } = await supabase.rpc('darme_de_baja', { p_borrar_lo_que_escribi: borrarLoQueEscribi });
   if (error) throw error;
   // La cuenta ya no existe: se cierra la sesión solo en este dispositivo.
@@ -638,7 +648,7 @@ export async function listarMensajesPrivados(): Promise<MensajePrivado[]> {
 }
 
 /** Nombres de las personas con las que tengo conversaciones. */
-export async function nombresDeConversaciones(): Promise<{ id: string; nombre_visible: string; organizacion_id: string | null }[]> {
+export async function nombresDeConversaciones(): Promise<{ id: string; nombre_visible: string; organizacion_id: string | null; foto_en?: string | null }[]> {
   if (supabase) {
     const { data, error } = await supabase.rpc('nombres_de_mis_conversaciones');
     if (error) throw error;
@@ -684,4 +694,97 @@ export function diasHasta(fecha: string): number {
   hoy.setHours(0, 0, 0, 0);
   const f = new Date(fecha + 'T00:00:00');
   return Math.round((f.getTime() - hoy.getTime()) / 86_400_000);
+}
+
+// ---------- Fotos de perfil y logos ----------
+// Se guardan en un espacio privado. Para mostrarlas se piden enlaces que vencen en una hora.
+
+export const rutaFoto = (perfilId: string) => `perfiles/${perfilId}.jpg`;
+export const rutaLogo = (organizacionId: string) => `organizaciones/${organizacionId}.jpg`;
+
+const enlaces = new Map<string, Promise<string | null>>();
+
+/** Enlace para mostrar una imagen, o null si no se puede ver. version: cuándo se subió (cambia el enlace al reemplazarla). */
+export function enlaceImagen(ruta: string, version: string): Promise<string | null> {
+  const clave = ruta + '?' + version;
+  if (!supabase) return Promise.resolve(mem.imagenes.get(ruta) ?? null);
+  let p = enlaces.get(clave);
+  if (!p) {
+    p = supabase.storage
+      .from('imagenes')
+      .createSignedUrl(ruta, 3600)
+      .then(({ data }) => data?.signedUrl ?? null, () => null);
+    enlaces.set(clave, p);
+    setTimeout(() => enlaces.delete(clave), 50 * 60 * 1000);
+  }
+  return p;
+}
+
+/**
+ * Recorta la imagen en cuadrado y la achica a 400 px. Al redibujarla se pierden
+ * los datos ocultos del archivo (lugar donde se sacó, teléfono, fecha).
+ */
+async function prepararImagen(archivo: File): Promise<Blob> {
+  const bitmap = await createImageBitmap(archivo);
+  const lado = Math.min(bitmap.width, bitmap.height);
+  const tam = Math.min(400, lado);
+  const lienzo = document.createElement('canvas');
+  lienzo.width = tam;
+  lienzo.height = tam;
+  const ctx = lienzo.getContext('2d')!;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, tam, tam);
+  ctx.drawImage(bitmap, (bitmap.width - lado) / 2, (bitmap.height - lado) / 2, lado, lado, 0, 0, tam, tam);
+  bitmap.close();
+  return new Promise((ok, mal) => lienzo.toBlob((b) => (b ? ok(b) : mal(new Error('imagen'))), 'image/jpeg', 0.85));
+}
+
+async function subirImagen(ruta: string, archivo: File) {
+  const blob = await prepararImagen(archivo);
+  if (!supabase) {
+    mem.imagenes.set(ruta, URL.createObjectURL(blob));
+    return;
+  }
+  const { error } = await supabase.storage.from('imagenes').upload(ruta, blob, { upsert: true, contentType: 'image/jpeg' });
+  if (error) throw error;
+}
+
+async function borrarImagen(ruta: string) {
+  if (!supabase) {
+    mem.imagenes.delete(ruta);
+    return;
+  }
+  const { error } = await supabase.storage.from('imagenes').remove([ruta]);
+  if (error) throw error;
+}
+
+/** Sube (o reemplaza) la foto de quien ingresó. null la borra. */
+export async function cambiarMiFoto(archivo: File | null) {
+  if (!supabase) {
+    if (archivo) await subirImagen(rutaFoto('yo'), archivo);
+    else await borrarImagen(rutaFoto('yo'));
+    mem.fotoEn = archivo ? new Date().toISOString() : null;
+    return;
+  }
+  const { data: s } = await supabase.auth.getSession();
+  const id = s.session?.user.id;
+  if (!id) throw new Error('Sin sesión');
+  if (archivo) await subirImagen(rutaFoto(id), archivo);
+  else await borrarImagen(rutaFoto(id));
+  const { error } = await supabase.from('perfiles').update({ foto_en: archivo ? new Date().toISOString() : null }).eq('id', id);
+  if (error) throw error;
+}
+
+/** Sube (o reemplaza) el logo de una organización. null lo borra. */
+export async function cambiarLogo(organizacionId: string, archivo: File | null) {
+  if (archivo) await subirImagen(rutaLogo(organizacionId), archivo);
+  else await borrarImagen(rutaLogo(organizacionId));
+  const logo_en = archivo ? new Date().toISOString() : null;
+  if (!supabase) {
+    mem.logoEn.set(organizacionId, logo_en);
+    mem.organizaciones = mem.organizaciones.map((o) => (o.id === organizacionId ? { ...o, logo_en } : o));
+    return;
+  }
+  const { error } = await supabase.from('organizaciones').update({ logo_en }).eq('id', organizacionId);
+  if (error) throw error;
 }

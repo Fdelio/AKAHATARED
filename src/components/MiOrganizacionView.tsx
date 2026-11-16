@@ -3,7 +3,7 @@ import {
   TIPOS_APORTE, type NuevoPedido, type Oportunidad, type Participacion, type PedidoApoyo, type Sesion, type SolicitudUnion, type TipoAporte,
   type Trabajo,
 } from '../types';
-import { Boton, EtiquetaSistema, Plazo } from './ui';
+import { Boton, EtiquetaSistema, Iniciales, Plazo } from './ui';
 import { campo, etiqueta } from './CuentaView';
 import PedirApoyo from './PedirApoyo';
 
@@ -55,9 +55,12 @@ export default function MiOrganizacionView({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-lg border border-line p-3.5">
-        <b className="block text-lg text-magenta">{org.nombre}</b>
-        <span className="text-sm text-ink-soft">{org.pais}{org.temas.length > 0 && ' · ' + org.temas.join(', ')}</span>
+      <div className="flex items-center gap-3 rounded-lg border border-line p-3.5">
+        <Iniciales org={org} grande />
+        <div className="min-w-0">
+          <b className="block text-lg leading-tight text-magenta">{org.nombre}</b>
+          <span className="text-sm text-ink-soft">{org.pais}{org.temas.length > 0 && ' · ' + org.temas.join(', ')}</span>
+        </div>
       </div>
 
       <section className="flex flex-col gap-2">

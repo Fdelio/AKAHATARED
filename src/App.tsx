@@ -19,7 +19,7 @@ import { NuevaContrasena } from './components/CuentaView';
 import BienvenidaView from './components/BienvenidaView';
 import NoticiasView, { NotaView } from './components/NoticiasView';
 import NotaForm from './components/NotaForm';
-import { Boton } from './components/ui';
+import { Boton, useImagen } from './components/ui';
 
 type ItemNav = { id: Pantalla; label: string; Icono: typeof Radar };
 const NAV: ItemNav[] = [
@@ -293,9 +293,7 @@ export default function App() {
             )}
           </button>
         )}
-        <button aria-label="Tu cuenta" onClick={() => ir('cuenta')} className="grid size-9 flex-none place-items-center rounded-full bg-magenta-light text-magenta">
-          <UserRound size={18} />
-        </button>
+        <BotonCuenta sesion={sesion} onClick={() => ir('cuenta')} />
       </header>
       {modoEjemplo && (
         <div className="bg-naranja-light px-5 py-1.5 text-[11px] font-extrabold uppercase tracking-widest text-naranja-dark">
@@ -535,5 +533,15 @@ export default function App() {
         {aviso}
       </div>
     </div>
+  );
+}
+
+/** Botón de la cuenta: muestra la foto de perfil si la persona subió una. */
+function BotonCuenta({ sesion, onClick }: { sesion: Sesion | null; onClick: () => void }) {
+  const foto = useImagen(sesion ? `perfiles/${sesion.id}.jpg` : null, sesion?.foto_en);
+  return (
+    <button aria-label="Tu cuenta" onClick={onClick} className="grid size-9 flex-none place-items-center overflow-hidden rounded-full bg-magenta-light text-magenta">
+      {foto ? <img src={foto} alt="" className="size-full object-cover" /> : <UserRound size={18} />}
+    </button>
   );
 }

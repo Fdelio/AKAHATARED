@@ -21,7 +21,7 @@ const hora = (iso: string) =>
   new Date(iso).toLocaleString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 export default function PrivadosView({ privados, usuariaId, personaId, personas, organizaciones, puedeEscribir, onAbrir, onCambio, onAviso }: Props) {
-  const [extra, setExtra] = useState<{ id: string; nombre_visible: string; organizacion_id: string | null }[]>([]);
+  const [extra, setExtra] = useState<{ id: string; nombre_visible: string; organizacion_id: string | null; foto_en?: string | null }[]>([]);
   const [texto, setTexto] = useState('');
   const [enviando, setEnviando] = useState(false);
   const fin = useRef<HTMLDivElement>(null);
@@ -35,7 +35,12 @@ export default function PrivadosView({ privados, usuariaId, personaId, personas,
   const quien = (id: string) => {
     const p = personas.find((x) => x.id === id) ?? extra.find((x) => x.id === id);
     const o = p?.organizacion_id ? orgPorId.get(p.organizacion_id) : undefined;
-    return { nombre: p?.nombre_visible ?? 'Persona de la red', org: o?.nombre ?? null, acepta: personas.find((x) => x.id === id)?.acepta_mensajes ?? false };
+    return {
+      nombre: p?.nombre_visible ?? 'Persona de la red',
+      org: o?.nombre ?? null,
+      acepta: personas.find((x) => x.id === id)?.acepta_mensajes ?? false,
+      foto_en: p?.foto_en ?? null,
+    };
   };
 
   // Conversaciones: la otra persona y el último mensaje.
@@ -69,7 +74,7 @@ export default function PrivadosView({ privados, usuariaId, personaId, personas,
           const nuevos = ms.filter((m) => m.para === usuariaId && !m.leido).length;
           return (
             <button key={id} onClick={() => onAbrir(id)} className="flex gap-3 border-b border-line py-3 text-left last:border-b-0">
-              <Avatar nombre={q.nombre} />
+              <Avatar nombre={q.nombre} perfilId={id} foto_en={q.foto_en} />
               <div className="flex min-w-0 flex-1 flex-col">
                 <span className="flex items-baseline justify-between gap-2">
                   <b className="truncate">{q.nombre}</b>
@@ -118,7 +123,7 @@ export default function PrivadosView({ privados, usuariaId, personaId, personas,
         <ArrowLeft size={16} /> Mensajes privados
       </button>
       <div className="flex items-center gap-3 rounded-lg border border-line p-3">
-        <Avatar nombre={q.nombre} />
+        <Avatar nombre={q.nombre} perfilId={personaId} foto_en={q.foto_en} />
         <div className="flex flex-col">
           <b>{q.nombre}</b>
           {q.org && <span className="text-[13px] text-ink-soft">{q.org}</span>}
