@@ -185,6 +185,33 @@ export async function salir() {
 }
 
 /**
+ * Borra la cuenta de quien ingresó: correo, contraseña, perfil y mensajes privados.
+ * Si borrarLoQueEscribi, también borra sus mensajes del chat y sus comentarios.
+ */
+export async function darmeDeBaja(borrarLoQueEscribi: boolean) {
+  if (!supabase) return;
+  const { error } = await supabase.rpc('darme_de_baja', { p_borrar_lo_que_escribi: borrarLoQueEscribi });
+  if (error) throw error;
+  // La cuenta ya no existe: se cierra la sesión solo en este dispositivo.
+  await supabase.auth.signOut({ scope: 'local' });
+}
+
+/** Personas del equipo de Akãhatã (rol revisora) y correos anotados que todavía no crearon su cuenta. */
+export async function equipoAkahata(): Promise<{ email: string; activa: boolean }[]> {
+  if (!supabase) return [{ email: 'ejemplo@akahata.org', activa: true }];
+  const { data, error } = await supabase.rpc('equipo_akahata');
+  if (error) throw error;
+  return (data ?? []) as { email: string; activa: boolean }[];
+}
+
+/** Suma a una persona al equipo de Akãhatã por su correo. Si todavía no tiene cuenta, recibe el rol al crearla. */
+export async function sumarRevisora(email: string) {
+  if (!supabase) return;
+  const { error } = await supabase.rpc('sumar_revisora', { p_email: email });
+  if (error) throw error;
+}
+
+/**
  * Avisa cuando alguien entra (por ejemplo, al volver desde el enlace del correo) o sale.
  * alRecuperar se llama cuando se vuelve del correo para elegir una contraseña nueva.
  */

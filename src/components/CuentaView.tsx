@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import type { NuevaOrganizacion, Organizacion, Perfil, Sesion } from '../types';
 import { Boton } from './ui';
 import * as datos from '../lib/datos';
@@ -23,10 +23,12 @@ interface Props {
   onSalir: () => void;
   /** Vuelve a leer la sesión después de guardar el perfil. */
   onRecargar: () => void;
+  /** La persona borró su cuenta. */
+  onDadaDeBaja: () => void;
 }
 
 export default function CuentaView({
-  sesion, modoEjemplo, onCrearOrganizacion, organizaciones, onPedirUnirme, onCancelarSolicitud, onSalir, onRecargar,
+  sesion, modoEjemplo, onCrearOrganizacion, organizaciones, onPedirUnirme, onCancelarSolicitud, onSalir, onRecargar, onDadaDeBaja,
 }: Props) {
   if (!sesion) return <Ingreso modoEjemplo={modoEjemplo} />;
   if (!sesion.organizacion && sesion.solicitud) {
@@ -38,18 +40,22 @@ export default function CuentaView({
         </p>
         <Boton variante="borde" onClick={onCancelarSolicitud}>Cancelar el pedido</Boton>
         <button type="button" className="text-sm font-bold text-ink-soft underline" onClick={onSalir}>Salir</button>
+        <DarmeDeBaja tieneOrganizacion={false} onListo={onDadaDeBaja} />
       </div>
     );
   }
   if (!sesion.organizacion) {
     return (
-      <SinOrganizacion
-        email={sesion.email}
-        organizaciones={organizaciones}
-        onPedirUnirme={onPedirUnirme}
-        onCrear={onCrearOrganizacion}
-        onSalir={onSalir}
-      />
+      <div className="flex flex-col gap-6">
+        <SinOrganizacion
+          email={sesion.email}
+          organizaciones={organizaciones}
+          onPedirUnirme={onPedirUnirme}
+          onCrear={onCrearOrganizacion}
+          onSalir={onSalir}
+        />
+        <DarmeDeBaja tieneOrganizacion={false} onListo={onDadaDeBaja} />
+      </div>
     );
   }
 
@@ -73,8 +79,135 @@ export default function CuentaView({
         {sesion.rol === 'revisora' && ' (equipo de Akãhatã)'}. Tu correo no se muestra a nadie.
       </div>
       <CambiarContrasena />
+      {sesion.rol === 'revisora' && <EquipoAkahata />}
       {!modoEjemplo && <Boton variante="borde" onClick={onSalir}>Salir</Boton>}
+      <DarmeDeBaja tieneOrganizacion onListo={onDadaDeBaja} />
     </div>
+  );
+}
+
+/** Borrar la cuenta. Es de verdad: no queda el correo ni el perfil. */
+function DarmeDeBaja({ tieneOrganizacion, onListo }: { tieneOrganizacion: boolean; onListo: () => void }) {
+  const [abierto, setAbierto] = useState(false);
+  const [borrarLoQueEscribi, setBorrarLoQueEscribi] = useState(false);
+  const [confirmacion, setConfirmacion] = useState('');
+  const [estado, setEstado] = useState<'' | 'borrando' | 'error' | 'ultima'>('');
+
+  if (!abierto)
+    return (
+      <button type="button" className="self-start text-sm text-ink-soft underline" onClick={() => setAbierto(true)}>
+        Darme de baja y borrar mi cuenta
+      </button>
+    );
+
+  const enviar = async (e: FormEvent) => {
+    e.preventDefault();
+    setEstado('borrando');
+    try {
+      await datos.darmeDeBaja(borrarLoQueEscribi);
+      onListo();
+    } catch (err) {
+      setEstado(/ultima_revisora/.test(String((err as Error)?.message ?? err)) ? 'ultima' : 'error');
+    }
+  };
+
+  return (
+    <form onSubmit={enviar} className="flex flex-col gap-3 rounded-lg border-2 border-magenta/40 p-3.5">
+      <b className="text-magenta">Darme de baja</b>
+      <p className="m-0 text-sm text-ink">
+        Se borra tu cuenta de la app: tu correo, tu contraseña, tu perfil y tus mensajes privados. No te vamos a mandar
+        más correos. No se puede deshacer: si querés volver, creás una cuenta nueva.
+      </p>
+      {tieneOrganizacion && (
+        <p className="m-0 text-sm text-ink-soft">
+          Tu organización sigue en la red con el resto de su equipo. Lo que escribiste en el chat y en los comentarios
+          está firmado por la organización y queda sin tu nombre.
+        </p>
+      )}
+      <label className="flex items-start gap-2.5 text-sm text-ink">
+        <input type="checkbox" className="mt-1 size-4 accent-magenta" checked={borrarLoQueEscribi} onChange={(e) => setBorrarLoQueEscribi(e.target.checked)} />
+        <span>Borrar también todo lo que escribí en el chat y en los comentarios de noticias.</span>
+      </label>
+      <label className={etiqueta}>
+        Para confirmar, escribí BORRAR
+        <input className={campo} value={confirmacion} onChange={(e) => setConfirmacion(e.target.value)} autoComplete="off" />
+      </label>
+      {estado === 'ultima' && (
+        <p className="m-0 text-sm text-magenta">
+          Sos la única persona del equipo de Akãhatã que puede revisar. Antes de darte de baja, sumá a otra persona al
+          equipo.
+        </p>
+      )}
+      {estado === 'error' && <p className="m-0 text-sm text-magenta">No se pudo borrar la cuenta. Intentá de nuevo.</p>}
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="submit"
+          disabled={confirmacion.trim().toUpperCase() !== 'BORRAR' || estado === 'borrando'}
+          className="rounded bg-magenta px-4 py-2.5 text-[13px] font-extrabold uppercase tracking-wider text-white disabled:opacity-40"
+        >
+          {estado === 'borrando' ? 'Borrando…' : 'Borrar mi cuenta'}
+        </button>
+        <button type="button" className="text-sm font-bold text-ink-soft underline" onClick={() => setAbierto(false)}>
+          Cancelar
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/** Solo para el equipo de Akãhatã: sumar personas con el mismo rol (revisar, publicar noticias y oportunidades). */
+function EquipoAkahata() {
+  const [equipo, setEquipo] = useState<{ email: string; activa: boolean }[] | null>(null);
+  const [email, setEmail] = useState('');
+  const [estado, setEstado] = useState<'' | 'guardando' | 'listo' | 'error'>('');
+
+  const cargar = () => datos.equipoAkahata().then(setEquipo).catch(() => setEquipo([]));
+  useEffect(() => {
+    cargar();
+  }, []);
+
+  const enviar = async (e: FormEvent) => {
+    e.preventDefault();
+    setEstado('guardando');
+    try {
+      await datos.sumarRevisora(email.trim());
+      setEmail('');
+      setEstado('listo');
+      cargar();
+    } catch {
+      setEstado('error');
+    }
+  };
+
+  return (
+    <form onSubmit={enviar} className="flex flex-col gap-3 rounded-lg border border-line p-3.5">
+      <div>
+        <div className="text-[11px] font-extrabold uppercase tracking-widest text-naranja-dark">Equipo de Akãhatã</div>
+        <p className="m-0 mt-1 text-sm text-ink-soft">
+          Estas personas pueden cargar noticias y oportunidades y aprobar lo que está en Revisión.
+        </p>
+      </div>
+      {equipo && equipo.length > 0 && (
+        <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm">
+          {equipo.map((p) => (
+            <li key={p.email}>
+              {p.email}
+              {!p.activa && <span className="text-ink-soft"> · todavía no creó su cuenta</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+      <label className={etiqueta}>
+        Sumar a alguien por su correo
+        <input type="email" required className={campo} value={email} onChange={(e) => { setEmail(e.target.value); setEstado(''); }} placeholder="nombre@akahataorg.org" />
+        <span className="text-xs font-normal text-ink-soft">
+          Si ya tiene cuenta, el rol es inmediato. Si no, lo recibe cuando cree su cuenta con ese correo y lo confirme.
+        </span>
+      </label>
+      {estado === 'listo' && <p className="m-0 text-sm font-bold text-magenta">Listo, la sumamos al equipo.</p>}
+      {estado === 'error' && <p className="m-0 text-sm text-magenta">No se pudo sumar. Revisá el correo.</p>}
+      <Boton variante="borde">{estado === 'guardando' ? 'Sumando…' : 'Sumar al equipo'}</Boton>
+    </form>
   );
 }
 
