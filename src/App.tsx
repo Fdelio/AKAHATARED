@@ -370,6 +370,11 @@ export default function App() {
             onCancelarSolicitud={() => ejecutar(datos.cancelarSolicitud, 'Pedido cancelado')}
             onSalir={() => ejecutar(datos.salir, 'Saliste de la app').then(() => ir('radar'))}
             onRecargar={cargar}
+            onDadaDeBaja={() => {
+              setAviso('Borramos tu cuenta. Gracias por haber sido parte.');
+              ir('radar');
+              cargar();
+            }}
           />
         ) : !sesion && (ruta.pantalla === 'red' || ruta.pantalla === 'mias' || ruta.pantalla === 'chat') ? (
           <div className="flex flex-col gap-4">
