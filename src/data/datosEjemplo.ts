@@ -144,16 +144,25 @@ export const SESIONES: SesionOrgano[] = [
     id: 's1', sistema: 'ONU', organo: 'Examen Periódico Universal', nombre: 'EPU · sesión del Grupo de Trabajo',
     fecha_inicio: enDias(40), fecha_fin: enDias(51), a_confirmar: false, lugar: 'Ginebra',
     descripcion: 'Ejemplo: se examinan 14 países, entre ellos dos de la región.', fuente_url: null,
+    fechas_clave: [
+      { fecha: enDias(-20), texto: 'Ejemplo: cierre de informes de la sociedad civil', url: null, aprox: false },
+      { fecha: enDias(12), texto: 'Ejemplo: reuniones con misiones en Ginebra', url: null, aprox: true },
+    ],
   },
   {
     id: 's2', sistema: 'ONU', organo: 'Consejo de Derechos Humanos', nombre: 'Consejo de Derechos Humanos · período de sesiones',
     fecha_inicio: enDias(75), fecha_fin: enDias(110), a_confirmar: true, lugar: 'Ginebra',
     descripcion: 'Ejemplo: informes de relatorías y resoluciones.', fuente_url: null,
+    fechas_clave: [
+      { fecha: enDias(45), texto: 'Ejemplo: pedir un evento paralelo', url: null, aprox: true },
+      { fecha: enDias(52), texto: 'Ejemplo: enviar declaraciones escritas', url: null, aprox: true },
+    ],
   },
   {
     id: 's3', sistema: 'OEA', organo: 'Asamblea General de la OEA', nombre: 'Asamblea General de la OEA',
     fecha_inicio: enDias(170), fecha_fin: null, a_confirmar: true, lugar: 'Sede a confirmar',
     descripcion: 'Ejemplo: resolución ómnibus de derechos humanos.', fuente_url: null,
+    fechas_clave: [],
   },
 ];
 
