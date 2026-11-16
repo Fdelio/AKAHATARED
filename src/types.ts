@@ -147,7 +147,7 @@ export interface PedidoApoyo {
 
 export type NuevoPedido = Pick<PedidoApoyo, 'oportunidad_id' | 'tipo_documento' | 'mensaje' | 'contacto'>;
 
-export type Pantalla = 'noticias' | 'radar' | 'red' | 'chat' | 'mias' | 'revision' | 'cuenta' | 'cargar';
+export type Pantalla = 'inicio' | 'noticias' | 'radar' | 'red' | 'chat' | 'mias' | 'revision' | 'cuenta' | 'cargar';
 
 export type TipoNoticia = 'noticia' | 'articulo' | 'nota_akahata';
 

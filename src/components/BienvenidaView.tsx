@@ -4,6 +4,9 @@ import { Ingreso } from './CuentaView';
 interface Props {
   modoEjemplo: boolean;
   onVerOportunidades: () => void;
+  /** Se muestra dentro de la app, para quien ya entró: sin el ingreso. */
+  enLaApp?: boolean;
+  onIr?: (pantalla: 'noticias' | 'radar') => void;
 }
 
 const QUE_HAY = [
@@ -41,9 +44,15 @@ const PASOS = [
 ];
 
 /** Portada para quien todavía no ingresó: qué es la app y cómo entrar. */
-export default function BienvenidaView({ modoEjemplo, onVerOportunidades }: Props) {
+export default function BienvenidaView({ modoEjemplo, onVerOportunidades, enLaApp = false, onIr }: Props) {
   return (
-    <div className="mx-auto flex min-h-screen max-w-[480px] flex-col bg-fondo sm:my-6 sm:min-h-0 sm:overflow-hidden sm:rounded-3xl sm:border sm:border-line">
+    <div
+      className={
+        enLaApp
+          ? 'flex flex-col'
+          : 'mx-auto flex min-h-screen max-w-[480px] flex-col bg-fondo sm:my-6 sm:min-h-0 sm:overflow-hidden sm:rounded-3xl sm:border sm:border-line'
+      }
+    >
       <section className="relative isolate overflow-hidden bg-gradient-to-br from-magenta via-magenta-dark to-berenjena px-6 pt-8 pb-12 text-white">
         <div className="absolute -bottom-[120px] -left-[90px] -z-10 h-[160px] w-[240px] rounded-full bg-naranja" />
         <div className="absolute -top-[40px] -right-[40px] -z-10 size-36 rounded-full border-2 border-naranja" />
@@ -56,6 +65,16 @@ export default function BienvenidaView({ modoEjemplo, onVerOportunidades }: Prop
           Para que las organizaciones de América Latina lleven sus agendas a la ONU, la OEA y el Mercosur, en todos los
           temas, y no vayan solas.
         </p>
+        {enLaApp ? (
+          <div className="mt-6 flex flex-wrap gap-2.5">
+            <button onClick={() => onIr?.('noticias')} className="rounded bg-white px-5 py-3 text-[13px] font-extrabold uppercase tracking-widest text-magenta">
+              Noticias
+            </button>
+            <button onClick={() => onIr?.('radar')} className="rounded border-2 border-white px-4 py-2.5 text-[13px] font-extrabold uppercase tracking-widest text-white">
+              Oportunidades
+            </button>
+          </div>
+        ) : (
         <div className="mt-6 flex flex-wrap gap-2.5">
           <button
             onClick={() => document.getElementById('entrar')?.scrollIntoView({ behavior: 'smooth' })}
@@ -70,6 +89,7 @@ export default function BienvenidaView({ modoEjemplo, onVerOportunidades }: Prop
             Ver noticias y oportunidades
           </button>
         </div>
+        )}
       </section>
 
       <main className="flex flex-col gap-6 px-6 pt-6 pb-8">
@@ -93,6 +113,7 @@ export default function BienvenidaView({ modoEjemplo, onVerOportunidades }: Prop
           ))}
         </section>
 
+        {!enLaApp && (<>
         <section className="flex flex-col gap-2">
           <h2 className="m-0 text-[13px] font-extrabold uppercase tracking-wider text-naranja-dark">Cómo entrar</h2>
           <ol className="m-0 flex list-decimal flex-col gap-1.5 pl-5 text-sm marker:font-extrabold marker:text-naranja">
@@ -108,6 +129,7 @@ export default function BienvenidaView({ modoEjemplo, onVerOportunidades }: Prop
         <button className="self-center text-sm font-bold text-rosa underline" onClick={onVerOportunidades}>
           Ver noticias y oportunidades sin registrarme
         </button>
+        </>)}
 
         <p className="m-0 -mt-2 text-center text-xs text-ink-soft">
           Una iniciativa de{' '}
