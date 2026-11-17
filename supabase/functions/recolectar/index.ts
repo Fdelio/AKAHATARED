@@ -12,6 +12,14 @@
 //   - ONU · procedimientos especiales y ACNUDH, a través de la página de
 //     convocatorias de Geneva Environment Network (ohchr.org bloquea la lectura
 //     automática).
+//   - ONU · órganos de tratados (CEDAW, DESC, Derechos Humanos, Niñez, CERD,
+//     Tortura, Discapacidad, Migrantes, Desapariciones), desde la base de
+//     sesiones tbinternet.ohchr.org: una oportunidad por cada país de América
+//     Latina y el Caribe que se examina en una sesión próxima. Si la página de
+//     la sesión no trae el plazo para la sociedad civil, se pone uno estimado
+//     y se avisa en el resumen para que Akãhatã lo confirme.
+//
+// Con ?probar=1 devuelve lo que encontró sin guardar nada.
 //
 // No repite: cada convocatoria tiene una "clave_fuente" única.
 
@@ -27,6 +35,8 @@ interface Hallazgo {
   fecha_limite: string; // YYYY-MM-DD
   fuente_nombre: string;
   fuente_url: string;
+  pais?: string;
+  pasos?: string[];
 }
 
 const CIDH_URL = 'https://www.oas.org/es/cidh/jsForm/?File=/es/cidh/informes/cuestionarios.asp';
@@ -223,12 +233,212 @@ async function deGeneva(): Promise<Hallazgo[]> {
   return hallazgos;
 }
 
-Deno.serve(async () => {
+// ---------- Órganos de tratados (tbinternet.ohchr.org) ----------
+
+const TB = 'https://tbinternet.ohchr.org/_layouts/15/TreatyBodyExternal/';
+
+/** Código del comité en tbinternet -> nombre en la app y tema por defecto. */
+const COMITES: Record<string, { nombre: string; tema: string }> = {
+  CEDAW: { nombre: 'Comité CEDAW', tema: 'Todos los temas' },
+  CESCR: { nombre: 'Comité DESC', tema: 'Desarrollo y derechos sociales' },
+  CCPR: { nombre: 'Comité de Derechos Humanos', tema: 'Todos los temas' },
+  CRC: { nombre: 'Comité de los Derechos del Niño', tema: 'Todos los temas' },
+  CERD: { nombre: 'Comité CERD', tema: 'Todos los temas' },
+  CAT: { nombre: 'Comité contra la Tortura', tema: 'Todos los temas' },
+  CRPD: { nombre: 'Comité CDPD', tema: 'Todos los temas' },
+  CMW: { nombre: 'Comité de Trabajadores Migratorios', tema: 'Migración' },
+  CED: { nombre: 'Comité contra la Desaparición Forzada', tema: 'Todos los temas' },
+};
+
+/** Países de América Latina y el Caribe, como los escribe la ONU en inglés. */
+export const REGION: Record<string, string> = {
+  'Antigua and Barbuda': 'Antigua y Barbuda', Argentina: 'Argentina', Bahamas: 'Bahamas', Barbados: 'Barbados',
+  Belize: 'Belice', 'Bolivia (Plurinational State of)': 'Bolivia', Brazil: 'Brasil', Chile: 'Chile', Colombia: 'Colombia',
+  'Costa Rica': 'Costa Rica', Cuba: 'Cuba', Dominica: 'Dominica', 'Dominican Republic': 'República Dominicana',
+  Ecuador: 'Ecuador', 'El Salvador': 'El Salvador', Grenada: 'Granada', Guatemala: 'Guatemala', Guyana: 'Guyana',
+  Haiti: 'Haití', Honduras: 'Honduras', Jamaica: 'Jamaica', Mexico: 'México', Nicaragua: 'Nicaragua', Panama: 'Panamá',
+  Paraguay: 'Paraguay', Peru: 'Perú', 'Saint Kitts and Nevis': 'San Cristóbal y Nieves', 'Saint Lucia': 'Santa Lucía',
+  'Saint Vincent and the Grenadines': 'San Vicente y las Granadinas', Suriname: 'Surinam',
+  'Trinidad and Tobago': 'Trinidad y Tobago', Uruguay: 'Uruguay', 'Venezuela (Bolivarian Republic of)': 'Venezuela',
+};
+
+/** Qué se examina, según el encabezado de la lista de la ONU. null = no es una instancia para la sociedad civil. */
+const TIPOS: Record<string, 'informe' | 'lista' | 'seguimiento' | 'adicional' | null> = {
+  'STATES PARTIES REPORTS': 'informe',
+  'NON REPORTING STATE': 'informe',
+  OPSC: 'informe',
+  OPAC: 'informe',
+  'LISTS OF ISSUES PRIOR TO REPORTING': 'lista',
+  'LISTS OF ISSUES IN ABSENCE OF A REPORT': 'lista',
+  'LISTS OF ISSUES': 'lista',
+  'FOLLOW-UP TO CONCLUDING OBSERVATIONS': 'seguimiento',
+  'REPORTS ON ADDITIONAL INFORMATION': 'adicional',
+  'LIST OF THEMES ON ADDITIONAL INFORMATION': 'adicional',
+  'STAND ALONE REQUEST FOR ADDITIONAL INFORMATION': 'adicional',
+  'INDIVIDUAL COMMUNICATIONS DECIDED': null,
+  'ARTICLE 34': null,
+};
+const ENCABEZADO = new RegExp(
+  '(' + Object.keys(TIPOS).sort((a, b) => b.length - a.length).map((k) => k.replace(/[-()]/g, '\\$&')).join('|') + ')(?= )',
+  'g',
+);
+
+const MESES_CORTOS: Record<string, number> = {
+  Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12,
+};
+const MESES_NOMBRE = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+/** "08 Feb 2027" -> "2027-02-08" */
+function fechaCorta(t: string): string | null {
+  const m = t.match(/(\d{1,2}) ([A-Z][a-z]{2}) (\d{4})/);
+  return m && MESES_CORTOS[m[2]] ? iso(Number(m[3]), MESES_CORTOS[m[2]], Number(m[1])) : null;
+}
+const legible = (f: string) => {
+  const [a, m, d] = f.split('-').map(Number);
+  return `${d} de ${MESES_NOMBRE[m - 1]} de ${a}`;
+};
+const restarDias = (f: string, n: number) => new Date(new Date(f + 'T12:00:00Z').getTime() - n * 86_400_000).toISOString().slice(0, 10);
+
+export interface SesionTB {
+  id: string;
+  numero: string;
+  previo: boolean;
+  inicio: string;
+  fin: string;
+  /** País (en inglés) -> qué se examina. */
+  paises: Map<string, 'informe' | 'lista' | 'seguimiento' | 'adicional'>;
+}
+
+/** Lee la lista de sesiones de un comité (texto ya sin etiquetas). */
+export function sesionesDeLaLista(plano: string): SesionTB[] {
+  const desde = plano.indexOf('items in');
+  const cuerpo = desde >= 0 ? plano.slice(desde) : plano;
+  const fila = /(\d{4}) (.{1,120}?) (Consideration of State Reports|\(Pre-Sessional Working Group\) Pre-Sessional Working Group) \d (\d\d [A-Z][a-z]{2} \d{4}) (\d\d [A-Z][a-z]{2} \d{4})/g;
+  const filas = [...cuerpo.matchAll(fila)];
+  return filas.map((m, i) => {
+    const resto = cuerpo.slice(m.index! + m[0].length, i + 1 < filas.length ? filas[i + 1].index : undefined);
+    const paises = new Map<string, 'informe' | 'lista' | 'seguimiento' | 'adicional'>();
+    // Después de los encabezados la ONU repite las listas sin encabezado: se corta ahí.
+    const partes = resto.split(ENCABEZADO).slice(1);
+    for (let j = 0; j < partes.length; j += 2) {
+      const tipo = TIPOS[partes[j]];
+      let valor = partes[j + 1] ?? '';
+      if (j + 2 >= partes.length) {
+        // El último bloque incluye la repetición: se queda con lo que va hasta que vuelve a empezar la primera lista.
+        const primera = (partes[1] ?? '').trim();
+        const corte = primera ? valor.indexOf(' ' + primera.split(',')[0], j === 0 ? 1 : 0) : -1;
+        if (corte > 0) valor = valor.slice(0, corte);
+      }
+      if (!tipo) continue;
+      for (const pais of Object.keys(REGION)) {
+        const re = new RegExp('(^|[ ,])' + pais.replace(/[()]/g, '\\$&') + '( \\(Initial report\\))?(,|$| )');
+        if (re.test(' ' + valor.trim() + ' ') && !paises.has(pais)) paises.set(pais, tipo);
+      }
+    }
+    return {
+      id: m[1],
+      // La ONU repite la etiqueta: "121 (to be confirmed) 121 (to be confirmed)".
+      numero: m[2].match(/^\d+/)?.[0] ?? m[2].slice(0, Math.ceil(m[2].length / 2)).replace(/[:\s]+$/, ''),
+      previo: m[3].startsWith('('),
+      inicio: fechaCorta(m[4])!,
+      fin: fechaCorta(m[5])!,
+      paises,
+    };
+  }).filter((s) => !/cancel/i.test(s.numero));
+}
+
+/**
+ * Busca en la página de la sesión un plazo para la sociedad civil que se refiera al país.
+ * La secretaría a veces escribe "(Deadline for CSO ... : 7 DECEMBER 2026)" junto a la lista
+ * de países a los que aplica: solo se usa si el país aparece poco antes del plazo.
+ */
+export function plazoEnSesion(plano: string, pais: string): string | null {
+  const nombre = pais.split(' (')[0].toLowerCase();
+  for (const m of plano.matchAll(/deadline[^:)]{0,120}:\s*(\d{1,2}\s+[A-Za-z]+\s+\d{4})/gi)) {
+    const antes = plano.slice(Math.max(0, m.index! - 400), m.index!).toLowerCase();
+    const fecha = fechaEn(m[1]);
+    if (fecha && antes.includes(nombre)) return fecha;
+  }
+  return null;
+}
+
+async function deTratados(): Promise<Hallazgo[]> {
+  const hallazgos: Hallazgo[] = [];
+  const listas = await Promise.all(
+    Object.keys(COMITES).map(async (codigo) => {
+      try {
+        return { codigo, sesiones: sesionesDeLaLista(texto(await leer(`${TB}SessionsList.aspx?Treaty=${codigo}`))) };
+      } catch {
+        return { codigo, sesiones: [] as SesionTB[] };
+      }
+    }),
+  );
+  const tareas: Promise<void>[] = [];
+  for (const { codigo, sesiones } of listas) {
+    const comite = COMITES[codigo];
+    for (const s of sesiones) {
+      if (s.inicio < hoy() || s.paises.size === 0) continue;
+      const url = `${TB}SessionDetails1.aspx?SessionID=${s.id}&Lang=en`;
+      tareas.push((async () => {
+        let pagina = '';
+        try {
+          pagina = texto(await leer(url));
+        } catch {
+          // Sin la página se sigue con el plazo estimado.
+        }
+        for (const [pais, tipo] of s.paises) {
+          const nombre = REGION[pais];
+          const real = pagina ? plazoEnSesion(pagina, pais) : null;
+          // Sin plazo publicado: seis semanas antes de que empiece la sesión.
+          const fecha = real ?? restarDias(s.inicio, 42);
+          if (fecha < hoy()) continue;
+          const instancia = s.previo ? `grupo de trabajo previo a la sesión ${s.numero}` : `sesión ${s.numero}`;
+          const titulo = {
+            informe: `Examen de ${nombre} ante el ${comite.nombre}: informe alternativo`,
+            lista: `Lista de cuestiones para ${nombre} (${comite.nombre}): aportes de la sociedad civil`,
+            seguimiento: `Seguimiento de las recomendaciones a ${nombre} (${comite.nombre})`,
+            adicional: `${comite.nombre}: información adicional sobre ${nombre}`,
+          }[tipo];
+          const queHace = {
+            informe: `examina el informe de ${nombre}`,
+            lista: `prepara la lista de cuestiones (las preguntas que ${nombre} tiene que responder)`,
+            seguimiento: `revisa si ${nombre} cumplió las recomendaciones prioritarias de su último examen`,
+            adicional: `revisa la información adicional sobre ${nombre}`,
+          }[tipo];
+          const aviso = real
+            ? `Plazo para la sociedad civil: ${legible(real)}, según la página de la sesión.`
+            : `Plazo estimado (seis semanas antes de la sesión): confirmarlo en la página oficial antes de publicar.`;
+          hallazgos.push({
+            clave_fuente: `tb-${codigo}-${s.id}-${pais.toLowerCase().replace(/[^a-z]+/g, '-')}`,
+            sistema: 'ONU',
+            mecanismo: comite.nombre,
+            titulo,
+            pais: nombre,
+            resumen: `El ${comite.nombre} ${queHace} en el ${instancia}, del ${legible(s.inicio)} al ${legible(s.fin)}. Las organizaciones pueden mandar información propia antes de esa fecha. ${aviso}`,
+            tema: comite.tema,
+            fecha_limite: fecha,
+            fuente_nombre: `ONU · Base de datos de órganos de tratados (sesión ${s.numero})`,
+            fuente_url: url,
+            pasos: [
+              'Abrir la página oficial de la sesión y buscar la nota para la sociedad civil: plazo, extensión y a dónde se envía',
+              `Preparar un informe breve con datos y casos de ${nombre}, ligados a los artículos del tratado`,
+              'Enviarlo antes del plazo por el medio que indica el Comité',
+            ],
+          });
+        }
+      })());
+    }
+  }
+  await Promise.all(tareas);
+  return hallazgos;
+}
+
+Deno.serve(async (req: Request) => {
+  const probar = new URL(req.url).searchParams.has('probar');
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
   const informe: Record<string, unknown> = {};
   const todos: Hallazgo[] = [];
 
-  for (const [nombre, fuente] of [['cidh', deCidh], ['cidh-comunicados', deComunicadosCidh], ['geneva', deGeneva]] as const) {
+  for (const [nombre, fuente] of [['cidh', deCidh], ['cidh-comunicados', deComunicadosCidh], ['geneva', deGeneva], ['tratados', deTratados]] as const) {
     try {
       const h = await fuente();
       todos.push(...h);
@@ -238,11 +448,16 @@ Deno.serve(async () => {
     }
   }
 
+  if (probar) {
+    return new Response(JSON.stringify({ ...informe, hallazgos: todos }, null, 2), { headers: { 'content-type': 'application/json' } });
+  }
+
   if (todos.length > 0) {
     const { data, error } = await supabase
       .from('oportunidades')
       .upsert(
-        todos.map((h) => ({ ...h, estado: 'pendiente', recolectada_automaticamente: true })),
+        // Todas las filas llevan las mismas columnas: si falta una, se guardaría vacía.
+        todos.map((h) => ({ ...h, pais: h.pais ?? 'Regional', pasos: h.pasos ?? [], estado: 'pendiente', recolectada_automaticamente: true })),
         { onConflict: 'clave_fuente', ignoreDuplicates: true },
       )
       .select('titulo');
