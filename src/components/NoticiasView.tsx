@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import type { Comentario, Noticia, Organizacion, Sistema } from '../types';
 import * as datos from '../lib/datos';
 import { MessageCircle } from 'lucide-react';
-import { Iniciales } from './ui';
+import { AvisoSeguridad, Iniciales } from './ui';
 
 const TIPO: Record<Noticia['tipo'], string> = { noticia: 'Noticia', articulo: 'Artículo', nota_akahata: 'Nota de Akãhatã' };
 
@@ -216,6 +216,7 @@ export function NotaView({ n, organizaciones, miOrg, usuariaId, revisora, onEdit
         </div>
       ) : (
         <>
+          <AvisoSeguridad donde="red" />
           {comentarios.length === 0 && <p className="m-0 text-sm text-ink-soft">Todavía nadie comentó. ¿Qué piensa tu organización?</p>}
           <div className="flex flex-col gap-2.5">
             {comentarios.map((c) => {

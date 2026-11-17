@@ -3,7 +3,7 @@
  * base real; si no, trabaja en memoria con los datos de ejemplo.
  */
 import type {
-  Comentario, MensajePrivado, Perfil, PersonaRed, EstadoPedido, EstadoRevision, Mensaje, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Participacion,
+  Comentario, MensajePrivado, Perfil, PersonaDeMiOrg, PersonaRed, EstadoPedido, EstadoRevision, Mensaje, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Participacion,
   NuevaSesion, PedidoApoyo, Sesion, SesionOrgano, SolicitudUnion, Trabajo, Visibilidad,
 } from '../types';
 import { Capacitor } from '@capacitor/core';
@@ -27,6 +27,10 @@ const mem = {
   logoEn: new Map<string, string | null>(),
   /** Modo ejemplo: imágenes subidas en esta visita. */
   imagenes: new Map<string, string>(),
+  personas: [
+    { perfil_id: 'yo', email: 'ejemplo@akahata.org', responsable: true },
+    { perfil_id: 'otra', email: 'otra.persona@ejemplo.org', responsable: false },
+  ] as PersonaDeMiOrg[],
 };
 
 export async function listarOportunidades(estado: EstadoRevision = 'publicada'): Promise<Oportunidad[]> {
@@ -122,7 +126,8 @@ export async function obtenerSesion(): Promise<Sesion | null> {
     const [{ data, error }, { data: sol }] = await Promise.all([
       supabase
         .from('perfiles')
-        .select('rol, nombre_visible, cargo, presentacion, visible_en_red, acepta_mensajes, foto_en, organizaciones(*)')
+        // '*' en vez de nombrar columnas: así no falla si la base todavía no tiene alguna (por ejemplo, responsable).
+        .select('*, organizaciones(*)')
         .eq('id', usuaria.id)
         .maybeSingle(),
       supabase
@@ -138,6 +143,7 @@ export async function obtenerSesion(): Promise<Sesion | null> {
       email: usuaria.email ?? '',
       rol: (data?.rol as Sesion['rol']) ?? 'miembro',
       foto_en: (data?.foto_en as string | null) ?? null,
+      responsable: (data?.responsable as boolean | undefined) ?? false,
       organizacion: (data?.organizaciones as unknown as Organizacion | null) ?? null,
       solicitud: sol
         ? { organizacion_id: sol.organizacion_id, nombre: (sol.organizaciones as unknown as { nombre: string } | null)?.nombre ?? '' }
@@ -159,6 +165,7 @@ export async function obtenerSesion(): Promise<Sesion | null> {
     foto_en: mem.fotoEn,
     email: 'ejemplo@akahata.org',
     rol: 'revisora',
+    responsable: true,
     organizacion: {
       id: ejemplo.MI_ORGANIZACION_ID, nombre: 'Tu organización', pais: 'Argentina',
       temas: [], ofrece: '', necesita: '', aprobada: true,
@@ -481,14 +488,32 @@ export async function responderSolicitud(perfilId: string, aceptar: boolean) {
   mem.solicitudes = mem.solicitudes.filter((s) => s.perfil_id !== perfilId);
 }
 
-/** Correos de las personas de mi organización. */
-export async function listarPersonas(): Promise<string[]> {
+/** Las personas de mi organización (correo y si son responsables). */
+export async function listarPersonas(): Promise<PersonaDeMiOrg[]> {
   if (supabase) {
     const { data, error } = await supabase.rpc('personas_de_mi_organizacion');
     if (error) throw error;
-    return (data as { email: string }[]).map((p) => p.email);
+    return (data as Partial<PersonaDeMiOrg>[]).map((p) => ({
+      perfil_id: p.perfil_id ?? null,
+      email: p.email ?? '',
+      responsable: p.responsable ?? false,
+    }));
   }
-  return ['ejemplo@akahata.org', 'otra.persona@ejemplo.org'];
+  return mem.personas;
+}
+
+/** Una responsable nombra (o saca) a otra persona de su organización como responsable. */
+export async function nombrarResponsable(perfilId: string, responsable: boolean) {
+  if (supabase) {
+    const { error } = await supabase.rpc('nombrar_responsable', { p_perfil: perfilId, p_responsable: responsable });
+    if (error) throw error;
+    return;
+  }
+  const p = mem.personas.find((x) => x.perfil_id === perfilId);
+  if (!p) return;
+  if (!responsable && mem.personas.filter((x) => x.responsable).length <= 1)
+    throw new Error('La organización necesita al menos una responsable. Nombrá a otra persona primero.');
+  p.responsable = responsable;
 }
 
 // ---------- Chat ----------

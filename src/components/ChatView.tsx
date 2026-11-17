@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Mensaje, Oportunidad, Organizacion } from '../types';
 import * as datos from '../lib/datos';
-import { Iniciales } from './ui';
+import { AvisoSeguridad, Iniciales } from './ui';
 
 interface Props {
   /** null = sala general. */
@@ -80,6 +80,7 @@ export default function ChatView({ sala, oportunidades, organizaciones, miOrg, u
 
   return (
     <div className="flex flex-col gap-3">
+      <AvisoSeguridad donde="red" />
       <label className="flex flex-col gap-1 text-[13px] font-bold">
         Conversación
         <select

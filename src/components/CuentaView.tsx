@@ -76,7 +76,7 @@ export default function CuentaView({
     return (
       <div className="flex flex-col gap-4">
         <p className="m-0 rounded-lg bg-naranja-light p-3.5 text-sm text-naranja-dark">
-          Pediste sumarte a <b>{sesion.solicitud.nombre}</b>. Te va a aceptar alguien de esa organización o el equipo de
+          Pediste sumarte a <b>{sesion.solicitud.nombre}</b>. Te va a aceptar una responsable de esa organización o el equipo de
           Akãhatã. Mientras tanto podés ver las oportunidades.
         </p>
         <Boton variante="borde" onClick={onCancelarSolicitud}>Cancelar el pedido</Boton>
@@ -118,15 +118,15 @@ export default function CuentaView({
             <span className="text-sm text-ink-soft">{org.pais}{org.temas.length > 0 && ' · ' + org.temas.join(', ')}</span>
           </div>
         </div>
-        <CambiarImagen
+        {(sesion.responsable || sesion.rol === 'revisora') && <CambiarImagen
           tiene={!!org.logo_en}
           textoSubir="Subir el logo de la organización"
           textoCambiar="Cambiar el logo"
           textoBorrar="Sacar el logo"
-          ayuda="Opcional. Lo ven las organizaciones de la red. Lo puede cambiar cualquier persona de tu organización."
+          ayuda="Opcional. Lo ven las organizaciones de la red. Lo pueden cambiar las responsables de tu organización."
           onCambiar={(a) => datos.cambiarLogo(org.id, a)}
           onListo={onRecargar}
-        />
+        />}
       </div>
       <TuPerfil perfil={sesion.perfil} perfilId={sesion.id} fotoEn={sesion.foto_en} aprobada={org.aprobada} onGuardado={onRecargar} />
       <div className="text-sm text-ink-soft">

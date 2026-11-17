@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import {
-  TIPOS_APORTE, type NuevoPedido, type Oportunidad, type Participacion, type PedidoApoyo, type Sesion, type SolicitudUnion, type TipoAporte,
+  TIPOS_APORTE, type NuevoPedido, type Oportunidad, type Participacion, type PedidoApoyo, type PersonaDeMiOrg, type Sesion, type SolicitudUnion, type TipoAporte,
   type Trabajo,
 } from '../types';
 import { Boton, EtiquetaSistema, Iniciales, Plazo } from './ui';
@@ -12,9 +12,10 @@ interface Props {
   oportunidades: Oportunidad[];
   participaciones: Participacion[];
   pedidos: PedidoApoyo[];
-  personas: string[];
+  personas: PersonaDeMiOrg[];
   solicitudes: SolicitudUnion[];
   onResponder: (perfilId: string, aceptar: boolean) => void;
+  onNombrarResponsable: (perfilId: string, si: boolean) => void;
   onAbrir: (id: string) => void;
   onIrACuenta: () => void;
   onGuardar: (oportunidadId: string, t: Trabajo) => void;
@@ -24,7 +25,7 @@ interface Props {
 const ESTADO_PEDIDO = { nuevo: 'Enviado', en_curso: 'Akãhatã lo está viendo', cerrado: 'Cerrado' } as const;
 
 export default function MiOrganizacionView({
-  sesion, oportunidades, participaciones, pedidos, personas, solicitudes, onResponder, onAbrir, onIrACuenta, onGuardar, onPedirApoyo,
+  sesion, oportunidades, participaciones, pedidos, personas, solicitudes, onResponder, onNombrarResponsable, onAbrir, onIrACuenta, onGuardar, onPedirApoyo,
 }: Props) {
   const org = sesion.organizacion;
   const [pidiendo, setPidiendo] = useState<string | null>(null); // id de oportunidad, o '' para un pedido general
@@ -74,12 +75,30 @@ export default function MiOrganizacionView({
             </div>
           </div>
         ))}
-        <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm">
-          {personas.map((p) => <li key={p}>• {p}{p === sesion.email && <span className="text-ink-soft"> (vos)</span>}</li>)}
+        <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm">
+          {personas.map((p) => (
+            <li key={p.email} className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="min-w-0 break-all">
+                • {p.email}
+                {p.email === sesion.email && <span className="text-ink-soft"> (vos)</span>}
+              </span>
+              {p.responsable && (
+                <span className="rounded bg-magenta-light px-1.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-rosa">Responsable</span>
+              )}
+              {sesion.responsable && p.perfil_id && (
+                <button className="text-xs font-bold text-ink-soft underline" onClick={() => onNombrarResponsable(p.perfil_id!, !p.responsable)}>
+                  {p.responsable ? (p.email === sesion.email ? 'Dejar de ser responsable' : 'Sacar de responsable') : 'Hacer responsable'}
+                </button>
+              )}
+            </li>
+          ))}
         </ul>
         <p className="m-0 text-xs text-ink-soft">
-          Para sumar a alguien: que entre con su correo y elija “{org.nombre}” en “Ya está en la red”. Te va a aparecer acá
-          para aceptarla.
+          Las responsables deciden quién entra, los datos y el logo de la organización, y si algo se muestra como
+          “Público”. Puede haber más de una.
+          {sesion.responsable
+            ? ` Para sumar a alguien: que entre con su correo y elija “${org.nombre}” en “Ya está en la red”. Te va a aparecer acá para aceptarla.`
+            : ' Si querés sumar a alguien, pedíselo a una responsable.'}
         </p>
       </section>
 

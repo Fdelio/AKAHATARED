@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Building2, CheckCheck, House, MessagesSquare, Network, Newspaper, Radar, UserRound } from 'lucide-react';
 import type {
   EstadoRevision, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevaSesion, NuevoPedido, Oportunidad, Organizacion, Pantalla, Participacion, PedidoApoyo, Sesion,
-  SesionOrgano, SolicitudUnion, Visibilidad, MensajePrivado, PersonaRed,
+  SesionOrgano, SolicitudUnion, Visibilidad, MensajePrivado, PersonaRed, PersonaDeMiOrg,
 } from './types';
 import * as datos from './lib/datos';
 import { modoEjemplo } from './lib/supabaseClient';
@@ -75,7 +75,7 @@ export default function App() {
   const [sesiones, setSesiones] = useState<SesionOrgano[]>([]);
   const [pedidos, setPedidos] = useState<PedidoApoyo[]>([]);
   const [solicitudes, setSolicitudes] = useState<SolicitudUnion[]>([]);
-  const [personas, setPersonas] = useState<string[]>([]);
+  const [personas, setPersonas] = useState<PersonaDeMiOrg[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
   /** Ya se sabe si hay alguien que ingresó (para no mostrar la portada un instante de más). */
   const [listo, setListo] = useState(false);
@@ -196,6 +196,18 @@ export default function App() {
 
   const responder = (perfilId: string, aceptar: boolean) =>
     ejecutar(() => datos.responderSolicitud(perfilId, aceptar), aceptar ? 'Persona aceptada' : 'Pedido rechazado');
+
+  const nombrar = async (perfilId: string, si: boolean) => {
+    try {
+      await datos.nombrarResponsable(perfilId, si);
+      await cargar();
+      setAviso(si ? 'Ahora es responsable' : 'Ya no es responsable');
+    } catch (e) {
+      console.error(e);
+      const m = (e as { message?: string }).message ?? '';
+      setAviso(m.includes('responsable') ? m : 'No se pudo guardar. Intentá de nuevo.');
+    }
+  };
 
   const enEdicion = ruta.editarId
     ? [...pendientes, ...oportunidades].find((x) => x.id === ruta.editarId)
@@ -361,6 +373,7 @@ export default function App() {
             organizaciones={organizaciones}
             participaciones={participaciones}
             miOrg={miOrg}
+            soyResponsable={!!sesion?.responsable || revisora}
             email={sesion?.email ?? ''}
             onPedirApoyo={miOrg ? pedirApoyo : null}
             onSinOrganizacion={pedirIngreso}
@@ -500,6 +513,7 @@ export default function App() {
             personas={personas}
             solicitudes={solicitudes.filter((x) => x.organizacion_id === sesion?.organizacion?.id)}
             onResponder={responder}
+            onNombrarResponsable={nombrar}
           />
         ) : (
           <RevisionView

@@ -29,6 +29,15 @@ export interface Sesion {
   perfil: Perfil;
   /** Cuándo subió su foto (null: no tiene). */
   foto_en: string | null;
+  /** Responsable de su organización: decide qué muestra la organización y quién entra. */
+  responsable: boolean;
+}
+
+/** Una persona de mi organización. */
+export interface PersonaDeMiOrg {
+  perfil_id: string | null;
+  email: string;
+  responsable: boolean;
 }
 
 /** Datos personales que cada persona elige mostrar. Nada es obligatorio. */

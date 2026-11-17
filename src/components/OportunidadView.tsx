@@ -9,6 +9,8 @@ interface Props {
   organizaciones: Organizacion[];
   participaciones: Participacion[];
   miOrg: string | null;
+  /** Solo una responsable de la organización puede mostrar su participación como "Público". */
+  soyResponsable: boolean;
   onSumarse: (v: Visibilidad) => void;
   onSalirse: () => void;
   email: string;
@@ -26,7 +28,7 @@ const OPCIONES: { v: Visibilidad; texto: string }[] = [
   { v: 'solo_akahata', texto: 'Solo Akãhatã (para contextos de riesgo)' },
 ];
 
-export default function OportunidadView({ o, organizaciones, participaciones, miOrg, onSumarse, onSalirse, email, onPedirApoyo, onSinOrganizacion, onConversar, onEditar }: Props) {
+export default function OportunidadView({ o, organizaciones, participaciones, miOrg, soyResponsable, onSumarse, onSalirse, email, onPedirApoyo, onSinOrganizacion, onConversar, onEditar }: Props) {
   const ps = participaciones.filter((p) => p.oportunidad_id === o.id);
   const mia = ps.find((p) => p.organizacion_id === miOrg);
   const [vis, setVis] = useState<Visibilidad>(mia?.visibilidad ?? 'red');
@@ -123,18 +125,25 @@ export default function OportunidadView({ o, organizaciones, participaciones, mi
 
       <fieldset className="flex flex-col gap-2 rounded-lg border-0 bg-panel px-3.5 py-3">
         <legend className="float-left mb-1 font-bold">Si te sumás, ¿quién lo puede ver?</legend>
-        {OPCIONES.map((op) => (
-          <label key={op.v} className="flex cursor-pointer items-start gap-2.5 text-sm">
-            <input
-              type="radio"
-              name="visibilidad"
-              className="mt-1 accent-rosa"
-              checked={vis === op.v}
-              onChange={() => setVis(op.v)}
-            />
-            {op.texto}
-          </label>
-        ))}
+        {OPCIONES.map((op) => {
+          const bloqueada = op.v === 'publica' && !soyResponsable && mia?.visibilidad !== 'publica';
+          return (
+            <label key={op.v} className={`flex items-start gap-2.5 text-sm ${bloqueada ? 'text-ink-soft' : 'cursor-pointer'}`}>
+              <input
+                type="radio"
+                name="visibilidad"
+                className="mt-1 accent-rosa"
+                checked={vis === op.v}
+                disabled={bloqueada}
+                onChange={() => setVis(op.v)}
+              />
+              <span>
+                {op.texto}
+                {bloqueada && <span className="block text-xs">Solo lo puede elegir una responsable de tu organización.</span>}
+              </span>
+            </label>
+          );
+        })}
       </fieldset>
 
       {mia ? (
