@@ -264,7 +264,7 @@ export default function App() {
 
   if (recuperando && sesion) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-[480px] flex-col gap-4 bg-fondo p-5">
+      <div className="mx-auto flex min-h-screen max-w-[480px] md:max-w-[960px] flex-col gap-4 bg-fondo p-5">
         <img src={import.meta.env.BASE_URL + 'logo-marca.png'} alt="Akãhatã" className="h-10 self-start" />
         <p className="m-0 text-sm text-ink-soft">Elegí tu contraseña nueva. Después entrás con tu correo y esta contraseña, sin esperar correos.</p>
         <NuevaContrasena
@@ -293,7 +293,7 @@ export default function App() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-[480px] flex-col bg-fondo sm:my-6 sm:min-h-0 sm:rounded-3xl sm:border sm:border-line">
+    <div className="mx-auto flex min-h-screen max-w-[480px] md:max-w-[960px] flex-col bg-fondo sm:my-6 sm:min-h-0 sm:rounded-3xl sm:border sm:border-line">
       <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-fondo/90 px-5 py-3.5 backdrop-blur-md sm:rounded-t-3xl">
         <img src={import.meta.env.BASE_URL + 'logo-marca.png'} alt="" className="size-11 flex-none drop-shadow-[0_0_10px_rgb(247_148_29/0.35)]" />
         <div className="min-w-0 flex-1">

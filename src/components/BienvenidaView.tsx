@@ -50,7 +50,7 @@ export default function BienvenidaView({ modoEjemplo, onVerOportunidades, enLaAp
       className={
         enLaApp
           ? 'flex flex-col'
-          : 'mx-auto flex min-h-screen max-w-[480px] flex-col bg-fondo sm:my-6 sm:min-h-0 sm:overflow-hidden sm:rounded-3xl sm:border sm:border-line'
+          : 'mx-auto flex min-h-screen max-w-[480px] md:max-w-[960px] flex-col bg-fondo sm:my-6 sm:min-h-0 sm:overflow-hidden sm:rounded-3xl sm:border sm:border-line'
       }
     >
       <section className="relative isolate overflow-hidden bg-gradient-to-br from-magenta via-magenta-dark to-berenjena px-6 pt-8 pb-12 text-white">
