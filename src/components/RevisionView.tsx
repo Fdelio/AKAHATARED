@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { TIPOS_APORTE, type EstadoPedido, type EstadoRevision, type Oportunidad, type Organizacion, type Noticia, type PedidoApoyo, type SolicitudUnion } from '../types';
+import {
+  TIPOS_APORTE, type EstadoPedido, type EstadoRevision, type IndependientePorRevisar, type Oportunidad, type Organizacion, type Noticia, type PedidoApoyo,
+  type SolicitudUnion,
+} from '../types';
 import { EtiquetaSistema } from './ui';
 
 interface Props {
@@ -17,11 +20,14 @@ interface Props {
   onResponder: (perfilId: string, aceptar: boolean) => void;
   onRevisar: (id: string, estado: EstadoRevision) => void;
   onAprobarOrg: (id: string, aprobada: boolean) => void;
+  /** Personas sin organización que piden entrar a la red. */
+  independientes: IndependientePorRevisar[];
+  onRevisarIndependiente: (id: string, aprobar: boolean) => void;
   onCargar: () => void;
   onEditar: (id: string) => void;
 }
 
-export default function RevisionView({ pendientes, orgsPendientes, pedidos, organizaciones, oportunidades, onPedido, solicitudes, onResponder, noticiasPendientes, onNuevaNota, onEditarNota, onRevisarNota, onRevisar, onAprobarOrg, onCargar, onEditar }: Props) {
+export default function RevisionView({ pendientes, orgsPendientes, pedidos, organizaciones, oportunidades, onPedido, solicitudes, onResponder, noticiasPendientes, onNuevaNota, onEditarNota, onRevisarNota, onRevisar, onAprobarOrg, independientes, onRevisarIndependiente, onCargar, onEditar }: Props) {
   const [verTodas, setVerTodas] = useState(false);
   const notas = verTodas ? noticiasPendientes : noticiasPendientes.slice(0, 8);
 
@@ -109,6 +115,32 @@ export default function RevisionView({ pendientes, orgsPendientes, pedidos, orga
               <div className="grid grid-cols-2 gap-2">
                 <button className="rounded bg-magenta px-1.5 py-2.5 text-xs font-extrabold uppercase text-white" onClick={() => onAprobarOrg(org.id, true)}>Aprobar</button>
                 <button className="rounded border-2 border-line px-1.5 py-2 text-xs font-extrabold uppercase text-ink-soft" onClick={() => onAprobarOrg(org.id, false)}>Rechazar</button>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {independientes.length > 0 && (
+        <section className="flex flex-col gap-2.5">
+          <h3 className="m-0 text-[13px] font-extrabold uppercase tracking-wider text-naranja-dark">
+            Personas independientes que piden entrar a la red
+          </h3>
+          <p className="m-0 text-[13px] text-ink-soft">
+            Activistas, académicas o periodistas sin organización. Si no la conocen, escríbanle antes de aprobar: el correo
+            solo lo ve Akãhatã.
+          </p>
+          {independientes.map((p) => (
+            <div key={p.id} className="flex flex-col gap-1.5 rounded-lg border border-naranja bg-naranja-light/40 p-3.5 text-sm">
+              <b className="text-rosa">{p.nombre_visible || 'Sin nombre'}</b>
+              <span className="text-[13px] text-ink-soft">
+                {[p.se_presenta, p.pais, p.cargo].filter(Boolean).join(' · ')}
+              </span>
+              {p.presentacion && <span className="text-[13px]">{p.presentacion}</span>}
+              <a className="text-[13px] font-bold text-rosa" href={'mailto:' + p.email}>{p.email}</a>
+              <div className="grid grid-cols-2 gap-2">
+                <button className="rounded bg-magenta px-1.5 py-2.5 text-xs font-extrabold uppercase text-white" onClick={() => onRevisarIndependiente(p.id, true)}>Aprobar</button>
+                <button className="rounded border-2 border-line px-1.5 py-2 text-xs font-extrabold uppercase text-ink-soft" onClick={() => onRevisarIndependiente(p.id, false)}>Rechazar</button>
               </div>
             </div>
           ))}

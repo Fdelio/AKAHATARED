@@ -7,7 +7,7 @@ import { horaCorta, ZONAS } from '../lib/calendario';
 const MECANISMOS: Record<Sistema, string[]> = {
   ONU: [
     'Examen Periódico Universal (EPU)', 'Comité CEDAW', 'Comité de Derechos Humanos', 'Comité DESC', 'Comité de los Derechos del Niño',
-    'Comité contra la Tortura', 'Comité CERD', 'Comité de Trabajadores Migratorios', 'Comité CDPD',
+    'Comité contra la Tortura', 'Comité CERD', 'Comité de Trabajadores Migratorios', 'Comité CDPD', 'Comité contra la Desaparición Forzada',
     'Experto Independiente SOGI', 'Relatoría sobre ambiente', 'Relatoría sobre pobreza extrema', 'Relatoría sobre defensoras y defensores',
     'Consejo de Derechos Humanos',
   ],

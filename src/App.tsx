@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Building2, CheckCheck, House, MessagesSquare, Network, Newspaper, Radar, UserRound } from 'lucide-react';
 import type {
   EstadoRevision, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevaSesion, NuevoPedido, Oportunidad, Organizacion, Pantalla, Participacion, PedidoApoyo, Sesion,
-  SesionOrgano, SolicitudUnion, Visibilidad, MensajePrivado, PersonaRed,
+  SesionOrgano, SolicitudUnion, Visibilidad, MensajePrivado, PersonaRed, PersonaDeMiOrg, IndependientePorRevisar, Perfil,
 } from './types';
 import * as datos from './lib/datos';
 import { modoEjemplo } from './lib/supabaseClient';
@@ -75,7 +75,7 @@ export default function App() {
   const [sesiones, setSesiones] = useState<SesionOrgano[]>([]);
   const [pedidos, setPedidos] = useState<PedidoApoyo[]>([]);
   const [solicitudes, setSolicitudes] = useState<SolicitudUnion[]>([]);
-  const [personas, setPersonas] = useState<string[]>([]);
+  const [personas, setPersonas] = useState<PersonaDeMiOrg[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
   /** Ya se sabe si hay alguien que ingresó (para no mostrar la portada un instante de más). */
   const [listo, setListo] = useState(false);
@@ -87,6 +87,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [personasRed, setPersonasRed] = useState<PersonaRed[]>([]);
   const [privados, setPrivados] = useState<MensajePrivado[]>([]);
+  const [independientes, setIndependientes] = useState<IndependientePorRevisar[]>([]);
   /** Volvió del correo para elegir una contraseña nueva. */
   const [recuperando, setRecuperando] = useState(false);
 
@@ -95,7 +96,9 @@ export default function App() {
       const s = await datos.obtenerSesion();
       const revisora = s?.rol === 'revisora';
       const conOrg = !!s?.organizacion?.aprobada;
-      const [ops, pend, orgs, orgsPend, parts, cal, peds, sols, pers, nots, notsPend, coms, red, privs] = await Promise.all([
+      // Parte de la red: organización aprobada o persona independiente aprobada.
+      const enRed = conOrg || (!s?.organizacion && s?.independiente === 'aprobada');
+      const [ops, pend, orgs, orgsPend, parts, cal, peds, sols, pers, nots, notsPend, coms, red, privs, inds] = await Promise.all([
         datos.listarOportunidades('publicada'),
         revisora ? datos.listarOportunidades('pendiente') : [],
         s ? datos.listarOrganizaciones(true) : [],
@@ -108,9 +111,11 @@ export default function App() {
         datos.listarNoticias('publicada'),
         revisora ? datos.listarNoticias('pendiente') : [],
         datos.contarComentarios(),
-        conOrg || revisora ? datos.listarPersonasDeLaRed() : [],
+        enRed || revisora ? datos.listarPersonasDeLaRed() : [],
         s ? datos.listarMensajesPrivados() : [],
+        revisora ? datos.listarIndependientesPorRevisar() : [],
       ]);
+      setIndependientes(inds);
       setPersonasRed(red);
       setPrivados(privs);
       setNoticias(nots);
@@ -177,6 +182,9 @@ export default function App() {
   /** Solo una organización aprobada puede sumarse a oportunidades. */
   const miOrg = sesion?.organizacion?.aprobada ? sesion.organizacion.id : null;
   const revisora = sesion?.rol === 'revisora';
+  /** Persona independiente aprobada por Akãhatã (sin organización). */
+  const independiente = !sesion?.organizacion && sesion?.independiente === 'aprobada';
+  const enLaRed = !!miOrg || independiente;
   const nav = NAV;
   const sinLeer = privados.filter((m) => m.para === sesion?.id && !m.leido).length;
   const organizacionesConLaMia =
@@ -184,10 +192,16 @@ export default function App() {
       ? [...organizaciones, sesion.organizacion]
       : organizaciones;
   const porRevisar = pendientes.length + orgsPendientes.length + noticiasPendientes.length + solicitudes.length
-    + pedidos.filter((p) => p.estado === 'nuevo').length;
+    + pedidos.filter((p) => p.estado === 'nuevo').length + independientes.length;
 
   const pedirIngreso = () => {
-    setAviso(sesion ? 'Tu organización todavía espera aprobación' : 'Entrá con tu organización para sumarte');
+    setAviso(
+      independiente
+        ? 'Sumarse a oportunidades es para organizaciones'
+        : sesion?.organizacion
+          ? 'Tu organización todavía espera aprobación'
+          : 'Entrá con tu organización para sumarte',
+    );
     ir('cuenta');
   };
 
@@ -196,6 +210,18 @@ export default function App() {
 
   const responder = (perfilId: string, aceptar: boolean) =>
     ejecutar(() => datos.responderSolicitud(perfilId, aceptar), aceptar ? 'Persona aceptada' : 'Pedido rechazado');
+
+  const nombrar = async (perfilId: string, si: boolean) => {
+    try {
+      await datos.nombrarResponsable(perfilId, si);
+      await cargar();
+      setAviso(si ? 'Ahora es responsable' : 'Ya no es responsable');
+    } catch (e) {
+      console.error(e);
+      const m = (e as { message?: string }).message ?? '';
+      setAviso(m.includes('responsable') ? m : 'No se pudo guardar. Intentá de nuevo.');
+    }
+  };
 
   const enEdicion = ruta.editarId
     ? [...pendientes, ...oportunidades].find((x) => x.id === ruta.editarId)
@@ -346,6 +372,7 @@ export default function App() {
             n={notaAbierta}
             organizaciones={organizacionesConLaMia}
             miOrg={miOrg}
+            enLaRed={enLaRed}
             usuariaId={sesion?.id ?? null}
             revisora={revisora}
             onEditar={revisora ? () => ir('editar-nota-' + notaAbierta.id) : undefined}
@@ -361,6 +388,7 @@ export default function App() {
             organizaciones={organizaciones}
             participaciones={participaciones}
             miOrg={miOrg}
+            soyResponsable={!!sesion?.responsable || revisora}
             email={sesion?.email ?? ''}
             onPedirApoyo={miOrg ? pedirApoyo : null}
             onSinOrganizacion={pedirIngreso}
@@ -392,6 +420,10 @@ export default function App() {
             organizaciones={organizaciones}
             onPedirUnirme={(id) => ejecutar(() => datos.pedirUnirme(id), 'Pedido enviado. Te avisamos cuando te acepten.')}
             onCancelarSolicitud={() => ejecutar(datos.cancelarSolicitud, 'Pedido cancelado')}
+            onPedirIndependiente={(p: Perfil) =>
+              ejecutar(() => datos.pedirEntrarComoIndependiente(p), 'Enviado. Akãhatã va a revisar tu pedido.')
+            }
+            onCancelarIndependiente={() => ejecutar(datos.cancelarIndependiente, 'Pedido cancelado')}
             onSalir={() => ejecutar(datos.salir, 'Saliste de la app').then(() => ir('radar'))}
             onRecargar={cargar}
             onDadaDeBaja={() => {
@@ -404,9 +436,9 @@ export default function App() {
           <div className="flex flex-col gap-4">
             <p className="m-0 text-sm text-ink-soft">
               {ruta.pantalla === 'chat'
-                ? 'El chat es solo para las organizaciones de la red y el equipo de Akãhatã.'
+                ? 'El chat es solo para las organizaciones y personas de la red y el equipo de Akãhatã.'
                 : ruta.pantalla === 'red'
-                ? 'El mapa de la red lo ven solo las organizaciones que forman parte, para cuidar a quienes trabajan en contextos de riesgo.'
+                ? 'El mapa de la red lo ven solo las organizaciones y personas que forman parte, para cuidar a quienes trabajan en contextos de riesgo.'
                 : 'Entrá con tu organización para registrar su trabajo y pedir acompañamiento a Akãhatã.'}
             </p>
             <Boton onClick={() => ir('cuenta')}>Entrar</Boton>
@@ -450,7 +482,7 @@ export default function App() {
               personaId={ruta.privado || null}
               personas={personasRed}
               organizaciones={organizacionesConLaMia}
-              puedeEscribir={!!miOrg}
+              puedeEscribir={enLaRed}
               onAbrir={(id) => ir(id ? 'privado-' + id : 'privados')}
               onCambio={recargarPrivados}
               onAviso={setAviso}
@@ -465,6 +497,7 @@ export default function App() {
                 : organizaciones
             }
             miOrg={miOrg}
+            enLaRed={enLaRed}
             usuariaId={sesion!.id}
             revisora={revisora}
             onCambiarSala={(s) => ir(s ? 'chat-' + s : 'chat')}
@@ -500,6 +533,7 @@ export default function App() {
             personas={personas}
             solicitudes={solicitudes.filter((x) => x.organizacion_id === sesion?.organizacion?.id)}
             onResponder={responder}
+            onNombrarResponsable={nombrar}
           />
         ) : (
           <RevisionView
@@ -520,6 +554,10 @@ export default function App() {
             onCargar={() => ir('cargar')}
             onEditar={(id) => ir('editar-' + id)}
             onAprobarOrg={(id, ok) => ejecutar(() => datos.aprobarOrganizacion(id, ok), ok ? 'Organización aprobada' : 'Organización rechazada')}
+            independientes={independientes}
+            onRevisarIndependiente={(id, ok) =>
+              ejecutar(() => datos.revisarIndependiente(id, ok), ok ? 'Persona aprobada' : 'Pedido rechazado')
+            }
             onRevisar={(id, estado: EstadoRevision) =>
               ejecutar(() => datos.revisarOportunidad(id, estado), estado === 'publicada' ? 'Publicada en el radar' : 'Descartada')
             }

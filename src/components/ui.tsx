@@ -166,3 +166,17 @@ export function AgregarAlCalendario({ evento, chico = false }: { evento: Evento;
     </div>
   );
 }
+
+/** Aviso de cuidado en el chat, el foro y los mensajes privados: no están cifrados de punta a punta. */
+export function AvisoSeguridad({ donde }: { donde: 'red' | 'privado' }) {
+  return (
+    <div className="rounded-lg border border-naranja/60 bg-naranja-light/40 px-3 py-2.5 text-[13px] leading-snug">
+      <b className="text-naranja-dark">Cuidá lo que compartís.</b>{' '}
+      {donde === 'red'
+        ? 'Lo leen todas las organizaciones de la red y no está cifrado de punta a punta.'
+        : 'Lo leen solo ustedes dos, pero no está cifrado de punta a punta.'}{' '}
+      No pongas nombres de personas en riesgo, direcciones, datos de casos ni estrategias sensibles. Para eso usá{' '}
+      <a href="https://signal.org/es/" target="_blank" rel="noopener noreferrer" className="font-bold text-rosa underline">Signal</a>.
+    </div>
+  );
+}

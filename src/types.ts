@@ -29,6 +29,17 @@ export interface Sesion {
   perfil: Perfil;
   /** Cuándo subió su foto (null: no tiene). */
   foto_en: string | null;
+  /** Responsable de su organización: decide qué muestra la organización y quién entra. */
+  responsable: boolean;
+  /** Persona sin organización: pidió entrar a la red (pendiente) o Akãhatã la aprobó. */
+  independiente: 'pendiente' | 'aprobada' | null;
+}
+
+/** Una persona de mi organización. */
+export interface PersonaDeMiOrg {
+  perfil_id: string | null;
+  email: string;
+  responsable: boolean;
 }
 
 /** Datos personales que cada persona elige mostrar. Nada es obligatorio. */
@@ -40,6 +51,23 @@ export interface Perfil {
   visible_en_red: boolean;
   /** Otras personas de la red le pueden escribir por mensaje privado. */
   acepta_mensajes: boolean;
+  /** Personas independientes: cómo se presentan (Activista, Académica, Periodista…) y su país. */
+  se_presenta: string;
+  pais: string;
+}
+
+export const COMO_SE_PRESENTA = ['Activista', 'Académica', 'Periodista', 'Otra'];
+
+/** Persona que pidió entrar a la red sin organización. Solo lo ve Akãhatã. */
+export interface IndependientePorRevisar {
+  id: string;
+  email: string;
+  nombre_visible: string;
+  se_presenta: string;
+  pais: string;
+  cargo: string;
+  presentacion: string;
+  creado_en: string;
 }
 
 /** Persona que aparece en la Red. Nunca se muestra su correo. */
@@ -48,9 +76,12 @@ export interface PersonaRed {
   nombre_visible: string;
   cargo: string;
   presentacion: string;
-  organizacion_id: string;
+  /** null: persona independiente. */
+  organizacion_id: string | null;
   acepta_mensajes: boolean;
   foto_en?: string | null;
+  se_presenta?: string;
+  pais?: string;
 }
 
 export interface MensajePrivado {
@@ -71,11 +102,13 @@ export interface SolicitudUnion {
   creada_en: string;
 }
 
-/** Mensaje del chat. Sin oportunidad = sala general. Se firma con la organización. */
+/** Mensaje del chat. Sin oportunidad = sala general. Se firma con la organización (o con el nombre, si es independiente). */
 export interface Mensaje {
   id: string;
   oportunidad_id: string | null;
-  organizacion_id: string;
+  /** null: lo escribió una persona independiente y va con su firma. */
+  organizacion_id: string | null;
+  firma?: string | null;
   autor: string | null;
   texto: string;
   borrado: boolean;
@@ -181,7 +214,9 @@ export type NuevaNoticia = Pick<
 export interface Comentario {
   id: string;
   noticia_id: string;
-  organizacion_id: string;
+  /** null: lo escribió una persona independiente y va con su firma. */
+  organizacion_id: string | null;
+  firma?: string | null;
   autor: string | null;
   texto: string;
   borrado: boolean;

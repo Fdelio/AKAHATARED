@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import type { Comentario, Noticia, Organizacion, Sistema } from '../types';
 import * as datos from '../lib/datos';
 import { MessageCircle } from 'lucide-react';
-import { Iniciales } from './ui';
+import { AvisoSeguridad, Iniciales } from './ui';
 
 const TIPO: Record<Noticia['tipo'], string> = { noticia: 'Noticia', articulo: 'Artículo', nota_akahata: 'Nota de Akãhatã' };
 
@@ -126,6 +126,8 @@ interface NotaProps {
   n: Noticia;
   organizaciones: Organizacion[];
   miOrg: string | null;
+  /** Organización aprobada o persona independiente aprobada. */
+  enLaRed: boolean;
   usuariaId: string | null;
   revisora: boolean;
   onEditar?: () => void;
@@ -134,11 +136,11 @@ interface NotaProps {
 }
 
 /** Una noticia con su foro de discusión. */
-export function NotaView({ n, organizaciones, miOrg, usuariaId, revisora, onEditar, onIngresar, onAviso }: NotaProps) {
+export function NotaView({ n, organizaciones, miOrg, enLaRed, usuariaId, revisora, onEditar, onIngresar, onAviso }: NotaProps) {
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [texto, setTexto] = useState('');
   const [enviando, setEnviando] = useState(false);
-  const puedeLeer = !!miOrg || revisora;
+  const puedeLeer = enLaRed || revisora;
   const orgPorId = new Map(organizaciones.map((o) => [o.id, o]));
 
   const cargar = useCallback(async () => {
@@ -156,7 +158,7 @@ export function NotaView({ n, organizaciones, miOrg, usuariaId, revisora, onEdit
 
   const enviar = async (e: FormEvent) => {
     e.preventDefault();
-    if (!miOrg || !texto.trim()) return;
+    if (!enLaRed || !texto.trim()) return;
     setEnviando(true);
     try {
       await datos.comentar(n.id, miOrg, texto.trim());
@@ -211,22 +213,24 @@ export function NotaView({ n, organizaciones, miOrg, usuariaId, revisora, onEdit
       <h3 className="mt-2 mb-0 text-base font-extrabold text-rosa">Foro de la red</h3>
       {!puedeLeer ? (
         <div className="flex flex-col gap-2 rounded-lg bg-panel p-3.5 text-sm">
-          El foro es para las organizaciones de la red, para cuidar a quienes trabajan en contextos de riesgo.
-          <button className="self-start font-bold text-rosa underline" onClick={onIngresar}>Entrar con mi organización</button>
+          El foro es para las organizaciones y personas de la red, para cuidar a quienes trabajan en contextos de riesgo.
+          <button className="self-start font-bold text-rosa underline" onClick={onIngresar}>Entrar a la red</button>
         </div>
       ) : (
         <>
+          <AvisoSeguridad donde="red" />
           {comentarios.length === 0 && <p className="m-0 text-sm text-ink-soft">Todavía nadie comentó. ¿Qué piensa tu organización?</p>}
           <div className="flex flex-col gap-2.5">
             {comentarios.map((c) => {
-              const org = orgPorId.get(c.organizacion_id);
+              const org = c.organizacion_id ? orgPorId.get(c.organizacion_id) : undefined;
+              const firma = c.organizacion_id ? org?.nombre ?? 'Organización' : c.firma || 'Persona independiente';
               const puedeBorrar = !c.borrado && (c.autor === usuariaId || revisora);
               return (
                 <div key={c.id} className="flex gap-2.5">
-                  <Iniciales org={org ?? { nombre: '?' }} />
+                  <Iniciales org={org ?? { nombre: firma }} />
                   <div className="min-w-0 flex-1 rounded-lg bg-panel px-3 py-2 text-sm">
                     <div className="flex flex-wrap items-baseline gap-x-2 text-xs">
-                      <b className="text-rosa">{org?.nombre ?? 'Organización'}</b>
+                      <b className="text-rosa">{firma}</b>
                       <span className="text-ink-soft">{fechaCorta(c.creado_en)}</span>
                     </div>
                     <div className={`whitespace-pre-wrap break-words ${c.borrado ? 'italic text-ink-soft' : ''}`}>{c.texto}</div>
@@ -240,13 +244,13 @@ export function NotaView({ n, organizaciones, miOrg, usuariaId, revisora, onEdit
               );
             })}
           </div>
-          {miOrg ? (
+          {enLaRed ? (
             <form onSubmit={enviar} className="flex flex-col gap-2">
               <textarea
                 rows={3}
                 maxLength={4000}
                 className="w-full rounded border-2 border-line px-3 py-2 text-[15px] focus:border-rosa focus:outline-none"
-                placeholder="Tu comentario va firmado con el nombre de tu organización"
+                placeholder={miOrg ? 'Tu comentario va firmado con el nombre de tu organización' : 'Tu comentario va firmado con tu nombre'}
                 value={texto}
                 onChange={(e) => setTexto(e.target.value)}
               />
@@ -255,7 +259,7 @@ export function NotaView({ n, organizaciones, miOrg, usuariaId, revisora, onEdit
               </button>
             </form>
           ) : (
-            <p className="m-0 text-sm text-ink-soft">Cuando tu organización esté aprobada vas a poder comentar.</p>
+            <p className="m-0 text-sm text-ink-soft">Cuando Akãhatã apruebe tu ingreso a la red vas a poder comentar.</p>
           )}
         </>
       )}

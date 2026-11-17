@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { ArrowLeft, Lock } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import type { MensajePrivado, Organizacion, PersonaRed } from '../types';
 import * as datos from '../lib/datos';
 import { Avatar } from './RedView';
+import { AvisoSeguridad } from './ui';
 
 interface Props {
   privados: MensajePrivado[];
@@ -66,8 +67,9 @@ export default function PrivadosView({ privados, usuariaId, personaId, personas,
     return (
       <div className="flex flex-col gap-2">
         <p className="m-0 flex items-center gap-1.5 text-sm text-ink-soft">
-          <Lock size={14} /> Solo lo ven las dos personas. Para escribirle a alguien nuevo, buscala en Red → Personas.
+          Para escribirle a alguien nuevo, buscala en Red → Personas.
         </p>
+        <AvisoSeguridad donde="privado" />
         {lista.map(([id, ms]) => {
           const q = quien(id);
           const ultimo = ms.at(-1)!;
@@ -129,6 +131,7 @@ export default function PrivadosView({ privados, usuariaId, personaId, personas,
           {q.org && <span className="text-[13px] text-ink-soft">{q.org}</span>}
         </div>
       </div>
+      <AvisoSeguridad donde="privado" />
       <div className="flex flex-col gap-2">
         {conversacion.map((m) => {
           const mio = m.de === usuariaId;
@@ -158,7 +161,7 @@ export default function PrivadosView({ privados, usuariaId, personaId, personas,
         </form>
       ) : (
         <p className="m-0 text-sm text-ink-soft">
-          {puedeEscribir ? 'Esta persona no recibe mensajes privados.' : 'Podés escribir cuando Akãhatã apruebe tu organización.'}
+          {puedeEscribir ? 'Esta persona no recibe mensajes privados.' : 'Podés escribir cuando Akãhatã apruebe tu ingreso a la red.'}
         </p>
       )}
     </div>

@@ -250,12 +250,14 @@ export const COMENTARIOS: Comentario[] = [
 
 export const MI_PERFIL: Perfil = {
   nombre_visible: 'Ejemplo', cargo: 'Coordinación de incidencia', presentacion: '', visible_en_red: true, acepta_mensajes: true,
+  se_presenta: '', pais: '',
 };
 
 export const PERSONAS: PersonaRed[] = [
   { id: 'p-rd', nombre_visible: 'Camila', cargo: 'Incidencia internacional', presentacion: 'Seguimos el EPU y los órganos de tratados.', organizacion_id: 'rd', acepta_mensajes: true },
   { id: 'p-ml', nombre_visible: 'Rosa', cargo: 'Coordinadora', presentacion: 'Defensoras ambientales en Bolivia.', organizacion_id: 'ml', acepta_mensajes: true },
   { id: 'p-ag', nombre_visible: 'Lu', cargo: '', presentacion: '', organizacion_id: 'ag', acepta_mensajes: false },
+  { id: 'p-ind', nombre_visible: 'Valentina', cargo: 'Investigadora en derechos sexuales', presentacion: 'Escribo sobre el sistema interamericano.', organizacion_id: null, acepta_mensajes: true, se_presenta: 'Académica', pais: 'Colombia' },
 ];
 
 export const PRIVADOS: MensajePrivado[] = [
