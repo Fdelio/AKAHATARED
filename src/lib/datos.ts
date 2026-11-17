@@ -3,7 +3,7 @@
  * base real; si no, trabaja en memoria con los datos de ejemplo.
  */
 import type {
-  Comentario, MensajePrivado, Perfil, PersonaDeMiOrg, PersonaRed, EstadoPedido, EstadoRevision, Mensaje, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Participacion,
+  Comentario, IndependientePorRevisar, MensajePrivado, Perfil, PersonaDeMiOrg, PersonaRed, EstadoPedido, EstadoRevision, Mensaje, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevoPedido, Oportunidad, Organizacion, Participacion,
   NuevaSesion, PedidoApoyo, Sesion, SesionOrgano, SolicitudUnion, Trabajo, Visibilidad,
 } from '../types';
 import { Capacitor } from '@capacitor/core';
@@ -144,6 +144,7 @@ export async function obtenerSesion(): Promise<Sesion | null> {
       rol: (data?.rol as Sesion['rol']) ?? 'miembro',
       foto_en: (data?.foto_en as string | null) ?? null,
       responsable: (data?.responsable as boolean | undefined) ?? false,
+      independiente: (data?.independiente as Sesion['independiente'] | undefined) ?? null,
       organizacion: (data?.organizaciones as unknown as Organizacion | null) ?? null,
       solicitud: sol
         ? { organizacion_id: sol.organizacion_id, nombre: (sol.organizaciones as unknown as { nombre: string } | null)?.nombre ?? '' }
@@ -154,6 +155,8 @@ export async function obtenerSesion(): Promise<Sesion | null> {
         presentacion: data?.presentacion ?? '',
         visible_en_red: data?.visible_en_red ?? false,
         acepta_mensajes: data?.acepta_mensajes ?? false,
+        se_presenta: (data?.se_presenta as string | undefined) ?? '',
+        pais: (data?.pais as string | undefined) ?? '',
       },
     };
   }
@@ -166,6 +169,7 @@ export async function obtenerSesion(): Promise<Sesion | null> {
     email: 'ejemplo@akahata.org',
     rol: 'revisora',
     responsable: true,
+    independiente: null,
     organizacion: {
       id: ejemplo.MI_ORGANIZACION_ID, nombre: 'Tu organización', pais: 'Argentina',
       temas: [], ofrece: '', necesita: '', aprobada: true,
@@ -543,7 +547,8 @@ export async function contarMensajesPorOportunidad(): Promise<Record<string, num
   return cuenta;
 }
 
-export async function enviarMensaje(organizacionId: string, oportunidadId: string | null, texto: string) {
+/** organizacionId null: escribe una persona independiente; la base pone su firma. */
+export async function enviarMensaje(organizacionId: string | null, oportunidadId: string | null, texto: string) {
   if (supabase) {
     const { error } = await supabase
       .from('mensajes')
@@ -648,7 +653,7 @@ export async function listarComentarios(noticiaId: string): Promise<Comentario[]
   return mem.comentarios.filter((c) => c.noticia_id === noticiaId);
 }
 
-export async function comentar(noticiaId: string, organizacionId: string, texto: string) {
+export async function comentar(noticiaId: string, organizacionId: string | null, texto: string) {
   if (supabase) {
     const { error } = await supabase.from('comentarios').insert({ noticia_id: noticiaId, organizacion_id: organizacionId, texto });
     if (error) throw error;
@@ -680,6 +685,8 @@ export async function guardarPerfil(p: Perfil) {
     presentacion: p.presentacion.trim(),
     visible_en_red: p.visible_en_red,
     acepta_mensajes: p.acepta_mensajes,
+    se_presenta: p.se_presenta.trim(),
+    pais: p.pais.trim(),
   };
   if (supabase) {
     const { data: s } = await supabase.auth.getSession();
@@ -688,6 +695,42 @@ export async function guardarPerfil(p: Perfil) {
     return;
   }
   mem.perfil = limpio;
+}
+
+/** Una persona sin organización pide entrar a la red. Akãhatã la revisa. */
+export async function pedirEntrarComoIndependiente(p: Perfil) {
+  await guardarPerfil(p);
+  if (supabase) {
+    const { data: s } = await supabase.auth.getSession();
+    const { error } = await supabase.from('perfiles').update({ independiente: 'pendiente' }).eq('id', s.session?.user.id ?? '');
+    if (error) throw error;
+  }
+}
+
+export async function cancelarIndependiente() {
+  if (supabase) {
+    const { data: s } = await supabase.auth.getSession();
+    const { error } = await supabase.from('perfiles').update({ independiente: null }).eq('id', s.session?.user.id ?? '');
+    if (error) throw error;
+  }
+}
+
+/** Para Akãhatã: personas que piden entrar sin organización. */
+export async function listarIndependientesPorRevisar(): Promise<IndependientePorRevisar[]> {
+  if (supabase) {
+    const { data, error } = await supabase.rpc('independientes_por_revisar');
+    // Si la base todavía no tiene la función, no hay pedidos.
+    if (error) return [];
+    return data as IndependientePorRevisar[];
+  }
+  return [];
+}
+
+export async function revisarIndependiente(id: string, aprobar: boolean) {
+  if (supabase) {
+    const { error } = await supabase.from('perfiles').update({ independiente: aprobar ? 'aprobada' : null }).eq('id', id);
+    if (error) throw error;
+  }
 }
 
 /** Personas que eligieron aparecer en la Red (sin correos). */

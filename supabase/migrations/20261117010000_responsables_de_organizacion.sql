@@ -138,7 +138,7 @@ end;
 $$;
 
 create or replace function public.solicitudes_para_responder()
-returns table (perfil_id uuid, email text, organizacion_id uuid, nombre text, creada_en timestamptz)
+returns table (perfil_id uuid, email text, organizacion_id uuid, organizacion text, creada_en timestamptz)
 language sql stable security definer set search_path = public as $$
   select s.perfil_id, u.email::text, s.organizacion_id, o.nombre, s.creada_en
   from solicitudes_union s

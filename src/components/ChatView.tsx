@@ -8,8 +8,10 @@ interface Props {
   sala: string | null;
   oportunidades: Oportunidad[];
   organizaciones: Organizacion[];
-  /** Mi organización aprobada; sin ella se puede leer pero no escribir. */
+  /** Mi organización aprobada (null si soy independiente o no estoy aprobada). */
   miOrg: string | null;
+  /** Organización aprobada o persona independiente aprobada: puede escribir. */
+  enLaRed: boolean;
   usuariaId: string;
   revisora: boolean;
   onCambiarSala: (sala: string | null) => void;
@@ -19,7 +21,7 @@ interface Props {
 const hora = (iso: string) =>
   new Date(iso).toLocaleString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-export default function ChatView({ sala, oportunidades, organizaciones, miOrg, usuariaId, revisora, onCambiarSala, onAviso }: Props) {
+export default function ChatView({ sala, oportunidades, organizaciones, miOrg, enLaRed, usuariaId, revisora, onCambiarSala, onAviso }: Props) {
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [conteo, setConteo] = useState<Record<string, number>>({});
   const [texto, setTexto] = useState('');
@@ -51,7 +53,7 @@ export default function ChatView({ sala, oportunidades, organizaciones, miOrg, u
 
   const enviar = async (e: FormEvent) => {
     e.preventDefault();
-    if (!miOrg || !texto.trim()) return;
+    if (!enLaRed || !texto.trim()) return;
     setEnviando(true);
     try {
       await datos.enviarMensaje(miOrg, sala, texto.trim());
@@ -100,22 +102,23 @@ export default function ChatView({ sala, oportunidades, organizaciones, miOrg, u
       <p className="m-0 text-[13px] text-ink-soft">
         {actual
           ? 'Para coordinar esta oportunidad: quién escribe qué, informes conjuntos, reuniones.'
-          : 'Para toda la red. Los mensajes van firmados con el nombre de la organización, no de la persona.'}{' '}
-        Solo lo ven las organizaciones aprobadas y Akãhatã.
+          : 'Para toda la red. Los mensajes van firmados con el nombre de la organización, no de la persona (las personas independientes firman con su nombre).'}{' '}
+        Solo lo ven las organizaciones y personas aprobadas y Akãhatã.
       </p>
 
       <div className="flex flex-col gap-2.5 rounded-lg bg-panel p-3">
         {mensajes.length === 0 && <p className="m-0 text-sm text-ink-soft">Todavía no hay mensajes. Escribí el primero.</p>}
         {mensajes.map((m) => {
-          const org = orgPorId.get(m.organizacion_id);
-          const propia = m.organizacion_id === miOrg;
+          const org = m.organizacion_id ? orgPorId.get(m.organizacion_id) : undefined;
+          const firma = m.organizacion_id ? org?.nombre ?? 'Organización' : m.firma || 'Persona independiente';
+          const propia = m.organizacion_id ? m.organizacion_id === miOrg : m.autor === usuariaId;
           const puedeBorrar = !m.borrado && (m.autor === usuariaId || revisora);
           return (
             <div key={m.id} className={`flex gap-2 ${propia ? 'flex-row-reverse' : ''}`}>
-              <Iniciales org={org ?? { nombre: '?' }} />
+              <Iniciales org={org ?? { nombre: firma }} />
               <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${propia ? 'bg-magenta-light' : 'bg-tarjeta'}`}>
                 <div className="flex flex-wrap items-baseline gap-x-2 text-xs">
-                  <b className="text-rosa">{org?.nombre ?? 'Organización'}</b>
+                  <b className="text-rosa">{firma}</b>
                   <span className="text-ink-soft">{hora(m.creado_en)}</span>
                 </div>
                 <div className={`whitespace-pre-wrap break-words ${m.borrado ? 'italic text-ink-soft' : ''}`}>{m.texto}</div>
@@ -131,7 +134,7 @@ export default function ChatView({ sala, oportunidades, organizaciones, miOrg, u
         <div ref={fin} />
       </div>
 
-      {miOrg ? (
+      {enLaRed ? (
         <form onSubmit={enviar} className="flex gap-2">
           <textarea
             rows={2}
@@ -152,7 +155,7 @@ export default function ChatView({ sala, oportunidades, organizaciones, miOrg, u
           </button>
         </form>
       ) : (
-        <p className="m-0 text-sm text-ink-soft">Cuando tu organización esté aprobada vas a poder escribir.</p>
+        <p className="m-0 text-sm text-ink-soft">Cuando Akãhatã apruebe tu ingreso a la red vas a poder escribir.</p>
       )}
     </div>
   );

@@ -46,14 +46,18 @@ export default function RedView(props: Props) {
 function Personas({ personas, organizaciones, usuariaId, apareceEnRed, onEscribir, onCompletarPerfil }: Props) {
   const [busqueda, setBusqueda] = useState('');
   const orgPorId = new Map(organizaciones.map((o) => [o.id, o]));
+  /** De qué organización es, o cómo se presenta si es independiente. */
+  const donde = (p: PersonaRed) => {
+    const o = p.organizacion_id ? orgPorId.get(p.organizacion_id) : undefined;
+    if (o) return `${o.nombre} (${o.pais})`;
+    if (p.organizacion_id) return '';
+    return [p.se_presenta || 'Independiente', p.pais].filter(Boolean).join(', ');
+  };
   const q = busqueda.trim().toLowerCase();
   const lista = personas
     .filter((p) => p.id !== usuariaId)
-    .filter((p) =>
-      !q || [p.nombre_visible, p.cargo ?? '', p.presentacion ?? '', orgPorId.get(p.organizacion_id)?.nombre ?? '', orgPorId.get(p.organizacion_id)?.pais ?? '']
-        .some((x) => x.toLowerCase().includes(q)),
-    )
-    .sort((a, b) => (orgPorId.get(a.organizacion_id)?.nombre ?? '').localeCompare(orgPorId.get(b.organizacion_id)?.nombre ?? ''));
+    .filter((p) => !q || [p.nombre_visible, p.cargo ?? '', p.presentacion ?? '', donde(p)].some((x) => x.toLowerCase().includes(q)))
+    .sort((a, b) => (a.organizacion_id ? 0 : 1) - (b.organizacion_id ? 0 : 1) || donde(a).localeCompare(donde(b)));
 
   return (
     <>
@@ -65,7 +69,7 @@ function Personas({ personas, organizaciones, usuariaId, apareceEnRed, onEscribi
         </div>
       )}
       <p className="m-0 text-sm text-ink-soft">
-        Personas de las organizaciones de la red que eligieron aparecer. Para contactarlas, escribiles dentro de la app.
+        Personas de las organizaciones de la red y personas independientes (activistas, académicas, periodistas) que eligieron aparecer. Para contactarlas, escribiles dentro de la app.
       </p>
       <input
         type="search"
@@ -75,14 +79,13 @@ function Personas({ personas, organizaciones, usuariaId, apareceEnRed, onEscribi
         onChange={(e) => setBusqueda(e.target.value)}
       />
       {lista.map((p) => {
-        const o = orgPorId.get(p.organizacion_id);
         return (
           <div key={p.id} className="flex gap-3 border-b border-line py-3 last:border-b-0">
             <Avatar nombre={p.nombre_visible} perfilId={p.id} foto_en={p.foto_en} />
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <b>{p.nombre_visible}</b>
               <span className="text-[13px] text-ink-soft">
-                {[p.cargo, o && `${o.nombre} (${o.pais})`].filter(Boolean).join(' · ')}
+                {[p.cargo, donde(p)].filter(Boolean).join(' · ')}
               </span>
               {p.presentacion && <span className="text-[13px] leading-snug">{p.presentacion}</span>}
               {p.acepta_mensajes ? (

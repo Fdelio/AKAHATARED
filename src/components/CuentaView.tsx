@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import type { NuevaOrganizacion, Organizacion, Perfil, Sesion } from '../types';
+import { COMO_SE_PRESENTA, type NuevaOrganizacion, type Organizacion, type Perfil, type Sesion } from '../types';
 import { Boton, Iniciales } from './ui';
 import { Avatar } from './RedView';
 import * as datos from '../lib/datos';
@@ -61,6 +61,9 @@ interface Props {
   organizaciones: Organizacion[];
   onPedirUnirme: (organizacionId: string) => Promise<void>;
   onCancelarSolicitud: () => void;
+  /** Persona sin organización: pide entrar a la red como independiente. */
+  onPedirIndependiente: (p: Perfil) => Promise<void>;
+  onCancelarIndependiente: () => void;
   onSalir: () => void;
   /** Vuelve a leer la sesión después de guardar el perfil. */
   onRecargar: () => void;
@@ -69,9 +72,47 @@ interface Props {
 }
 
 export default function CuentaView({
-  sesion, modoEjemplo, onCrearOrganizacion, organizaciones, onPedirUnirme, onCancelarSolicitud, onSalir, onRecargar, onDadaDeBaja,
+  sesion, modoEjemplo, onCrearOrganizacion, organizaciones, onPedirUnirme, onCancelarSolicitud, onPedirIndependiente, onCancelarIndependiente,
+  onSalir, onRecargar, onDadaDeBaja,
 }: Props) {
   if (!sesion) return <Ingreso modoEjemplo={modoEjemplo} />;
+  if (!sesion.organizacion && !sesion.solicitud && sesion.independiente === 'pendiente') {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="m-0 rounded-lg bg-naranja-light p-3.5 text-sm text-naranja-dark">
+          <b>Pediste entrar a la red como persona independiente.</b> El equipo de Akãhatã lo va a revisar y, si hace falta,
+          te escribe a tu correo. Mientras tanto podés ver las oportunidades y las noticias.
+        </p>
+        <TuPerfil perfil={sesion.perfil} perfilId={sesion.id} fotoEn={sesion.foto_en} aprobada={false} independiente onGuardado={onRecargar} />
+        <Boton variante="borde" onClick={onCancelarIndependiente}>Cancelar el pedido</Boton>
+        <button type="button" className="text-sm font-bold text-ink-soft underline" onClick={onSalir}>Salir</button>
+        <DarmeDeBaja tieneOrganizacion={false} onListo={onDadaDeBaja} />
+      </div>
+    );
+  }
+  if (!sesion.organizacion && !sesion.solicitud && sesion.independiente === 'aprobada') {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="rounded-lg border border-line p-3.5">
+          <div className="text-[11px] font-extrabold uppercase tracking-widest text-naranja-dark">En la red</div>
+          <b className="block text-lg leading-tight text-rosa">Persona independiente</b>
+          <span className="text-sm text-ink-soft">
+            Ves la Red, el chat y el foro. Lo que escribís va firmado con tu nombre visible.
+          </span>
+        </div>
+        <TuPerfil perfil={sesion.perfil} perfilId={sesion.id} fotoEn={sesion.foto_en} aprobada independiente onGuardado={onRecargar} />
+        <div className="text-sm text-ink-soft">
+          Ingresaste como <b className="text-ink">{sesion.email}</b>
+          {sesion.rol === 'revisora' && ' (equipo de Akãhatã)'}. Tu correo no se muestra a nadie.
+        </div>
+        <CambiarContrasena />
+        {sesion.rol === 'revisora' && <EquipoAkahata />}
+        <SumarmeAUnaOrganizacion organizaciones={organizaciones} onPedirUnirme={onPedirUnirme} />
+        {!modoEjemplo && <Boton variante="borde" onClick={onSalir}>Salir</Boton>}
+        <DarmeDeBaja tieneOrganizacion={false} independiente onListo={onDadaDeBaja} />
+      </div>
+    );
+  }
   if (!sesion.organizacion && sesion.solicitud) {
     return (
       <div className="flex flex-col gap-4">
@@ -93,6 +134,8 @@ export default function CuentaView({
           organizaciones={organizaciones}
           onPedirUnirme={onPedirUnirme}
           onCrear={onCrearOrganizacion}
+          onIndependiente={onPedirIndependiente}
+          perfil={sesion.perfil}
           onSalir={onSalir}
         />
         <DarmeDeBaja tieneOrganizacion={false} onListo={onDadaDeBaja} />
@@ -142,7 +185,9 @@ export default function CuentaView({
 }
 
 /** Borrar la cuenta. Es de verdad: no queda el correo ni el perfil. */
-function DarmeDeBaja({ tieneOrganizacion, onListo }: { tieneOrganizacion: boolean; onListo: () => void }) {
+function DarmeDeBaja({
+  tieneOrganizacion, independiente, onListo,
+}: { tieneOrganizacion: boolean; independiente?: boolean; onListo: () => void }) {
   const [abierto, setAbierto] = useState(false);
   const [borrarLoQueEscribi, setBorrarLoQueEscribi] = useState(false);
   const [confirmacion, setConfirmacion] = useState('');
@@ -177,6 +222,11 @@ function DarmeDeBaja({ tieneOrganizacion, onListo }: { tieneOrganizacion: boolea
         <p className="m-0 text-sm text-ink-soft">
           Tu organización sigue en la red con el resto de su equipo. Lo que escribiste en el chat y en los comentarios
           está firmado por la organización y queda sin tu nombre.
+        </p>
+      )}
+      {independiente && (
+        <p className="m-0 text-sm text-ink-soft">
+          Si no lo borrás, lo que escribiste en el chat y en los comentarios queda firmado como “Persona que se dio de baja”.
         </p>
       )}
       <label className="flex items-start gap-2.5 text-sm text-ink">
@@ -268,8 +318,8 @@ function EquipoAkahata() {
 
 /** Datos personales opcionales. Cada persona elige si aparece en la red y si se le puede escribir. */
 function TuPerfil({
-  perfil, perfilId, fotoEn, aprobada, onGuardado,
-}: { perfil: Perfil; perfilId: string; fotoEn: string | null; aprobada: boolean; onGuardado: () => void }) {
+  perfil, perfilId, fotoEn, aprobada, independiente, onGuardado,
+}: { perfil: Perfil; perfilId: string; fotoEn: string | null; aprobada: boolean; independiente?: boolean; onGuardado: () => void }) {
   const [p, setP] = useState<Perfil>(perfil);
   const [estado, setEstado] = useState<'' | 'guardando' | 'listo' | 'error'>('');
   const cambiar = <K extends keyof Perfil>(k: K, v: Perfil[K]) => {
@@ -312,8 +362,23 @@ function TuPerfil({
         Cómo querés que te vean
         <input className={campo} maxLength={80} value={p.nombre_visible} onChange={(e) => cambiar('nombre_visible', e.target.value)} placeholder="Ej.: Camila" />
       </label>
+      {independiente && (
+        <>
+          <label className={etiqueta}>
+            Cómo te presentás
+            <select className={campo} value={p.se_presenta} onChange={(e) => cambiar('se_presenta', e.target.value)}>
+              <option value="">Elegí…</option>
+              {COMO_SE_PRESENTA.map((x) => <option key={x}>{x}</option>)}
+            </select>
+          </label>
+          <label className={etiqueta}>
+            País
+            <input className={campo} maxLength={60} value={p.pais} onChange={(e) => cambiar('pais', e.target.value)} />
+          </label>
+        </>
+      )}
       <label className={etiqueta}>
-        Qué hacés en tu organización
+        {independiente ? 'Qué hacés' : 'Qué hacés en tu organización'}
         <input className={campo} maxLength={80} value={p.cargo} onChange={(e) => cambiar('cargo', e.target.value)} placeholder="Ej.: incidencia internacional" />
       </label>
       <label className={etiqueta}>
@@ -322,14 +387,14 @@ function TuPerfil({
       </label>
       <label className="flex items-start gap-2.5 text-sm text-ink">
         <input type="checkbox" className="mt-1 size-4 accent-rosa" checked={p.visible_en_red} onChange={(e) => cambiar('visible_en_red', e.target.checked)} />
-        <span><b>Aparecer en la red.</b> Tu nombre, lo que hacés y tu organización se ven solo para organizaciones aprobadas.</span>
+        <span><b>Aparecer en la red.</b> Tu nombre, lo que hacés y {independiente ? 'cómo te presentás' : 'tu organización'} se ven solo dentro de la red (organizaciones y personas aprobadas).</span>
       </label>
       <label className="flex items-start gap-2.5 text-sm text-ink">
         <input type="checkbox" className="mt-1 size-4 accent-rosa" checked={p.acepta_mensajes} onChange={(e) => cambiar('acepta_mensajes', e.target.checked)} />
         <span><b>Recibir mensajes privados</b> dentro de la app. Nadie ve tu correo.</span>
       </label>
       {!aprobada && p.visible_en_red && (
-        <p className="m-0 text-xs text-naranja-dark">Vas a aparecer cuando Akãhatã apruebe tu organización.</p>
+        <p className="m-0 text-xs text-naranja-dark">Vas a aparecer cuando Akãhatã {independiente ? 'apruebe tu pedido' : 'apruebe tu organización'}.</p>
       )}
       {estado === 'listo' && <p className="m-0 text-sm font-bold text-rosa">Listo, guardamos tu perfil.</p>}
       {estado === 'error' && <p className="m-0 text-sm text-rosa">No se pudo guardar. Intentá de nuevo.</p>}
@@ -595,12 +660,12 @@ export function NuevaContrasena({ titulo, onListo }: { titulo: string; onListo: 
 }
 
 function SinOrganizacion({
-  email, organizaciones, onPedirUnirme, onCrear, onSalir,
+  email, organizaciones, onPedirUnirme, onCrear, onIndependiente, perfil, onSalir,
 }: {
   email: string; organizaciones: Organizacion[]; onPedirUnirme: (id: string) => Promise<void>;
-  onCrear: (o: NuevaOrganizacion) => Promise<void>; onSalir: () => void;
+  onCrear: (o: NuevaOrganizacion) => Promise<void>; onIndependiente: (p: Perfil) => Promise<void>; perfil: Perfil; onSalir: () => void;
 }) {
-  const [modo, setModo] = useState<'unirme' | 'nueva'>(organizaciones.length > 0 ? 'unirme' : 'nueva');
+  const [modo, setModo] = useState<'unirme' | 'nueva' | 'independiente'>(organizaciones.length > 0 ? 'unirme' : 'nueva');
   const [elegida, setElegida] = useState('');
   const [enviando, setEnviando] = useState(false);
 
@@ -619,8 +684,8 @@ function SinOrganizacion({
       <p className="m-0 text-sm text-ink-soft">
         Hola, <b className="text-ink">{email}</b>. ¿Tu organización ya está en la red?
       </p>
-      <div className="grid grid-cols-2 rounded-lg bg-panel p-1" role="tablist">
-        {(['unirme', 'nueva'] as const).map((m) => (
+      <div className="grid grid-cols-3 rounded-lg bg-panel p-1" role="tablist">
+        {(['unirme', 'nueva', 'independiente'] as const).map((m) => (
           <button
             key={m}
             role="tab"
@@ -628,7 +693,7 @@ function SinOrganizacion({
             onClick={() => setModo(m)}
             className={`rounded-md px-1 py-2 text-[12px] font-extrabold uppercase tracking-wider ${modo === m ? 'bg-magenta text-white shadow-sm' : 'text-ink-soft'}`}
           >
-            {m === 'unirme' ? 'Ya está en la red' : 'Registrar una nueva'}
+            {m === 'unirme' ? 'Ya está en la red' : m === 'nueva' ? 'Registrar una nueva' : 'Sin organización'}
           </button>
         ))}
       </div>
@@ -649,10 +714,100 @@ function SinOrganizacion({
           <Boton>{enviando ? 'Enviando…' : 'Pedir sumarme'}</Boton>
           <button type="button" className="text-sm font-bold text-ink-soft underline" onClick={onSalir}>Salir</button>
         </form>
-      ) : (
+      ) : modo === 'nueva' ? (
         <AltaOrganizacion email={email} onCrear={onCrear} onSalir={onSalir} />
+      ) : (
+        <AltaIndependiente perfil={perfil} onPedir={onIndependiente} onSalir={onSalir} />
       )}
     </div>
+  );
+}
+
+/** Activistas, académicas o periodistas sin organización piden entrar a la red. */
+function AltaIndependiente({ perfil, onPedir, onSalir }: { perfil: Perfil; onPedir: (p: Perfil) => Promise<void>; onSalir: () => void }) {
+  const [p, setP] = useState<Perfil>({ ...perfil, visible_en_red: true });
+  const [enviando, setEnviando] = useState(false);
+  const cambiar = <K extends keyof Perfil>(k: K, v: Perfil[K]) => setP((x) => ({ ...x, [k]: v }));
+  const enviar = async (e: FormEvent) => {
+    e.preventDefault();
+    setEnviando(true);
+    try {
+      await onPedir(p);
+    } finally {
+      setEnviando(false);
+    }
+  };
+  return (
+    <form onSubmit={enviar} className="flex flex-col gap-4">
+      <p className="m-0 text-sm text-ink-soft">
+        Para activistas, académicas, periodistas y otras personas que trabajan en derechos humanos sin una organización. El
+        equipo de Akãhatã revisa cada pedido antes de abrirte la Red, el chat y el foro.
+      </p>
+      <label className={etiqueta}>
+        Cómo querés que te vean
+        <input required className={campo} maxLength={80} value={p.nombre_visible} onChange={(e) => cambiar('nombre_visible', e.target.value)} placeholder="Tu nombre o un apodo" />
+        <span className="text-xs font-normal text-ink-soft">Con este nombre firmás en el chat y en el foro.</span>
+      </label>
+      <label className={etiqueta}>
+        Cómo te presentás
+        <select required className={campo} value={p.se_presenta} onChange={(e) => cambiar('se_presenta', e.target.value)}>
+          <option value="" disabled>Elegí…</option>
+          {COMO_SE_PRESENTA.map((x) => <option key={x}>{x}</option>)}
+        </select>
+      </label>
+      <label className={etiqueta}>
+        País
+        <input required className={campo} maxLength={60} value={p.pais} onChange={(e) => cambiar('pais', e.target.value)} />
+      </label>
+      <label className={etiqueta}>
+        Contale a Akãhatã en qué trabajás
+        <textarea required className={campo} rows={3} maxLength={400} value={p.presentacion} onChange={(e) => cambiar('presentacion', e.target.value)} placeholder="Temas, espacios donde participaste, con quiénes trabajás… Si alguien de la red te conoce, nombrala." />
+      </label>
+      <label className="flex items-start gap-2.5 text-sm text-ink">
+        <input type="checkbox" className="mt-1 size-4 accent-rosa" checked={p.visible_en_red} onChange={(e) => cambiar('visible_en_red', e.target.checked)} />
+        <span><b>Aparecer en la red</b> cuando te aprueben. Lo podés cambiar después.</span>
+      </label>
+      <label className="flex items-start gap-2.5 text-sm text-ink">
+        <input type="checkbox" className="mt-1 size-4 accent-rosa" checked={p.acepta_mensajes} onChange={(e) => cambiar('acepta_mensajes', e.target.checked)} />
+        <span><b>Recibir mensajes privados</b> dentro de la app. Nadie ve tu correo.</span>
+      </label>
+      <Boton>{enviando ? 'Enviando…' : 'Pedir entrar a la red'}</Boton>
+      <button type="button" className="text-sm font-bold text-ink-soft underline" onClick={onSalir}>Salir</button>
+    </form>
+  );
+}
+
+/** Una persona independiente que después entra a una organización pide sumarse. */
+function SumarmeAUnaOrganizacion({ organizaciones, onPedirUnirme }: { organizaciones: Organizacion[]; onPedirUnirme: (id: string) => Promise<void> }) {
+  const [abierto, setAbierto] = useState(false);
+  const [elegida, setElegida] = useState('');
+  if (organizaciones.length === 0) return null;
+  if (!abierto)
+    return (
+      <button type="button" className="self-start text-sm font-bold text-rosa underline" onClick={() => setAbierto(true)}>
+        Ahora formo parte de una organización de la red
+      </button>
+    );
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onPedirUnirme(elegida);
+      }}
+      className="flex flex-col gap-3 rounded-lg border border-line p-3.5"
+    >
+      <label className={etiqueta}>
+        Elegí tu organización
+        <select required className={campo} value={elegida} onChange={(e) => setElegida(e.target.value)}>
+          <option value="" disabled>Elegí…</option>
+          {[...organizaciones].sort((a, b) => a.nombre.localeCompare(b.nombre)).map((o) => (
+            <option key={o.id} value={o.id}>{o.nombre} ({o.pais})</option>
+          ))}
+        </select>
+      </label>
+      <p className="m-0 text-xs text-ink-soft">Cuando te acepten, pasás a escribir con el nombre de la organización.</p>
+      <Boton variante="borde">Pedir sumarme</Boton>
+    </form>
   );
 }
 

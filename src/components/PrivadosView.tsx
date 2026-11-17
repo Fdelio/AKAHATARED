@@ -161,7 +161,7 @@ export default function PrivadosView({ privados, usuariaId, personaId, personas,
         </form>
       ) : (
         <p className="m-0 text-sm text-ink-soft">
-          {puedeEscribir ? 'Esta persona no recibe mensajes privados.' : 'Podés escribir cuando Akãhatã apruebe tu organización.'}
+          {puedeEscribir ? 'Esta persona no recibe mensajes privados.' : 'Podés escribir cuando Akãhatã apruebe tu ingreso a la red.'}
         </p>
       )}
     </div>

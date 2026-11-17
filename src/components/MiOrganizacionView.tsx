@@ -30,6 +30,18 @@ export default function MiOrganizacionView({
   const org = sesion.organizacion;
   const [pidiendo, setPidiendo] = useState<string | null>(null); // id de oportunidad, o '' para un pedido general
 
+  if (!org && sesion.independiente === 'aprobada') {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="m-0 text-sm text-ink-soft">
+          Estás en la red como <b className="text-ink">persona independiente</b>: ves la Red, participás del chat y del foro
+          y podés recibir mensajes privados. Esta sección es para que las organizaciones registren su trabajo y pidan
+          acompañamiento. Si después entrás a una organización, pedí sumarte desde tu cuenta.
+        </p>
+        <Boton variante="borde" onClick={onIrACuenta}>Ir a mi cuenta</Boton>
+      </div>
+    );
+  }
   if (!org) {
     return (
       <div className="flex flex-col gap-4">
