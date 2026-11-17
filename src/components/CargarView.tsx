@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import type { NuevaOportunidad, Oportunidad, Sistema } from '../types';
 import { Boton } from './ui';
 import { campo, etiqueta } from './CuentaView';
+import { horaCorta, ZONAS } from '../lib/calendario';
 
 const MECANISMOS: Record<Sistema, string[]> = {
   ONU: [
@@ -21,7 +22,7 @@ const TEMAS = [
 
 const VACIA: NuevaOportunidad = {
   sistema: 'ONU', mecanismo: '', titulo: '', pais: 'Regional', tema: '', resumen: '', angulo_agenda: '',
-  pasos: [], fecha_limite: '', fuente_nombre: '', fuente_url: null,
+  pasos: [], fecha_limite: '', hora_cierre: null, zona_cierre: null, fuente_nombre: '', fuente_url: null,
 };
 
 interface Props {
@@ -33,7 +34,7 @@ interface Props {
 
 function aFormulario(op: Oportunidad): NuevaOportunidad {
   const { id: _id, estado: _estado, recolectada_automaticamente: _auto, ...resto } = op;
-  return resto;
+  return { ...resto, hora_cierre: horaCorta(resto.hora_cierre) };
 }
 
 export default function CargarView({ inicial, onGuardar, onCancelar }: Props) {
@@ -47,7 +48,11 @@ export default function CargarView({ inicial, onGuardar, onCancelar }: Props) {
     e.preventDefault();
     setGuardando(true);
     const listaPasos = pasos.split('\n').map((p) => p.trim()).filter(Boolean);
-    const ok = await onGuardar({ ...o, pasos: listaPasos, fuente_url: o.fuente_url?.trim() || null }, publicar);
+    const hora = o.hora_cierre || null;
+    const ok = await onGuardar(
+      { ...o, pasos: listaPasos, fuente_url: o.fuente_url?.trim() || null, hora_cierre: hora, zona_cierre: hora ? o.zona_cierre || null : null },
+      publicar,
+    );
     setGuardando(false);
     if (ok && !inicial) {
       setO(VACIA);
@@ -106,10 +111,25 @@ export default function CargarView({ inicial, onGuardar, onCancelar }: Props) {
         </label>
       </div>
 
-      <label className={etiqueta}>
-        Fecha límite
-        <input required type="date" className={campo} value={o.fecha_limite} onChange={(e) => cambiar('fecha_limite', e.target.value)} />
-      </label>
+      <div className="grid grid-cols-[1.3fr_1fr] gap-3">
+        <label className={etiqueta}>
+          Fecha límite
+          <input required type="date" className={campo} value={o.fecha_limite} onChange={(e) => cambiar('fecha_limite', e.target.value)} />
+        </label>
+        <label className={etiqueta}>
+          Hora (si la dice)
+          <input type="time" className={campo} value={o.hora_cierre ?? ''} onChange={(e) => cambiar('hora_cierre', e.target.value || null)} />
+        </label>
+      </div>
+      {o.hora_cierre && (
+        <label className={etiqueta}>
+          Esa hora es de
+          <select required className={campo} value={o.zona_cierre ?? ''} onChange={(e) => cambiar('zona_cierre', e.target.value || null)}>
+            <option value="" disabled>Elegí la ciudad…</option>
+            {Object.keys(ZONAS).map((z) => <option key={z}>{z}</option>)}
+          </select>
+        </label>
+      )}
 
       <label className={etiqueta}>
         Resumen en lenguaje simple
@@ -132,7 +152,7 @@ export default function CargarView({ inicial, onGuardar, onCancelar }: Props) {
           <input required className={campo} value={o.fuente_nombre} onChange={(e) => cambiar('fuente_nombre', e.target.value)} placeholder="Ej.: OHCHR" />
         </label>
         <label className={etiqueta}>
-          Enlace
+          Enlace a la convocatoria
           <input type="url" className={campo} value={o.fuente_url ?? ''} onChange={(e) => cambiar('fuente_url', e.target.value)} placeholder="https://…" />
         </label>
       </div>

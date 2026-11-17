@@ -37,6 +37,7 @@ export async function listarOportunidades(estado: EstadoRevision = 'publicada'):
       .eq('estado', estado)
       .order('fecha_limite', { ascending: true });
     if (error) throw error;
+    if (data.length > 0) hayColumnasDeHora = 'hora_cierre' in data[0];
     return data as Oportunidad[];
   }
   return mem.oportunidades
@@ -301,13 +302,20 @@ export async function aprobarOrganizacion(id: string, aprobada: boolean) {
 
 // ---------- Oportunidades y participaciones ----------
 
+/** Si la base todavía no tiene las columnas de hora (falta correr el SQL), se guarda sin la hora. */
+let hayColumnasDeHora = false;
+function paraGuardar(o: NuevaOportunidad) {
+  const { hora_cierre, zona_cierre, ...resto } = o;
+  return hayColumnasDeHora || hora_cierre ? { ...resto, hora_cierre: hora_cierre || null, zona_cierre: hora_cierre ? zona_cierre ?? null : null } : resto;
+}
+
 /** Akãhatã corrige una oportunidad (por ejemplo, una recolectada automáticamente) antes o después de publicarla. */
 export async function actualizarOportunidad(id: string, o: NuevaOportunidad, publicar: boolean) {
   const estado: EstadoRevision = publicar ? 'publicada' : 'pendiente';
   if (supabase) {
     const { error } = await supabase
       .from('oportunidades')
-      .update({ ...o, estado, revisada_en: new Date().toISOString() })
+      .update({ ...paraGuardar(o), estado, revisada_en: new Date().toISOString() })
       .eq('id', id);
     if (error) throw error;
     return;
@@ -321,7 +329,7 @@ export async function crearOportunidad(o: NuevaOportunidad, publicar: boolean) {
   const estado: EstadoRevision = publicar ? 'publicada' : 'pendiente';
   if (supabase) {
     const { error } = await supabase.from('oportunidades').insert({
-      ...o,
+      ...paraGuardar(o),
       estado,
       recolectada_automaticamente: false,
       revisada_en: publicar ? new Date().toISOString() : null,

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import type { FechaClave, NuevaSesion, SesionOrgano } from '../types';
+import type { FechaClave, NuevaSesion, Oportunidad, SesionOrgano } from '../types';
 import { diasHasta } from '../lib/datos';
-import { EtiquetaSistema } from './ui';
+import { AgregarAlCalendario, EtiquetaSistema } from './ui';
+import { eventoDeSesion, horaCorta } from '../lib/calendario';
 import SesionForm from './SesionForm';
 
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -36,17 +37,31 @@ function faltan(fecha: string): string {
 
 interface Props {
   sesiones: SesionOrgano[];
+  /** Las convocatorias publicadas: sus cierres también aparecen en "Próximos plazos". */
+  oportunidades: Oportunidad[];
+  onAbrirOportunidad: (id: string) => void;
   /** Solo para el equipo de Akãhatã: guardar (id null = nueva) y borrar. */
   onGuardar?: (id: string | null, s: NuevaSesion) => Promise<boolean>;
   onBorrar?: (id: string) => Promise<void>;
 }
 
-export default function CalendarioView({ sesiones, onGuardar, onBorrar }: Props) {
+export default function CalendarioView({ sesiones, oportunidades, onAbrirOportunidad, onGuardar, onBorrar }: Props) {
   const [editando, setEditando] = useState<string | null>(null); // id, 'nueva' o null
-  const proximas = sesiones
-    .flatMap((s) => s.fechas_clave.filter((f) => diasHasta(f.fecha) >= 0).map((f) => ({ f, s })))
-    .sort((a, b) => a.f.fecha.localeCompare(b.f.fecha))
-    .slice(0, 6);
+  const [todos, setTodos] = useState(false);
+  type Plazo =
+    | { tipo: 'sesion'; f: FechaClave; s: SesionOrgano }
+    | { tipo: 'convocatoria'; f: FechaClave; o: Oportunidad };
+  const plazos: Plazo[] = [
+    ...sesiones.flatMap((s) => s.fechas_clave.map((f): Plazo => ({ tipo: 'sesion', f, s }))),
+    ...oportunidades.map((o): Plazo => ({
+      tipo: 'convocatoria',
+      o,
+      f: { fecha: o.fecha_limite, texto: o.titulo, url: null, aprox: false },
+    })),
+  ]
+    .filter((p) => diasHasta(p.f.fecha) >= 0)
+    .sort((a, b) => a.f.fecha.localeCompare(b.f.fecha));
+  const proximas = todos ? plazos : plazos.slice(0, 6);
 
   const guardar = (id: string | null) => async (s: NuevaSesion) => {
     const ok = await onGuardar!(id, s);
@@ -57,26 +72,44 @@ export default function CalendarioView({ sesiones, onGuardar, onBorrar }: Props)
   return (
     <div className="flex flex-col gap-3">
       <p className="m-0 text-sm text-ink-soft">
-        Las sesiones donde se decide. Preparar la incidencia con tiempo hace la diferencia: muchas inscripciones y
+        Las sesiones donde se toman decisiones que afectan nuestras agendas. Preparar la incidencia con tiempo hace la diferencia: muchas inscripciones y
         plazos cierran semanas antes.
       </p>
 
       {proximas.length > 0 && (
         <section className="flex flex-col gap-2 rounded-lg border-2 border-naranja px-3.5 py-3">
           <h3 className="m-0 text-[13px] font-extrabold uppercase tracking-wider text-naranja-dark">Próximos plazos</h3>
-          {proximas.map(({ f, s }, i) => (
-            <div key={s.id + i} className="flex flex-col border-b border-line pb-2 text-[13px] last:border-b-0 last:pb-0">
+          {proximas.map((p, i) => (
+            <div key={(p.tipo === 'sesion' ? p.s.id : p.o.id) + i} className="flex flex-col border-b border-line pb-2 text-[13px] last:border-b-0 last:pb-0">
               <span className="font-extrabold text-rosa">
-                {fechaCorta(f)} <span className="font-bold text-ink-soft">· {faltan(f.fecha)}</span>
+                {fechaCorta(p.f)}
+                {p.tipo === 'convocatoria' && horaCorta(p.o.hora_cierre) && ` ${horaCorta(p.o.hora_cierre)}${p.o.zona_cierre ? ` (${p.o.zona_cierre})` : ''}`}{' '}
+                <span className="font-bold text-ink-soft">· {faltan(p.f.fecha)}</span>
               </span>
-              {f.url ? (
-                <a href={f.url} target="_blank" rel="noopener noreferrer" className="font-bold text-ink underline decoration-rosa/50">{f.texto}</a>
+              {p.tipo === 'convocatoria' ? (
+                <>
+                  <button onClick={() => onAbrirOportunidad(p.o.id)} className="text-left font-bold text-ink underline decoration-rosa/50">
+                    Cierra la convocatoria: {p.o.titulo}
+                  </button>
+                  <span className="text-ink-soft">{p.o.sistema} · {p.o.mecanismo}</span>
+                </>
               ) : (
-                <span className="font-bold text-ink">{f.texto}</span>
+                <>
+                  {p.f.url ? (
+                    <a href={p.f.url} target="_blank" rel="noopener noreferrer" className="font-bold text-ink underline decoration-rosa/50">{p.f.texto}</a>
+                  ) : (
+                    <span className="font-bold text-ink">{p.f.texto}</span>
+                  )}
+                  <span className="text-ink-soft">{p.s.nombre}</span>
+                </>
               )}
-              <span className="text-ink-soft">{s.nombre}</span>
             </div>
           ))}
+          {plazos.length > 6 && (
+            <button onClick={() => setTodos(!todos)} className="self-start text-[13px] font-bold text-rosa underline">
+              {todos ? 'Ver menos' : `Ver todos los plazos (${plazos.length})`}
+            </button>
+          )}
         </section>
       )}
 
@@ -143,6 +176,7 @@ export default function CalendarioView({ sesiones, onGuardar, onBorrar }: Props)
                     Página oficial de esta sesión
                   </a>
                 )}
+                {!s.a_confirmar && <AgregarAlCalendario evento={eventoDeSesion(s)} chico />}
                 {onGuardar && (
                   <button className="text-[13px] font-bold text-ink-soft underline" onClick={() => setEditando(s.id)}>
                     Editar (equipo Akãhatã)

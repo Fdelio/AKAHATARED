@@ -28,7 +28,7 @@ export const OPORTUNIDADES: Oportunidad[] = [
   {
     id: 're-amb', sistema: 'ONU', mecanismo: 'Procedimientos especiales',
     titulo: 'Relatoría Especial sobre derechos humanos y medio ambiente: llamado a contribuciones',
-    pais: 'Regional', tema: 'Ambiente y clima', fecha_limite: enDias(16),
+    pais: 'Regional', tema: 'Ambiente y clima', fecha_limite: enDias(16), hora_cierre: '18:00', zona_cierre: 'Ginebra',
     resumen: 'La Relatoría prepara un informe temático para el Consejo de Derechos Humanos y pide aportes de la sociedad civil: datos, casos y recomendaciones.',
     angulo_agenda: 'Mostrá cómo la crisis climática y los proyectos extractivos afectan distinto a mujeres, personas LGBTI+ y quienes cuidan: desplazamiento, acceso al agua, violencia en los territorios.',
     pasos: ['Leer el cuestionario y elegir 2 o 3 preguntas donde tu experiencia aporte.', 'Sumar datos o casos concretos de tu país.', 'Proponer recomendaciones con enfoque de género.', 'Enviar por correo antes de la fecha límite.'],

@@ -42,7 +42,7 @@ export default function RevisionView({ pendientes, orgsPendientes, pedidos, orga
 
       {pedidos.some((p) => p.estado !== 'cerrado') && (
         <section className="flex flex-col gap-2.5">
-          <h3 className="m-0 text-[13px] font-extrabold uppercase tracking-wider text-naranja-dark">Pedidos de apoyo para redactar</h3>
+          <h3 className="m-0 text-[13px] font-extrabold uppercase tracking-wider text-naranja-dark">Pedidos de acompañamiento para redactar</h3>
           {pedidos.filter((p) => p.estado !== 'cerrado').map((p) => {
             const org = organizaciones.find((o) => o.id === p.organizacion_id);
             const op = oportunidades.find((o) => o.id === p.oportunidad_id);

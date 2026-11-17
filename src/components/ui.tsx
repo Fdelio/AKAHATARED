@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { Oportunidad, Organizacion, Sistema } from '../types';
 import { diasHasta, enlaceImagen } from '../lib/datos';
+import { descargarIcs, enlaceGoogle, type Evento } from '../lib/calendario';
 
 /** Enlace para mostrar una imagen privada (foto o logo), o null mientras carga o si no hay. */
 export function useImagen(ruta: string | null, version: string | null | undefined): string | null {
@@ -124,5 +125,44 @@ export function TarjetaOportunidad({
         )}
       </div>
     </button>
+  );
+}
+
+/** "Agregar a mi calendario": Google Calendar o archivo para el celular, Apple y Outlook. */
+export function AgregarAlCalendario({ evento, chico = false }: { evento: Evento; chico?: boolean }) {
+  const [abierto, setAbierto] = useState(false);
+  const opcion = 'rounded border border-line bg-tarjeta px-3 py-2 text-[13px] font-bold text-ink';
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => setAbierto(!abierto)}
+        aria-expanded={abierto}
+        className={
+          chico
+            ? 'self-start text-[13px] font-bold text-rosa underline'
+            : 'w-full rounded border-2 border-rosa px-4 py-3 text-[13px] font-extrabold uppercase tracking-widest text-rosa'
+        }
+      >
+        Agregar a mi calendario
+      </button>
+      {abierto && (
+        <div className="flex flex-wrap gap-2">
+          <a className={opcion} href={enlaceGoogle(evento)} target="_blank" rel="noopener noreferrer" onClick={() => setAbierto(false)}>
+            Google Calendar
+          </a>
+          <button
+            type="button"
+            className={opcion}
+            onClick={() => {
+              descargarIcs(evento);
+              setAbierto(false);
+            }}
+          >
+            Celular, Apple u Outlook (.ics)
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
