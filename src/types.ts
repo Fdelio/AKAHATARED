@@ -100,6 +100,10 @@ export interface Oportunidad {
   angulo_agenda: string;
   pasos: string[];
   fecha_limite: string; // YYYY-MM-DD
+  /** Hora exacta de cierre, "HH:MM" (la base la devuelve como "HH:MM:SS"). */
+  hora_cierre?: string | null;
+  /** Ciudad de referencia de esa hora: "Ginebra", "Washington"… (ver ZONAS en lib/calendario). */
+  zona_cierre?: string | null;
   fuente_nombre: string;
   fuente_url: string | null;
   estado: EstadoRevision;

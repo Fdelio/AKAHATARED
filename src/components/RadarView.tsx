@@ -47,7 +47,7 @@ export default function RadarView({ oportunidades, organizaciones, participacion
     return (
       <div className="flex flex-col gap-3.5">
         {pestanas}
-        <CalendarioView sesiones={sesiones} onGuardar={onGuardarSesion} onBorrar={onBorrarSesion} />
+        <CalendarioView sesiones={sesiones} oportunidades={oportunidades} onAbrirOportunidad={onAbrir} onGuardar={onGuardarSesion} onBorrar={onBorrarSesion} />
       </div>
     );
   }

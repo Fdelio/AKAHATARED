@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { TIPOS_APORTE, type NuevoPedido, type Oportunidad, type Organizacion, type Participacion, type Visibilidad } from '../types';
 import PedirApoyo from './PedirApoyo';
-import { Boton, EtiquetaSistema, Iniciales, Plazo } from './ui';
+import { AgregarAlCalendario, Boton, EtiquetaSistema, Iniciales, Plazo } from './ui';
+import { enTuHora, eventoDeOportunidad, textoCierre } from '../lib/calendario';
 
 interface Props {
   o: Oportunidad;
@@ -52,6 +53,25 @@ export default function OportunidadView({ o, organizaciones, participaciones, mi
         {o.pais} · {o.tema}
       </div>
       <p className="m-0">{o.resumen}</p>
+
+      <div className="flex flex-col gap-0.5 rounded-lg bg-panel px-3.5 py-3 text-sm">
+        <b className="font-extrabold text-rosa">Cierre</b>
+        <span className="font-bold">{textoCierre(o)}</span>
+        {enTuHora(o) && <span className="text-[13px] text-ink-soft">En tu hora: {enTuHora(o)}.</span>}
+        {!o.hora_cierre && <span className="text-[13px] text-ink-soft">La convocatoria no indica la hora: mejor enviarlo antes de ese día.</span>}
+      </div>
+
+      {o.fuente_url && (
+        <a
+          href={o.fuente_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full rounded bg-magenta px-4 py-3 text-center text-[13px] font-extrabold uppercase tracking-widest text-white"
+        >
+          Ir a la convocatoria oficial ↗
+        </a>
+      )}
+      <AgregarAlCalendario evento={eventoDeOportunidad(o)} />
 
       <div className="flex flex-col gap-1 rounded-lg border-2 border-naranja px-3.5 py-3">
         <b className="font-extrabold text-naranja-dark">Cómo sumar tu agenda</b>
@@ -134,7 +154,7 @@ export default function OportunidadView({ o, organizaciones, participaciones, mi
         />
       ) : (
         <Boton variante="borde" onClick={() => (onPedirApoyo ? setPidiendo(true) : onSinOrganizacion())}>
-          Pedir apoyo de Akãhatã para redactar
+          Pedir acompañamiento de Akãhatã para redactar
         </Boton>
       )}
       <Boton variante="borde" onClick={onConversar}>Conversar con la red sobre esta oportunidad</Boton>

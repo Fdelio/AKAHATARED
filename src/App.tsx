@@ -37,7 +37,7 @@ const TITULOS: Record<Pantalla, [string, string]> = {
   radar: ['Oportunidades de participar', 'ONU, OEA y Mercosur, en todos los temas'],
   red: ['La red', 'Organizaciones, personas y su trabajo'],
   chat: ['Chat de la red', 'Salas para coordinar y mensajes privados'],
-  mias: ['Mi organización', 'Nuestro trabajo y pedidos de apoyo'],
+  mias: ['Mi organización', 'Nuestro trabajo y pedidos de acompañamiento'],
   revision: ['Revisión de Akãhatã', 'Lo que espera aprobación'],
   cuenta: ['Tu cuenta', 'Tu organización en la red'],
   cargar: ['Cargar oportunidad', 'Se suma al radar de incidencia'],
@@ -407,7 +407,7 @@ export default function App() {
                 ? 'El chat es solo para las organizaciones de la red y el equipo de Akãhatã.'
                 : ruta.pantalla === 'red'
                 ? 'El mapa de la red lo ven solo las organizaciones que forman parte, para cuidar a quienes trabajan en contextos de riesgo.'
-                : 'Entrá con tu organización para registrar su trabajo y pedir apoyo a Akãhatã.'}
+                : 'Entrá con tu organización para registrar su trabajo y pedir acompañamiento a Akãhatã.'}
             </p>
             <Boton onClick={() => ir('cuenta')}>Entrar</Boton>
           </div>

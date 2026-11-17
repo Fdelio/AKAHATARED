@@ -30,7 +30,7 @@ export default function PedirApoyo({ oportunidadId, email, onEnviar, onCancelar 
 
   return (
     <form onSubmit={enviar} className="flex flex-col gap-3 rounded-lg border-2 border-naranja bg-naranja-light/40 p-3.5">
-      <b className="text-naranja-dark">Pedir apoyo de Akãhatã para redactar</b>
+      <b className="text-naranja-dark">Pedir acompañamiento de Akãhatã para redactar</b>
       <p className="m-0 text-[13px] text-ink-soft">
         El equipo de Akãhatã puede acompañarlas con la estructura, la redacción, la revisión o la traducción. Solo
         Akãhatã ve este pedido.

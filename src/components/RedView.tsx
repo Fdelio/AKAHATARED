@@ -129,7 +129,7 @@ function Organizaciones({ organizaciones, participaciones, oportunidades, miOrg,
       <div className="flex flex-col gap-1.5 rounded-lg bg-magenta-light p-3.5 text-sm">
         <b className="text-rosa">¿Preparan un informe sombra, una contribución o un reporte?</b>
         <span>Akãhatã puede acompañarlas en la redacción, la revisión o la traducción.</span>
-        <button className="self-start font-bold text-rosa underline" onClick={onPedirApoyo}>Pedir apoyo</button>
+        <button className="self-start font-bold text-rosa underline" onClick={onPedirApoyo}>Pedir acompañamiento</button>
       </div>
 
       <input

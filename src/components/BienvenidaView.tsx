@@ -18,7 +18,7 @@ const QUE_HAY = [
   {
     Icono: CalendarDays,
     titulo: 'Oportunidades de participar',
-    texto: 'Convocatorias abiertas de la ONU, la OEA y el Mercosur, explicadas en lenguaje simple, y el calendario de sesiones del Consejo de Derechos Humanos, el EPU, la CSW y la Asamblea General de la OEA.',
+    texto: 'Convocatorias abiertas de la ONU, la OEA y el Mercosur explicadas en lenguaje simple, y el calendario de sesiones del Consejo de Derechos Humanos, el EPU, la CSW y la Asamblea General de la OEA.',
   },
   {
     Icono: Network,
@@ -27,7 +27,7 @@ const QUE_HAY = [
   },
   {
     Icono: PenLine,
-    titulo: 'Apoyo de Akãhatã',
+    titulo: 'Acompañamiento de Akãhatã',
     texto: 'Acompañamiento para redactar informes sombra, contribuciones y reportes.',
   },
   {
@@ -62,8 +62,8 @@ export default function BienvenidaView({ modoEjemplo, onVerOportunidades, enLaAp
         </div>
         <h1 className="mt-6 mb-3 text-[32px] font-black leading-[1.05]">Radar de Incidencia Internacional</h1>
         <p className="m-0 text-[15px] font-semibold leading-snug text-white/85">
-          Para que las organizaciones de América Latina lleven sus agendas a la ONU, la OEA y el Mercosur, en todos los
-          temas, y no vayan solas.
+          Para que las organizaciones de América Latina lleven sus agendas a la ONU, la OEA y el Mercosur en todos los
+          temas y no vayan solas.
         </p>
         {enLaApp ? (
           <div className="mt-6 flex flex-wrap gap-2.5">

@@ -41,7 +41,7 @@ export default function MiOrganizacionView({
     return (
       <p className="m-0 rounded-lg bg-naranja-light p-3.5 text-sm text-naranja-dark">
         <b>{org.nombre} está esperando la aprobación de Akãhatã.</b> Cuando la aprueben vas a poder sumarte a
-        oportunidades, registrar lo que hacen y pedir apoyo.
+        oportunidades, registrar lo que hacen y pedir acompañamiento.
       </p>
     );
   }
@@ -84,11 +84,11 @@ export default function MiOrganizacionView({
       </section>
 
       <section className="flex flex-col gap-2.5">
-        <h3 className="m-0 text-[13px] font-extrabold uppercase tracking-wider text-naranja-dark">Apoyo de Akãhatã</h3>
+        <h3 className="m-0 text-[13px] font-extrabold uppercase tracking-wider text-naranja-dark">Acompañamiento de Akãhatã</h3>
         {pidiendo === '' ? (
           <PedirApoyo oportunidadId={null} email={sesion.email} onEnviar={enviarPedido} onCancelar={() => setPidiendo(null)} />
         ) : (
-          <Boton variante="borde" onClick={() => setPidiendo('')}>Pedir apoyo para redactar un documento</Boton>
+          <Boton variante="borde" onClick={() => setPidiendo('')}>Pedir acompañamiento para redactar un documento</Boton>
         )}
         {pedidos.map((p) => (
           <div key={p.id} className="rounded-lg bg-panel p-3 text-sm">
@@ -184,7 +184,7 @@ function Trabajo({
       <Boton variante="borde" onClick={() => onGuardar(t)}>Guardar</Boton>
       {pidiendo ? formPedido : !t.enviado && (
         <button className="self-start text-sm font-bold text-rosa underline" onClick={onPedir}>
-          Pedir apoyo de Akãhatã para redactarlo
+          Pedir acompañamiento de Akãhatã para redactarlo
         </button>
       )}
     </div>
