@@ -1,8 +1,9 @@
 // Recolector diario de noticias y artículos sobre los espacios internacionales
 // de derechos humanos (ONU, OEA, Mercosur).
 //
-// Lee fuentes que se pueden leer automáticamente (canales RSS y la página de
-// comunicados de la CIDH) y guarda cada nota nueva como "pendiente". Akãhatã
+// Lee fuentes que se pueden leer automáticamente (canales RSS, la página de
+// comunicados de la CIDH y lo que publica oas.org en español, que incluye el
+// Centro de Noticias de la OEA) y guarda cada nota nueva como "pendiente". Akãhatã
 // la revisa y la publica. Nunca publica nada por su cuenta. Solo guarda el
 // título, un resumen breve, la imagen y el enlace: el texto completo queda en la fuente.
 
@@ -43,10 +44,19 @@ const FUENTES_RSS: FuenteRss[] = [
 ];
 
 const CIDH_URL = 'https://www.oas.org/es/cidh/prensa/comunicados.asp';
+// oas.org bloquea la lectura automática (Cloudflare), así que el Centro de Noticias
+// de la OEA (y la CIDH) se leen a través del buscador de Google Noticias.
+const OEA_URL = 'https://news.google.com/rss/search?q=site:oas.org/es+when:14d&hl=es-419&gl=US&ceid=US:es-419';
 const DIAS_ATRAS = 21;
 
 const MECANISMOS =
   /\b(ONU|Naciones Unidas|Consejo de Derechos Humanos|ACNUDH|Alto Comisionad|relator|EPU|Examen Peri[óo]dico|CEDAW|CSW|Comit[ée] de|CIDH|Comisi[óo]n Interamericana|Corte (IDH|Interamericana)|OEA|Organizaci[óo]n de los Estados Americanos|Mercosur|IPPDH|RAADH|Human Rights Council|Special Rapporteur|UPR|treaty bod)/i;
+
+// Para el Centro de Noticias de la OEA: lo de la CIDH, REDESCA, CIM/MESECVI y la
+// Corte IDH entra siempre; lo demás solo si toca algún tema de derechos humanos.
+const OEA_DDHH = /CIDH|Comisi[óo]n Interamericana|REDESCA|Relator[íi]a|Corte (IDH|Interamericana)|\bCIM\b|Comisi[óo]n Interamericana de Mujeres|MESECVI|Bel[ée]m do Par[áa]|derecho|violencia|mujer|g[ée]nero|igualdad|discrimina|racismo|ind[íi]gena|afrodescendiente|migra|refugiad|desplazad|protecci[óo]n internacional|MIRPS|ni[ñn](ez|as|os)|adolescen|juventud|LGBT|\btrans\b|discapacidad|personas mayores|defensor|periodista|libertad de expresi[óo]n|sociedad civil|medidas cautelares|Escaz[úu]|ambient|clim[áa]tic|pobreza|tortura|desaparici|privad[ao]s de libertad|pena de muerte|memoria|justicia/i;
+/** Páginas que no son noticias (calendario, PDF, fichas viejas, etc.). */
+const OEA_NO_NOTICIA = /^(Untitled|OEA\s*>\s*Calendario|Calendario\s*>|Comunicados de Prensa|Discursos|Boletines|Informe (\d|de fondo)|LEY \d|Budget)|\.\.\.$|…$|_|@/i;
 
 const ua = { 'user-agent': 'RedIncidencia/1.0 (+https://fdelio.github.io/AKAHATARED/)' };
 
@@ -163,12 +173,50 @@ async function deCidh(): Promise<Nota[]> {
   return notas;
 }
 
-Deno.serve(async () => {
+function normalizar(t: string): string {
+  return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+async function deOea(): Promise<Nota[]> {
+  const xml = await leer(OEA_URL);
+  const notas: Nota[] = [];
+  for (const m of xml.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
+    const item = m[1];
+    const campo = (n: string) => item.match(new RegExp(`<${n}[^>]*>([\\s\\S]*?)</${n}>`))?.[1] ?? '';
+    const titulo = texto(campo('title'))
+      .replace(/\s+-\s+(OAS\.org|OAS - Organization of American States)$/i, '')
+      .replace(/^(OEA|OAS)\s*::\s*/i, '')
+      .trim();
+    const url = texto(campo('link'));
+    const fecha = new Date(texto(campo('pubDate')));
+    if (!titulo || !url || isNaN(fecha.getTime()) || fecha < desde()) continue;
+    if (OEA_NO_NOTICIA.test(titulo) || titulo.length < 25) continue;
+    if (!OEA_DDHH.test(titulo)) continue;
+    const cidh = /CIDH|Comisi[óo]n Interamericana de Derechos|REDESCA|Relator[íi]a/i.test(titulo);
+    notas.push({
+      clave_fuente: 'oea:' + normalizar(titulo),
+      titulo,
+      resumen: '',
+      url,
+      fuente_nombre: cidh ? 'CIDH · Comunicados de prensa' : 'OEA · Centro de Noticias',
+      tipo: 'noticia',
+      sistema: 'OEA',
+      idioma: 'es',
+      publicada_en: fecha.toISOString(),
+      imagen_url: null,
+    });
+  }
+  return notas;
+}
+
+Deno.serve(async (req: Request) => {
+  const probar = new URL(req.url).searchParams.get('probar') === '1';
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
   const informe: Record<string, unknown> = {};
   const todas: Nota[] = [];
   const tareas: [string, () => Promise<Nota[]>][] = [
     ['CIDH', deCidh],
+    ['OEA (Centro de Noticias y CIDH)', deOea],
     ...FUENTES_RSS.map((f) => [f.nombre, () => deRss(f)] as [string, () => Promise<Nota[]>]),
   ];
   await Promise.all(
@@ -182,6 +230,34 @@ Deno.serve(async () => {
       }
     }),
   );
+
+  // Lo que llega vía Google Noticias puede repetir una nota que ya vino directo o
+  // que ya está guardada (otra clave): esas se descartan por título.
+  const vistos = new Set<string>();
+  const { data: recientes } = await supabase
+    .from('noticias')
+    .select('titulo')
+    .gte('publicada_en', new Date(desde().getTime() - 7 * 86_400_000).toISOString());
+  for (const r of recientes ?? []) vistos.add(normalizar(r.titulo));
+  const directas = todas.filter((n) => !n.clave_fuente.startsWith('oea:'));
+  for (const n of directas) vistos.add(normalizar(n.titulo));
+  const unicas = [
+    ...directas,
+    ...todas.filter((n) => {
+      if (!n.clave_fuente.startsWith('oea:')) return false;
+      const k = normalizar(n.titulo);
+      if (vistos.has(k)) return false;
+      vistos.add(k);
+      return true;
+    }),
+  ];
+  todas.length = 0;
+  todas.push(...unicas);
+
+  if (probar) {
+    informe.prueba_oea_nuevas = todas.filter((n) => n.clave_fuente.startsWith('oea:')).map((n) => `${n.fuente_nombre} · ${n.publicada_en.slice(0, 10)} · ${n.titulo}`);
+    return new Response(JSON.stringify(informe, null, 2), { headers: { 'content-type': 'application/json' } });
+  }
 
   if (todas.length > 0) {
     const { data, error } = await supabase
