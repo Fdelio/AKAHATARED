@@ -56,7 +56,7 @@ const MECANISMOS =
 // Corte IDH entra siempre; lo demás solo si toca algún tema de derechos humanos.
 const OEA_DDHH = /CIDH|Comisi[óo]n Interamericana|REDESCA|Relator[íi]a|Corte (IDH|Interamericana)|\bCIM\b|Comisi[óo]n Interamericana de Mujeres|MESECVI|Bel[ée]m do Par[áa]|derecho|violencia|mujer|g[ée]nero|igualdad|discrimina|racismo|ind[íi]gena|afrodescendiente|migra|refugiad|desplazad|protecci[óo]n internacional|MIRPS|ni[ñn](ez|as|os)|adolescen|juventud|LGBT|\btrans\b|discapacidad|personas mayores|defensor|periodista|libertad de expresi[óo]n|sociedad civil|medidas cautelares|Escaz[úu]|ambient|clim[áa]tic|pobreza|tortura|desaparici|privad[ao]s de libertad|pena de muerte|memoria|justicia/i;
 /** Páginas que no son noticias (calendario, PDF, fichas viejas, etc.). */
-const OEA_NO_NOTICIA = /^(Untitled|OEA\s*>\s*Calendario|Calendario\s*>|Comunicados de Prensa|Discursos|Boletines|Informe (\d|de fondo)|LEY \d|Budget)|\.\.\.$|…$|_|@/i;
+const OEA_NO_NOTICIA = /^(Untitled|CIDH\s*::|OEA\s*>\s*Calendario|Calendario\s*>|Comunicados de Prensa|Discursos|Boletines|Informe (\d|de fondo)|LEY \d|Budget)|\.\.\.$|…$|_|@/i;
 
 const ua = { 'user-agent': 'RedIncidencia/1.0 (+https://fdelio.github.io/AKAHATARED/)' };
 

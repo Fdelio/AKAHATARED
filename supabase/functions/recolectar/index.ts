@@ -9,6 +9,11 @@
 //   - CIDH · Comunicados de prensa que abren un plazo para la sociedad civil
 //     (pedidos de audiencias, consultas públicas, convocatorias). Se guarda el
 //     enlace al comunicado específico.
+//   - CIDH y REDESCA a través de Google Noticias: desde noviembre de 2026
+//     oas.org bloquea la lectura automática (Cloudflare), así que las dos
+//     fuentes anteriores pueden volver vacías. Google solo trae el título y la
+//     fecha, no el texto: el plazo se estima y se avisa para que Akãhatã lo
+//     confirme en el comunicado antes de publicar.
 //   - ONU · procedimientos especiales y ACNUDH, a través de la página de
 //     convocatorias de Geneva Environment Network (ohchr.org bloquea la lectura
 //     automática).
@@ -44,6 +49,7 @@ const CIDH_COMUNICADOS_URL = 'https://www.oas.org/es/cidh/prensa/comunicados.asp
 /** Títulos de comunicados que suelen abrir un plazo para participar. */
 const CONVOCA =
   /solicitudes? de audiencia|solicitar audiencia|recibe solicitudes|consulta p[úu]blica|convoca|convocatoria|abre (?:el )?(?:plazo|registro|inscripci)|registro para participar|cuestionario|llamado a/i;
+const CIDH_GN_URL = 'https://news.google.com/rss/search?q=site:oas.org/es+when:30d&hl=es-419&gl=US&ceid=US:es-419';
 const GEN_URL = 'https://www.genevaenvironmentnetwork.org/resources/updates/special-procedures-of-the-human-rights-council/';
 
 const MESES_ES: Record<string, number> = {
@@ -194,6 +200,46 @@ async function deComunicadosCidh(): Promise<Hallazgo[]> {
     } catch {
       // Si un comunicado no se puede leer, se sigue con los demás.
     }
+  }
+  return hallazgos;
+}
+
+/** Para comparar títulos que llegan por caminos distintos. */
+const normalizar = (t: string) =>
+  t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/^cuestionario de consulta:?\s*/, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+async function deCidhGoogle(): Promise<Hallazgo[]> {
+  const xml = await leer(CIDH_GN_URL);
+  const hace30 = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+  const hallazgos: Hallazgo[] = [];
+  for (const m of xml.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
+    const campo = (n: string) => m[1].match(new RegExp(`<${n}[^>]*>([\\s\\S]*?)</${n}>`))?.[1] ?? '';
+    const titulo = texto(campo('title').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, '’'))
+      .replace(/\s+-\s+(OAS\.org|OAS - Organization of American States)$/i, '')
+      .trim();
+    const url = texto(campo('link'));
+    const fecha = new Date(texto(campo('pubDate')));
+    if (!titulo || !url || isNaN(fecha.getTime())) continue;
+    const publicado = fecha.toISOString().slice(0, 10);
+    if (publicado < hace30) continue;
+    if (!/CIDH|Comisi[óo]n Interamericana|REDESCA|Relator[íi]a|Cuestionario/i.test(titulo)) continue;
+    if (!(CONVOCA.test(titulo) || /invita a (participar|presentar|enviar)|contribuciones/i.test(titulo))) continue;
+    // Sin el texto no se sabe el plazo: se estima en tres semanas desde la publicación.
+    const estimada = restarDias(publicado, -21);
+    const plazo = estimada >= hoy() ? estimada : restarDias(hoy(), -7);
+    const cuestionario = /cuestionario/i.test(titulo);
+    const relatoria = titulo.match(/REDESCA|Relator[íi]a (?:Especial )?(?:sobre|para) [^,(:]+/i)?.[0];
+    hallazgos.push({
+      clave_fuente: `cidh-gn-${normalizar(titulo).replace(/ /g, '-').slice(0, 120)}`,
+      sistema: 'OEA',
+      mecanismo: relatoria ? `CIDH · ${relatoria.trim()}` : /audiencia/i.test(titulo) ? 'CIDH · audiencias' : 'CIDH · consultas públicas',
+      titulo: titulo.replace(/^Cuestionario de Consulta:\s*/i, '').trim(),
+      resumen: `Publicado por la CIDH el ${legible(publicado)}. Plazo estimado (tres semanas desde la publicación): abrir el enlace y confirmar la fecha y la forma de envío antes de publicar.`,
+      tema: adivinarTema(titulo),
+      fecha_limite: plazo,
+      fuente_nombre: cuestionario ? 'CIDH · Cuestionarios de consulta' : 'CIDH · Comunicados de prensa',
+      fuente_url: url,
+    });
   }
   return hallazgos;
 }
@@ -438,7 +484,7 @@ Deno.serve(async (req: Request) => {
   const informe: Record<string, unknown> = {};
   const todos: Hallazgo[] = [];
 
-  for (const [nombre, fuente] of [['cidh', deCidh], ['cidh-comunicados', deComunicadosCidh], ['geneva', deGeneva], ['tratados', deTratados]] as const) {
+  for (const [nombre, fuente] of [['cidh', deCidh], ['cidh-comunicados', deComunicadosCidh], ['cidh-google', deCidhGoogle], ['geneva', deGeneva], ['tratados', deTratados]] as const) {
     try {
       const h = await fuente();
       todos.push(...h);
@@ -447,6 +493,25 @@ Deno.serve(async (req: Request) => {
       informe[nombre] = { error: String(e) };
     }
   }
+
+  // Lo que llega por Google Noticias puede ser algo ya leído directo de oas.org o ya
+  // guardado (con otra clave): se descarta por título.
+  const vistos = new Set<string>();
+  const { data: guardadas } = await supabase
+    .from('oportunidades')
+    .select('titulo')
+    .gte('creada_en', new Date(Date.now() - 60 * 86_400_000).toISOString());
+  for (const g of guardadas ?? []) vistos.add(normalizar(g.titulo));
+  for (const h of todos) if (!h.clave_fuente.startsWith('cidh-gn-')) vistos.add(normalizar(h.titulo));
+  const unicos = todos.filter((h) => {
+    if (!h.clave_fuente.startsWith('cidh-gn-')) return true;
+    const k = normalizar(h.titulo);
+    if (vistos.has(k)) return false;
+    vistos.add(k);
+    return true;
+  });
+  todos.length = 0;
+  todos.push(...unicos);
 
   if (probar) {
     return new Response(JSON.stringify({ ...informe, hallazgos: todos }, null, 2), { headers: { 'content-type': 'application/json' } });
