@@ -96,7 +96,7 @@ function fechas(e: Evento): [string, string] {
 
 export function eventoDeOportunidad(o: Oportunidad): Evento {
   const m = momentoDeCierre(o);
-  const detalle = [`Cierra el ${textoCierre(o)}.`, o.resumen, o.fuente_url ? `Convocatoria oficial: ${o.fuente_url}` : '', 'Akãhatã: Sonar de incidencia']
+  const detalle = [`Cierra el ${textoCierre(o)}.`, o.resumen, o.fuente_url ? `Convocatoria oficial: ${o.fuente_url}` : '', 'Akãhatã: Sonar de Incidencia Internacional']
     .filter(Boolean)
     .join('\n\n');
   return {
@@ -110,7 +110,7 @@ export function eventoDeOportunidad(o: Oportunidad): Evento {
 }
 
 export function eventoDeSesion(s: SesionOrgano): Evento {
-  const detalle = [s.descripcion, s.lugar ? `Lugar: ${s.lugar}` : '', s.fuente_url ? `Página oficial: ${s.fuente_url}` : '', 'Akãhatã: Sonar de incidencia']
+  const detalle = [s.descripcion, s.lugar ? `Lugar: ${s.lugar}` : '', s.fuente_url ? `Página oficial: ${s.fuente_url}` : '', 'Akãhatã: Sonar de Incidencia Internacional']
     .filter(Boolean)
     .join('\n\n');
   return { titulo: s.nombre, detalle, inicio: s.fecha_inicio, fin: s.fecha_fin ?? s.fecha_inicio, enlace: s.fuente_url };
@@ -129,7 +129,7 @@ export function archivoIcs(e: Evento): string {
   const [i, f] = fechas(e);
   const conHora = typeof e.inicio !== 'string';
   const lineas = [
-    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Akahata//Sonar de incidencia//ES', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Akahata//Sonar de Incidencia Internacional//ES', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
     'BEGIN:VEVENT',
     `UID:${Date.now()}-${Math.random().toString(36).slice(2)}@radar-akahata`,
     `DTSTAMP:${utc(new Date())}`,

@@ -1,4 +1,4 @@
-# Akãhatã: Sonar de incidencia
+# Akãhatã: Sonar de Incidencia Internacional
 
 App para celular y web que ayuda a organizaciones de América Latina a **llevar sus agendas a los espacios de derechos humanos de la ONU, la OEA y el Mercosur**, también en temas que no son "de género": ambiente, desarrollo, economía, migración.
 
