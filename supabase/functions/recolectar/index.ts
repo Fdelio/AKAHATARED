@@ -208,6 +208,25 @@ async function deComunicadosCidh(): Promise<Hallazgo[]> {
 const normalizar = (t: string) =>
   t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/^cuestionario de consulta:?\s*/, '').replace(/[^a-z0-9]+/g, ' ').trim();
 
+const VACIAS = new Set(['para', 'ante', 'sobre', 'desde', 'entre', 'cidh', 'consulta', 'cuestionario', 'pedir', 'recibe', 'solicitudes', 'llama', 'invita', 'como', 'esta', 'este']);
+/** Palabras que identifican una convocatoria: sin acentos, recortadas para que "audiencias" y "audiencia" coincidan. */
+function palabrasClave(t: string): Set<string> {
+  return new Set(
+    normalizar(t)
+      .split(' ')
+      .filter((w) => (w.length >= 4 || /\d/.test(w)) && !VACIAS.has(w))
+      .map((w) => (/\d/.test(w) ? w : w.replace(/s$/, '').slice(0, 6))),
+  );
+}
+/** Dos títulos hablan de lo mismo si comparten al menos el 60 % de las palabras clave del más corto. */
+function parecidos(a: Set<string>, b: Set<string>): boolean {
+  const menor = Math.min(a.size, b.size);
+  if (menor < 2) return false;
+  let comunes = 0;
+  for (const w of a) if (b.has(w)) comunes++;
+  return comunes / menor >= 0.6;
+}
+
 async function deCidhGoogle(): Promise<Hallazgo[]> {
   const xml = await leer(CIDH_GN_URL);
   const hace30 = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
@@ -495,19 +514,22 @@ Deno.serve(async (req: Request) => {
   }
 
   // Lo que llega por Google Noticias puede ser algo ya leído directo de oas.org o ya
-  // guardado (con otra clave): se descarta por título.
-  const vistos = new Set<string>();
+  // cargado (publicado, en revisión o descartado) con otro título: se descarta si
+  // comparte la mayoría de las palabras clave con alguna convocatoria de la OEA.
   const { data: guardadas } = await supabase
     .from('oportunidades')
     .select('titulo')
-    .gte('creada_en', new Date(Date.now() - 60 * 86_400_000).toISOString());
-  for (const g of guardadas ?? []) vistos.add(normalizar(g.titulo));
-  for (const h of todos) if (!h.clave_fuente.startsWith('cidh-gn-')) vistos.add(normalizar(h.titulo));
+    .eq('sistema', 'OEA')
+    .gte('creada_en', new Date(Date.now() - 90 * 86_400_000).toISOString());
+  const previas = [
+    ...(guardadas ?? []).map((g) => palabrasClave(g.titulo)),
+    ...todos.filter((h) => !h.clave_fuente.startsWith('cidh-gn-')).map((h) => palabrasClave(h.titulo)),
+  ];
   const unicos = todos.filter((h) => {
     if (!h.clave_fuente.startsWith('cidh-gn-')) return true;
-    const k = normalizar(h.titulo);
-    if (vistos.has(k)) return false;
-    vistos.add(k);
+    const k = palabrasClave(h.titulo);
+    if (previas.some((p) => parecidos(k, p))) return false;
+    previas.push(k);
     return true;
   });
   todos.length = 0;
