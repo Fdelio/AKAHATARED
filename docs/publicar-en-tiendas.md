@@ -39,7 +39,7 @@ Todo lo que cambia en la web se pasa a las apps volviendo a armarlas (no hay que
 
 ## Datos técnicos
 - Identificador de la app (no se puede cambiar después de publicar): `org.akahataorg.radar`
-- Nombre en el celular: "Radar Akãhatã"
+- Nombre en el celular: "Sonar Akãhatã"
 - Íconos y pantalla de inicio: se generan desde `assets/` con `npx @capacitor/assets generate --android --ios`.
 - Después de cambiar la web, para actualizar las carpetas nativas: `npm run build && npx cap sync`.
 - Los enlaces de los correos (confirmar cuenta, recuperar contraseña) abren la versión web; después se entra a la app con correo y contraseña.
