@@ -32,7 +32,7 @@ const NAV: ItemNav[] = [
 ];
 
 const TITULOS: Record<Pantalla, [string, string]> = {
-  inicio: ['Inicio', 'Akãhatã: Sonar de incidencia'],
+  inicio: ['Inicio', 'Akãhatã: Sonar de Incidencia Internacional'],
   noticias: ['Noticias', 'Lo que pasa en los espacios internacionales'],
   radar: ['Oportunidades de participar', 'ONU, OEA y Mercosur, en todos los temas'],
   red: ['La red', 'Organizaciones, personas y su trabajo'],
@@ -321,14 +321,10 @@ export default function App() {
   return (
     <div className="mx-auto flex min-h-screen max-w-[480px] md:max-w-[960px] flex-col bg-fondo sm:my-6 sm:min-h-0 sm:rounded-3xl sm:border sm:border-line">
       <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-fondo/90 px-5 py-3.5 backdrop-blur-md sm:rounded-t-3xl">
-        <img src={import.meta.env.BASE_URL + 'logo-sonar.svg'} alt="" className="size-11 flex-none rounded-full" />
+        <img src={import.meta.env.BASE_URL + 'logo-sonar.svg'} alt="" className="size-12 flex-none rounded-full" />
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.25em] text-naranja">
-            <img src={import.meta.env.BASE_URL + 'logo-marca.png'} alt="" className="size-3.5" />
-            Akãhatã
-          </div>
-          <div className="text-[19px] font-black leading-[1.08] tracking-tight text-ink sm:text-[21px]">
-            Sonar de <span className="text-rosa">incidencia</span>
+          <div className="text-[19px] font-black leading-[1.1] tracking-tight text-ink sm:text-[22px]">
+            <span className="text-naranja">Akãhatã:</span> Sonar de Incidencia <span className="text-rosa">Internacional</span>
           </div>
         </div>
         {revisora && (

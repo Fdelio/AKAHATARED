@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { COMO_SE_PRESENTA, type NuevaOrganizacion, type Organizacion, type Perfil, type Sesion } from '../types';
-import { Boton, Iniciales } from './ui';
+import { Boton, Iniciales, SelloAkahata } from './ui';
 import { Avatar } from './RedView';
 import * as datos from '../lib/datos';
 
@@ -180,6 +180,7 @@ export default function CuentaView({
       {sesion.rol === 'revisora' && <EquipoAkahata />}
       {!modoEjemplo && <Boton variante="borde" onClick={onSalir}>Salir</Boton>}
       <DarmeDeBaja tieneOrganizacion onListo={onDadaDeBaja} />
+      <SelloAkahata />
     </div>
   );
 }

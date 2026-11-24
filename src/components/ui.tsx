@@ -180,3 +180,21 @@ export function AvisoSeguridad({ donde }: { donde: 'red' | 'privado' }) {
     </div>
   );
 }
+
+/** El logo completo de Akãhatã, con enlace a su web. Va al pie de la portada y en Cuenta. */
+export function SelloAkahata() {
+  return (
+    <a
+      href="https://www.akahataorg.org"
+      target="_blank"
+      rel="noreferrer"
+      className="flex items-center gap-4 self-center rounded-2xl bg-[#fdf6f1] px-5 py-4 no-underline"
+    >
+      <img src={import.meta.env.BASE_URL + 'logo-akahata.png'} alt="Akãhatã" className="h-20 w-auto" />
+      <span className="max-w-[150px] text-[13px] font-bold leading-snug text-[#2e0526]">
+        Una iniciativa de Akãhatã.
+        <span className="mt-1 block text-[#a30d5f] underline">akahataorg.org</span>
+      </span>
+    </a>
+  );
+}

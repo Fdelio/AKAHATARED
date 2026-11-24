@@ -1,3 +1,4 @@
+import { SelloAkahata } from './ui';
 import { CalendarDays, MessagesSquare, Network, Newspaper, PenLine } from 'lucide-react';
 import { Ingreso } from './CuentaView';
 
@@ -57,12 +58,12 @@ export default function BienvenidaView({ modoEjemplo, onVerOportunidades, enLaAp
         <div className="absolute -bottom-[120px] -left-[90px] -z-10 h-[160px] w-[240px] rounded-full bg-naranja" />
         <div className="absolute -top-[40px] -right-[40px] -z-10 size-36 rounded-full border-2 border-naranja" />
         <div className="flex items-center gap-2.5">
-          <img src={import.meta.env.BASE_URL + 'logo-marca.png'} alt="" className="size-10 rounded-full bg-white" />
-          <b className="text-xl font-extrabold tracking-tight">Akãhatã</b>
+          <img src={import.meta.env.BASE_URL + 'logo-marca.png'} alt="" className="size-14 rounded-full bg-white p-0.5" />
+          <b className="text-[26px] font-black tracking-tight">Akãhatã</b>
         </div>
         <div className="mt-6 mb-3 flex items-center gap-3">
           <img src={import.meta.env.BASE_URL + 'logo-sonar.svg'} alt="" className="size-16 flex-none rounded-2xl shadow-lg" />
-          <h1 className="m-0 text-[32px] font-black leading-[1.05]">Sonar de incidencia</h1>
+          <h1 className="m-0 text-[30px] font-black leading-[1.05]">Sonar de Incidencia Internacional</h1>
         </div>
         <p className="m-0 text-[15px] font-semibold leading-snug text-white/85">
           Para que las organizaciones de América Latina lleven sus agendas a la ONU, la OEA y el Mercosur en todos los
@@ -134,12 +135,12 @@ export default function BienvenidaView({ modoEjemplo, onVerOportunidades, enLaAp
         </button>
         </>)}
 
+        <SelloAkahata />
         <p className="m-0 -mt-2 text-center text-xs text-ink-soft">
-          Una iniciativa de{' '}
-          <a className="font-bold text-rosa" href="https://www.akahataorg.org" target="_blank" rel="noreferrer">Akãhatã</a>.
           Pedimos pocos datos y cada organización elige qué es público.
         </p>
       </main>
     </div>
   );
 }
+
