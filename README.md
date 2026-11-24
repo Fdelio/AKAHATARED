@@ -1,12 +1,12 @@
-# Radar de Incidencia Internacional · Akãhatã
+# Akãhatã: Sonar de incidencia
 
 App para celular y web que ayuda a organizaciones de América Latina a **llevar sus agendas a los espacios de derechos humanos de la ONU, la OEA y el Mercosur**, también en temas que no son "de género": ambiente, desarrollo, economía, migración.
 
-- **Radar:** oportunidades de incidencia (llamados a contribuciones, revisiones de países, audiencias, consultas) con plazo, cómo participar y "cómo sumar tu agenda".
+- **Sonar (Oportunidades):** oportunidades de incidencia (llamados a contribuciones, revisiones de países, audiencias, consultas) con plazo, cómo participar y "cómo sumar tu agenda".
 - **Me sumo:** cada organización indica a qué se suma y quién puede verlo (público, solo la red o solo Akãhatã, para contextos de riesgo).
 - **Red:** organizaciones por país, con lo que ofrecen y necesitan.
 - **Me sumé:** registro del resultado de cada espacio.
-- **Revisión:** el equipo de Akãhatã aprueba lo que el radar recolecta antes de publicarlo.
+- **Revisión:** el equipo de Akãhatã aprueba lo que el sonar recolecta antes de publicarlo.
 
 Usa la misma tecnología que Truek: Vite, React, TypeScript, Tailwind y Supabase.
 
@@ -40,7 +40,7 @@ supabase functions deploy probar-fuentes
 ```
 src/
   App.tsx              navegación y estado general
-  components/          pantallas (Radar, Oportunidad, Red, Me sumé, Revisión)
+  components/          pantallas (Sonar/Oportunidades, Oportunidad, Red, Me sumé, Revisión)
   lib/datos.ts         lectura y escritura (Supabase o datos de ejemplo)
   data/datosEjemplo.ts datos inventados para el modo ejemplo
 supabase/

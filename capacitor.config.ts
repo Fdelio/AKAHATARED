@@ -5,7 +5,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 // OJO: appId no se puede cambiar después de publicar en las tiendas.
 const config: CapacitorConfig = {
   appId: 'org.akahataorg.radar',
-  appName: 'Radar Akãhatã',
+  appName: 'Sonar Akãhatã',
   webDir: 'dist',
   backgroundColor: '#1a0516',
   android: {

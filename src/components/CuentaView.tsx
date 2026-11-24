@@ -148,7 +148,7 @@ export default function CuentaView({
     <div className="flex flex-col gap-4">
       {!org.aprobada && (
         <p className="m-0 rounded-lg bg-naranja-light p-3.5 text-sm text-naranja-dark">
-          <b>Tu organización está esperando la aprobación de Akãhatã.</b> Mientras tanto podés ver el radar. Cuando la
+          <b>Tu organización está esperando la aprobación de Akãhatã.</b> Mientras tanto podés ver el sonar. Cuando la
           aprueben vas a poder sumarte a oportunidades y aparecer en la red.
         </p>
       )}

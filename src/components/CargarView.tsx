@@ -69,7 +69,7 @@ export default function CargarView({ inicial, onGuardar, onCancelar }: Props) {
         </p>
       ) : (
       <p className="m-0 text-sm text-ink-soft">
-        Para convocatorias que el radar no recolecta solo. Pensá en organizaciones que no trabajan este tema: el
+        Para convocatorias que el sonar no recolecta solo. Pensá en organizaciones que no trabajan este tema: el
         “cómo sumar tu agenda” es lo que las anima a participar.
       </p>
       )}
@@ -159,7 +159,7 @@ export default function CargarView({ inicial, onGuardar, onCancelar }: Props) {
 
       <label className="flex items-center gap-2 text-sm font-bold">
         <input type="checkbox" className="size-4 accent-rosa" checked={publicar} onChange={(e) => setPublicar(e.target.checked)} />
-        {inicial?.estado === 'publicada' ? 'Visible en el radar (si lo destildás, vuelve a Revisión)' : 'Publicar ya en el radar (si no, queda en Revisión)'}
+        {inicial?.estado === 'publicada' ? 'Visible en el sonar (si lo destildás, vuelve a Revisión)' : 'Publicar ya en el sonar (si no, queda en Revisión)'}
       </label>
 
       <Boton>{guardando ? 'Guardando…' : publicar ? (inicial?.estado === 'publicada' ? 'Guardar cambios' : 'Publicar oportunidad') : 'Guardar para revisar'}</Boton>

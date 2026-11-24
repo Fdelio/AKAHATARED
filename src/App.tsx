@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Building2, CheckCheck, House, MessagesSquare, Network, Newspaper, Radar, UserRound } from 'lucide-react';
+import { Building2, CheckCheck, House, MessagesSquare, Network, Newspaper, Radio, UserRound } from 'lucide-react';
 import type {
   EstadoRevision, Noticia, NuevaNoticia, NuevaOportunidad, NuevaOrganizacion, NuevaSesion, NuevoPedido, Oportunidad, Organizacion, Pantalla, Participacion, PedidoApoyo, Sesion,
   SesionOrgano, SolicitudUnion, Visibilidad, MensajePrivado, PersonaRed, PersonaDeMiOrg, IndependientePorRevisar, Perfil,
@@ -21,18 +21,18 @@ import NoticiasView, { NotaView } from './components/NoticiasView';
 import NotaForm from './components/NotaForm';
 import { Boton, useImagen } from './components/ui';
 
-type ItemNav = { id: Pantalla; label: string; Icono: typeof Radar };
+type ItemNav = { id: Pantalla; label: string; Icono: typeof Radio };
 const NAV: ItemNav[] = [
   { id: 'inicio', label: 'Inicio', Icono: House },
   { id: 'noticias', label: 'Noticias', Icono: Newspaper },
-  { id: 'radar', label: 'Oportunidades', Icono: Radar },
+  { id: 'radar', label: 'Oportunidades', Icono: Radio },
   { id: 'red', label: 'Red', Icono: Network },
   { id: 'chat', label: 'Chat', Icono: MessagesSquare },
   { id: 'mias', label: 'Mi organización', Icono: Building2 },
 ];
 
 const TITULOS: Record<Pantalla, [string, string]> = {
-  inicio: ['Inicio', 'Radar de Incidencia Internacional'],
+  inicio: ['Inicio', 'Akãhatã: Sonar de incidencia'],
   noticias: ['Noticias', 'Lo que pasa en los espacios internacionales'],
   radar: ['Oportunidades de participar', 'ONU, OEA y Mercosur, en todos los temas'],
   red: ['La red', 'Organizaciones, personas y su trabajo'],
@@ -40,7 +40,7 @@ const TITULOS: Record<Pantalla, [string, string]> = {
   mias: ['Mi organización', 'Nuestro trabajo y pedidos de acompañamiento'],
   revision: ['Revisión de Akãhatã', 'Lo que espera aprobación'],
   cuenta: ['Tu cuenta', 'Tu organización en la red'],
-  cargar: ['Cargar oportunidad', 'Se suma al radar de incidencia'],
+  cargar: ['Cargar oportunidad', 'Se suma al sonar de incidencia'],
 };
 
 const RUTAS: Pantalla[] = ['inicio', 'noticias', 'radar', 'red', 'chat', 'mias', 'revision', 'cuenta', 'cargar'];
@@ -232,7 +232,7 @@ export default function App() {
       if (enEdicion) await datos.actualizarOportunidad(enEdicion.id, o, publicar);
       else await datos.crearOportunidad(o, publicar);
       await cargar();
-      setAviso(publicar ? 'Publicada en el radar' : 'Guardada en Revisión');
+      setAviso(publicar ? 'Publicada en el sonar' : 'Guardada en Revisión');
       ir(enEdicion && publicar ? 'op-' + enEdicion.id : publicar ? 'radar' : 'revision');
       return true;
     } catch (e) {
@@ -321,11 +321,14 @@ export default function App() {
   return (
     <div className="mx-auto flex min-h-screen max-w-[480px] md:max-w-[960px] flex-col bg-fondo sm:my-6 sm:min-h-0 sm:rounded-3xl sm:border sm:border-line">
       <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-fondo/90 px-5 py-3.5 backdrop-blur-md sm:rounded-t-3xl">
-        <img src={import.meta.env.BASE_URL + 'logo-marca.png'} alt="" className="size-11 flex-none drop-shadow-[0_0_10px_rgb(247_148_29/0.35)]" />
+        <img src={import.meta.env.BASE_URL + 'logo-sonar.svg'} alt="" className="size-11 flex-none rounded-full" />
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-naranja">Akãhatã</div>
+          <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.25em] text-naranja">
+            <img src={import.meta.env.BASE_URL + 'logo-marca.png'} alt="" className="size-3.5" />
+            Akãhatã
+          </div>
           <div className="text-[19px] font-black leading-[1.08] tracking-tight text-ink sm:text-[21px]">
-            Radar de Incidencia <span className="text-rosa">Internacional</span>
+            Sonar de <span className="text-rosa">incidencia</span>
           </div>
         </div>
         {revisora && (
@@ -559,7 +562,7 @@ export default function App() {
               ejecutar(() => datos.revisarIndependiente(id, ok), ok ? 'Persona aprobada' : 'Pedido rechazado')
             }
             onRevisar={(id, estado: EstadoRevision) =>
-              ejecutar(() => datos.revisarOportunidad(id, estado), estado === 'publicada' ? 'Publicada en el radar' : 'Descartada')
+              ejecutar(() => datos.revisarOportunidad(id, estado), estado === 'publicada' ? 'Publicada en el sonar' : 'Descartada')
             }
           />
         )}

@@ -208,7 +208,7 @@ export const NOTICIAS: Noticia[] = [
     id: 'n1', sistema: 'OEA', fuente_nombre: 'CIDH · Comunicados de prensa', publicada_en: haceDias(1),
     titulo: 'Ejemplo: la CIDH anuncia el calendario de sesiones y el plazo para pedir audiencias en 2027',
     resumen: 'La Comisión publicó las fechas de sus períodos de sesiones del próximo año y abrió el plazo para solicitar audiencias públicas.',
-    comentario_akahata: 'Es el momento de pensar audiencias conjuntas: una organización ambiental y una feminista pidiendo juntas suman fuerza. Mirá la oportunidad en el Radar.',
+    comentario_akahata: 'Es el momento de pensar audiencias conjuntas: una organización ambiental y una feminista pidiendo juntas suman fuerza. Mirá la oportunidad en el Sonar.',
   }),
   nota({
     id: 'n2', sistema: 'ONU', fuente_nombre: 'Noticias ONU · Derechos humanos', publicada_en: haceDias(2),

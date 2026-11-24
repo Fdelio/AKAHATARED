@@ -60,7 +60,10 @@ export default function BienvenidaView({ modoEjemplo, onVerOportunidades, enLaAp
           <img src={import.meta.env.BASE_URL + 'logo-marca.png'} alt="" className="size-10 rounded-full bg-white" />
           <b className="text-xl font-extrabold tracking-tight">Akãhatã</b>
         </div>
-        <h1 className="mt-6 mb-3 text-[32px] font-black leading-[1.05]">Radar de Incidencia Internacional</h1>
+        <div className="mt-6 mb-3 flex items-center gap-3">
+          <img src={import.meta.env.BASE_URL + 'logo-sonar.svg'} alt="" className="size-16 flex-none rounded-2xl shadow-lg" />
+          <h1 className="m-0 text-[32px] font-black leading-[1.05]">Sonar de incidencia</h1>
+        </div>
         <p className="m-0 text-[15px] font-semibold leading-snug text-white/85">
           Para que las organizaciones de América Latina lleven sus agendas a la ONU, la OEA y el Mercosur en todos los
           temas y no vayan solas.

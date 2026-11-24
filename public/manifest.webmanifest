@@ -1,6 +1,6 @@
 {
-  "name": "Radar de Incidencia Internacional · Akãhatã",
-  "short_name": "Radar Akãhatã",
+  "name": "Akãhatã: Sonar de incidencia",
+  "short_name": "Sonar Akãhatã",
   "description": "Oportunidades de incidencia en la ONU, la OEA y el Mercosur para organizaciones de América Latina.",
   "lang": "es",
   "start_url": "./",
@@ -8,7 +8,7 @@
   "background_color": "#1a0516",
   "theme_color": "#1a0516",
   "icons": [
-    { "src": "./logo-marca.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icono-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "./icono-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
